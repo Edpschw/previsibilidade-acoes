@@ -19,7 +19,7 @@ A CVM regera os ZIPs dos últimos anos quando há reapresentação. Use `python3
 |---|---|
 | `scripts/processar.py` | Lê DFP e FCA da CVM, cotações e fichas de emissores da B3 e a PTAX do BCB e gera `data/empresas.js`. A docstring explica os cuidados com a base. |
 | `scripts/auditar.py` | Audita a base contra as fontes e gera `auditoria.md` (resumo) e `auditoria.json` (todas as ocorrências). Com `--trava`, sai com código 2 se a base piorou em relação a `auditoria_resumo.json`. |
-| `scripts/mudancas.py` | Compara a base nova com a commitada e escreve `mudancas.md` (entradas e saídas, balanços novos, cotações e índice que mudaram muito). |
+| `scripts/mudancas.py` | Compara a base nova com a commitada e escreve `mudancas.md` (entradas e saídas, balanços novos, cotações que mudaram mais de 15% em papéis com liquidez de pelo menos R$ 1 mi/dia, índice que mudou 5 pontos ou mais). |
 | `scripts/versionar.py` | Atualiza o `?v=` dos assets no `index.html` com o hash do conteúdo. Roda sozinho no fim do processamento. |
 | `tests/` | `test_regras.py` (regras com dados sintéticos) e `test_dados.py` (invariantes da base gerada). `python3 -m unittest discover -s tests` |
 | `.github/workflows/atualizar.yml` | Atualização diária no GitHub Actions |

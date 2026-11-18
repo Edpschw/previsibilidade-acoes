@@ -22,6 +22,7 @@ SAIDA = RAIZ / "mudancas.md"
 
 LIMIAR_PRECO = 0.15      # variação de cotação entre execuções
 LIMIAR_INDICE = 5        # pontos no índice de previsibilidade
+LIQUIDEZ_MINIMA = 1_000_000  # R$/dia: abaixo disso, oscilação de 15% num dia é ruído de microcap
 
 
 def ler(texto):
@@ -44,7 +45,7 @@ def comparar(a, b):
     A = {e["cnpj"]: e for e in a["empresas"]}
     B = {e["cnpj"]: e for e in b["empresas"]}
     s = {k: [] for k in ("Entraram na base", "Saíram da base", "Tickers novos ou removidos",
-                         "Balanço novo", "Últimos 12 meses atualizados", "Cotação mudou mais de 15%",
+                         "Balanço novo", "Últimos 12 meses atualizados", "Cotação mudou mais de 15% (liquidez ≥ R$ 1 mi/dia)",
                          "Índice de previsibilidade mudou")}
     for c in sorted(set(B) - set(A), key=lambda c: B[c]["ticker"]):
         s["Entraram na base"].append(f"{B[c]['ticker']} — {B[c]['nome']}")
@@ -64,8 +65,9 @@ def comparar(a, b):
         pa = (ea["cotacao"].get(ea["ticker"]) or {}).get("preco")
         pb = (eb["cotacao"].get(ea["ticker"]) or {}).get("preco")
         avancou = (b.get("cotacoes_em") or "") > (a.get("cotacoes_em") or "")
-        if avancou and pa and pb and abs(pb / pa - 1) > LIMIAR_PRECO:
-            s["Cotação mudou mais de 15%"].append(f"{ea['ticker']}: R$ {pa:.2f} → R$ {pb:.2f} ({pb / pa - 1:+.0%})")
+        liquida = (eb.get("liquidez") or 0) >= LIQUIDEZ_MINIMA
+        if avancou and liquida and pa and pb and abs(pb / pa - 1) > LIMIAR_PRECO:
+            s["Cotação mudou mais de 15% (liquidez ≥ R$ 1 mi/dia)"].append(f"{ea['ticker']}: R$ {pa:.2f} → R$ {pb:.2f} ({pb / pa - 1:+.0%})")
         ia, ib = (ea["score"]["brl"] or {}).get("total"), (eb["score"]["brl"] or {}).get("total")
         if ia is not None and ib is not None and abs(ib - ia) >= LIMIAR_INDICE:
             s["Índice de previsibilidade mudou"].append(f"{eb['ticker']}: {ia} → {ib}")
