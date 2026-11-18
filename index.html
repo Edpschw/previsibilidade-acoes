@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lastro · Ações brasileiras</title>
 <meta name="description" content="Fundamentals, valuation and a predictability score for every stock listed on B3, Brazil's exchange, from CVM open data, in reais or US dollars. Fundamentos e índice de previsibilidade das ações da B3.">
-<link rel="stylesheet" href="style.css?v=8abf532dce">
+<link rel="prefetch" href="mapa.js?v=5e216268ca" data-modulo="mapa">
+<link rel="stylesheet" href="style.css?v=aced0d6719">
 </head>
 <body>
 <header class="topo">
@@ -14,6 +15,11 @@
       <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="18" width="6" height="10" rx="1.5"/><rect x="13" y="11" width="6" height="17" rx="1.5"/><rect x="22" y="4" width="6" height="24" rx="1.5"/></svg>
       <span>Lastro</span>
     </a>
+    <nav class="nav-principal" aria-label="Navegação principal" data-i18n-aria="nav_principal">
+      <a href="#/" data-nav="inicio" data-i18n="nav_inicio">Início</a>
+      <a href="#/acoes" data-nav="acoes" data-i18n="nav_acoes">Ações</a>
+      <a href="#/mapa" data-nav="mapa" data-i18n="nav_mapa">Mapa 3D</a>
+    </nav>
     <label class="busca">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
       <input id="busca" type="search" placeholder="Buscar ticker ou empresa" autocomplete="off" aria-label="Buscar ticker ou empresa" data-i18n-ph="buscar" data-i18n-aria="buscar">
@@ -48,7 +54,8 @@
 <div id="dica" class="dica" hidden></div>
 
 <script src="data/empresas.js?v=ef899c612d"></script>
-<script src="i18n.js?v=a8df54e6f7"></script>
-<script src="app.js?v=0933f52f51"></script>
+<script src="i18n.js?v=61a8ebefaa"></script>
+<script src="app.js?v=ca026938fd"></script>
+<script src="inicio.js?v=13483ae965"></script>
 </body>
 </html>

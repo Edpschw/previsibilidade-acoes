@@ -410,7 +410,7 @@
     var e = POR_TICKER[ticker];
     var app = $("#app");
     if (!e) {
-      app.innerHTML = '<a class="voltar" href="#/">' + t("voltar") + '</a><div class="cartao vazio">' + tf("nao_encontrado", esc(ticker)) + "</div>";
+      app.innerHTML = '<a class="voltar" href="#/acoes">' + t("voltar") + '</a><div class="cartao vazio">' + tf("nao_encontrado", esc(ticker)) + "</div>";
       return;
     }
     document.title = ticker + " · " + nomeCurto(e.nome) + " · Lastro";
@@ -423,7 +423,7 @@
     // --- cabeçalho
     var stat = function (rot, val) { return '<div class="stat"><span>' + rot + '</span><b class="num">' + val + "</b></div>"; };
     var cab =
-      '<a class="voltar" href="#/">' + t("voltar") + "</a>" +
+      '<a class="voltar" href="#/acoes">' + t("voltar") + "</a>" +
       '<section class="cartao hero">' +
       '<div class="hero-principal">' +
       "<h1>" + esc(nomeCurto(e.nome)) + "</h1>" +
@@ -570,7 +570,7 @@
 
   // ---------------------------------------------------------------- navegação por seções
 
-  var observador = null;
+  var observador = null, marcarSecao = null;
   function observarSecoes() {
     if (observador) observador.disconnect();
     var nav = $(".secoes");
@@ -588,6 +588,7 @@
       if (visiveis.length) marcar(visiveis[0].target.id);
     }, { rootMargin: "-30% 0px -60% 0px" });
     $$(".secao[id]").forEach(function (s) { observador.observe(s); });
+    marcarSecao = function () { if (links.length) marcar(links[links.length - 1].getAttribute("data-ir")); };
     marcar(links.length ? links[0].getAttribute("data-ir") : "");
     progresso();
   }
@@ -598,6 +599,8 @@
     if (!nav) return;
     var h = document.documentElement.scrollHeight - window.innerHeight;
     nav.style.setProperty("--progresso", h > 0 ? Math.min(1, window.scrollY / h) : 0);
+    // a última seção raramente chega à faixa observada: no fim da página, ela é a ativa
+    if (h > 0 && window.scrollY >= h - 2 && marcarSecao) marcarSecao();
   }
 
   function recorte(e) {
@@ -841,11 +844,34 @@
 
   // ---------------------------------------------------------------- roteamento e controles
 
+  /** "#/" início · "#/acoes" ranking · "#/mapa" mapa 3D · "#/PETR4" empresa */
   function rota() {
-    var m = location.hash.match(/^#\/([A-Z0-9]+)/i);
+    var m = location.hash.match(/^#\/([A-Za-z0-9]+)/);
+    var alvo = m ? m[1] : "";
     $("#dica").hidden = true;
     if (observador) { observador.disconnect(); observador = null; }
-    if (m) telaEmpresa(m[1].toUpperCase()); else telaRanking();
+    if (window.LastroMapa && window.LastroMapa.parar) window.LastroMapa.parar();
+    var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "mapa" ? "mapa" : "empresa";
+    $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
+    document.body.setAttribute("data-pagina", pagina);
+    if (pagina === "inicio" && window.LastroInicio) window.LastroInicio.render($("#app"));
+    else if (pagina === "inicio" || pagina === "acoes") telaRanking();
+    else if (pagina === "mapa") telaMapa();
+    else telaEmpresa(alvo.toUpperCase());
+  }
+
+  /** o mapa (three.js, ~700 KB) só é baixado quando alguém abre #/mapa */
+  function telaMapa() {
+    document.title = t("nav_mapa") + " · Lastro";
+    var app = $("#app");
+    app.innerHTML = '<div class="cartao vazio">' + t("mapa_carregando") + "</div>";
+    var link = $('link[rel="prefetch"][data-modulo="mapa"]');
+    import(link ? link.href : "./mapa.js").then(function (mod) {
+      if (document.body.getAttribute("data-pagina") === "mapa") mod.render(app, window.Lastro);
+    }).catch(function (err) {
+      if (window.console) console.error(err);
+      app.innerHTML = '<div class="cartao vazio">' + t("mapa_erro") + ' <a href="#/acoes">' + t("nav_acoes") + "</a>.</div>";
+    });
   }
 
   /** textos fixos do index.html (data-i18n, data-i18n-html, data-i18n-ph, data-i18n-aria) */
@@ -910,6 +936,15 @@
     busca();
     rota();
   }
+
+  // API para inicio.js e mapa.js (mesmos números, formatos e textos da página)
+  window.Lastro = {
+    D: D, EMPRESAS: EMPRESAS, POR_TICKER: POR_TICKER, estado: estado,
+    t: t, tf: tf, L: L, mapa: mapa, locale: locale,
+    dinheiro: dinheiro, porAcao: porAcao, pct: pct, vezes: vezes, nf: nf, data: data, esc: esc,
+    nomeCurto: nomeCurto, setor: setor, score: score, nivelScore: nivelScore, indicadores: indicadores,
+    linhas: linhas, observarSecoes: observarSecoes, componentes: componentes,
+  };
 
   iniciar();
 })();

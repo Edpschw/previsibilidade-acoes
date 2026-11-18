@@ -4,6 +4,9 @@
 window.I18N = {
   pt: {
     titulo: "Lastro · Ações brasileiras",
+    nav_inicio: "Início", nav_acoes: "Ações", nav_mapa: "Mapa 3D", nav_principal: "Navegação principal",
+    mapa_carregando: "Carregando o mapa 3D…",
+    mapa_erro: "Não foi possível carregar o mapa 3D neste navegador. Veja as empresas em",
     buscar: "Buscar ticker ou empresa",
     nada_encontrado: "Nada encontrado",
     moeda: "Moeda", idioma: "Idioma", tema: "Alternar tema claro/escuro",
@@ -92,6 +95,9 @@ window.I18N = {
   },
   en: {
     titulo: "Lastro · Brazilian stocks",
+    nav_inicio: "Home", nav_acoes: "Stocks", nav_mapa: "3D map", nav_principal: "Main navigation",
+    mapa_carregando: "Loading the 3D map…",
+    mapa_erro: "The 3D map could not load in this browser. Browse the companies under",
     buscar: "Search ticker or company",
     nada_encontrado: "No results",
     moeda: "Currency", idioma: "Language", tema: "Toggle light/dark theme",
