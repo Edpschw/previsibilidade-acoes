@@ -324,29 +324,47 @@ tbody tr:last-child td { border-bottom: 0; }
 .i-passo p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; flex: 1; }
 .i-passo-cta { font-weight: 650; color: var(--accent); font-size: 14px; }
 
-/* mapa 3D -------------------------------------------------------------- */
-.mapa-cab { margin-bottom: 18px; }
-.mapa-cab h1 { margin: 14px 0 8px; font-size: clamp(26px, 3.6vw, 38px); letter-spacing: -.03em; }
-.mapa-cab p { max-width: 760px; margin: 0; line-height: 1.6; }
-.mapa-controles { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: flex-end; margin-bottom: 12px; }
-.mapa-controles label:not(.check) { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
-.mapa-controles select, .mapa-controles input[type="search"] { padding: 7px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font: inherit; font-size: 14px; min-width: 150px; }
-.mapa-controles input[type="search"] { width: 120px; min-width: 0; text-transform: uppercase; }
-.mapa-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
-.mapa-presets button { border: 1px solid var(--border); background: var(--surface); padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); }
-.mapa-presets button:hover { color: var(--text); border-color: var(--accent); }
-.mapa-palco { position: relative; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
-  background: radial-gradient(70% 60% at 50% 40%, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--surface) 75%); }
-.mapa-palco canvas { display: block; width: 100%; height: min(72vh, 680px); touch-action: none; cursor: grab; }
-.mapa-legenda { position: absolute; left: 14px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); pointer-events: none; }
-.mapa-legenda span { display: inline-flex; align-items: center; gap: 6px; }
-.mapa-legenda i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
-.mapa-conta { position: absolute; right: 14px; top: 10px; margin: 0; font-size: 12.5px; pointer-events: none; }
-.mapa-dica-toque { display: none; position: absolute; left: 14px; top: 10px; margin: 0; font-size: 12px; color: var(--muted); pointer-events: none; }
-@media (hover: none) { .mapa-dica-toque { display: block; } }
+/* teia (gráfico de radar) ------------------------------------------- */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.teia-cab { margin-bottom: 18px; }
+.teia-cab h1 { margin: 14px 0 8px; font-size: clamp(26px, 3.6vw, 38px); letter-spacing: -.03em; }
+.teia-cab p { max-width: 760px; margin: 0; line-height: 1.6; }
+.teia-controles { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; margin-bottom: 12px; }
+.teia-escolhidas { display: flex; flex-wrap: wrap; gap: 6px; }
+.teia-chip { display: inline-flex; align-items: center; gap: 7px; padding: 3px 3px 3px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font: 600 13px/1 var(--mono); }
+.teia-chip i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.teia-chip a { color: var(--text); }
+.teia-chip button { border: 0; background: transparent; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; color: var(--muted); font-size: 16px; line-height: 1; }
+.teia-chip button:hover { background: var(--surface-2); color: var(--text); }
+.teia-add { position: relative; }
+.teia-add input { padding: 7px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font: inherit; font-size: 14px; width: 210px; }
+.teia-add input:disabled { opacity: .6; }
+.teia-add .sugestoes { min-width: 280px; z-index: 30; }
+.teia-controles .seg { margin-left: auto; }
+.teia-palco { padding: 14px 16px 16px; }
+.teia-grafico { width: 100%; touch-action: pan-y; }
+.teia-grafico svg { display: block; width: 100%; overflow: visible; }
+.teia-grafico .anel { fill: none; stroke: var(--grid); stroke-width: 1; }
+.teia-grafico .anel.externo { stroke: var(--border); }
+.teia-grafico .raio { stroke: var(--grid); stroke-width: 1; }
+.teia-grafico .raio.ativo { stroke: var(--muted); stroke-width: 1.5; }
+.teia-grafico .marca-anel { fill: var(--muted); font-size: 10.5px; font-family: var(--font); }
+.teia-grafico .mediana { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-dasharray: 5 4; }
+.teia-grafico .serie { fill-opacity: .12; stroke-width: 2.2; stroke-linejoin: round; }
+.teia-grafico .rot { fill: var(--text); font-size: 12.5px; font-weight: 600; font-family: var(--font); cursor: default; }
+.teia-grafico .rot.ativo { fill: var(--accent); }
+.legenda i.tracejada { width: 16px; height: 0; border-radius: 0; background: none; border-top: 2px dashed var(--muted); }
+.teia-th { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); }
+.teia-th i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.teia-tabela thead th { text-transform: none; letter-spacing: 0; }
+.teia-tabela small { font-size: 11.5px; }
 @media (max-width: 640px) {
-  .mapa-legenda, .mapa-conta { position: static; padding: 8px 14px 0; }
-  .mapa-conta { padding-bottom: 10px; }
+  .teia-add, .teia-add input { flex: 1 1 100%; width: 100%; }
+  .teia-controles .seg { margin-left: 0; }
+  .teia-palco { padding: 10px 8px 12px; }
+  .teia-grafico .rot { font-size: 11.5px; }
+  .teia-tabela th, .teia-tabela td { padding: 8px 9px; font-size: 13px; white-space: normal; }
+  .teia-tabela td small { display: block; }
 }
 
 @media (max-width: 980px) {
@@ -367,10 +385,6 @@ tbody tr:last-child td { border-bottom: 0; }
   .i-cap { padding: 18px; }
   .i-pesos li { grid-template-columns: 1fr 70px 34px; }
   .i-glossario { grid-template-columns: 1fr; }
-  .mapa-controles label:not(.check) { flex: 1 1 140px; }
-  .mapa-controles select { min-width: 0; width: 100%; }
-  .mapa-presets { margin-left: 0; }
-  .mapa-palco canvas { height: 62vh; }
 }
 
 /* logotipo: "Real" na cor de destaque */
