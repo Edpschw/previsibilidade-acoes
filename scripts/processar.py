@@ -463,6 +463,14 @@ def extrair_ano(zf, ano, cnpjs, base, itr=False):
             gravar(cnpj, a, u, "fci", v)
         elif c == "6.03":
             gravar(cnpj, a, u, "fcf", v)
+        elif c == "6.04" and "cambial" in ds:
+            gravar(cnpj, a, u, "fx_caixa", v)
+        elif c == "6.05" and re.search(r"aumento|redução|reducao|varia", ds):
+            gravar(cnpj, a, u, "var_caixa", v)
+        elif c == "6.01.01":
+            gravar(cnpj, a, u, "fco_operacoes", v)  # caixa gerado antes do capital de giro
+        elif c == "6.01.02" and re.search(r"varia", ds):
+            gravar(cnpj, a, u, "fco_giro", v)  # capital de giro: explica saltos pontuais do caixa operacional
         elif c.startswith("6.01.01.") and nivel(c) == 3 and re.search(r"deprecia|amortiza|exaust|deple", ds) \
                 and "juros" not in ds and "custo" not in ds:
             gravar(cnpj, a, u, "da", abs(v), somar=True)
@@ -596,7 +604,7 @@ def montar_series(anos_dados):
     s = {k: [] for k in ("receita", "lucro_bruto", "ebit", "lucro_liquido", "lucro_controladora",
                          "ebitda", "ativo_total", "pl", "pl_controladora", "divida_bruta", "caixa",
                          "divida_liquida", "fco", "fci", "fcf", "capex", "dividendos_pagos", "acoes",
-                         "acoes_on", "acoes_pn", "lpa_declarado")}
+                         "acoes_on", "acoes_pn", "lpa_declarado", "fco_operacoes", "fco_giro", "var_caixa", "fx_caixa")}
 
     def r(v):
         return None if v is None else round(v)
@@ -630,6 +638,10 @@ def montar_series(anos_dados):
         s["fci"].append(r(d.get("fci")))
         s["fcf"].append(r(d.get("fcf")))
         s["capex"].append(r(d.get("capex")))
+        s["fco_operacoes"].append(r(d.get("fco_operacoes")))
+        s["fco_giro"].append(r(d.get("fco_giro")))
+        s["var_caixa"].append(r(d.get("var_caixa")))
+        s["fx_caixa"].append(r(d.get("fx_caixa")))
         s["dividendos_pagos"].append(r(d.get("dividendos_pagos", 0 if "_fin_detalhado" in d else None)))
         acoes = ajustar_escala_acoes(d.get("acoes"), lucro_c, d.get("lpa_on"))
         anterior = next((x for x in reversed(s["acoes"]) if x), None)

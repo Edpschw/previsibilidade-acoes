@@ -73,7 +73,7 @@ python3 scripts/auditar.py --externo
 A auditoria tem três camadas:
 
 1. **Cobertura.** Parte do que a B3 negocia de fato (ações ON/PN/units com negócio nos últimos 21 pregões) e diz, para cada emissor ausente, em que etapa ele caiu. Também lista o caminho inverso: empresas da base sem negócio.
-2. **Consistência interna.** Cada empresa passa por regras que comparam números entre si: LPA calculado × LPA declarado na DRE (pelas ações do fim do ano e pela média do ano), ações B3 × DFP, PL × ativo, saltos de ações e receita, margens e múltiplos fora de faixa, DY de 12 meses × DY do exercício, cotação parada, preço que muda de escala depois do balanço.
+2. **Consistência interna.** Cada empresa passa por regras que comparam números entre si: identidade do fluxo de caixa (operacional + investimento + financiamento + câmbio = variação do caixa), LPA calculado × LPA declarado na DRE (pelas ações do fim do ano e pela média do ano), ações B3 × DFP, PL × ativo, saltos de ações e receita, margens e múltiplos fora de faixa, DY de 12 meses × DY do exercício, cotação parada, preço que muda de escala depois do balanço.
 3. **Referência externa.** Contagens públicas de empresas listadas e, com `--externo`, cotação e valor de mercado de PETR4, VALE3, ITUB4 e MGLU3 na brapi.dev (os únicos liberados sem chave).
 
 Problemas que a auditoria revelou e que o processamento já trata:
@@ -87,6 +87,7 @@ Problemas que a auditoria revelou e que o processamento já trata:
 | Lucro da controladora preenchido com zero | CSN Mineração 2023–24 | usa o lucro consolidado |
 | Ações mudaram depois do balanço | Gafisa, Azul, Light, Toky | valor de mercado com a quantidade atual da B3 |
 | Raiz de ticker com dígito | B3SA3 | classe pelo número após os 4 primeiros caracteres |
+| Caixa operacional muito acima do EBITDA | Sanepar 2025 (R$ 7,1 bi × EBITDA de R$ 3,0 bi) | auditoria explica a diferença por capital de giro ou por itens sem efeito no caixa (impairment, provisões); a página da empresa avisa quando o capital de giro infla o fluxo de caixa livre |
 
 O que sobra no relatório são, em geral, erros de preenchimento das próprias empresas (LPA com sinal trocado ou por lote de mil ações) ou situações reais (holdings com receita zero, empresas em recuperação com múltiplos extremos).
 

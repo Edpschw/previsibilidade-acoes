@@ -97,6 +97,23 @@ class Base(unittest.TestCase):
         com = sum(1 for e in self.d["empresas"] if e.get("ttm"))
         self.assertGreater(com / len(self.d["empresas"]), 0.85)
 
+    def test_sanepar_caixa_operacional_explicado_pelo_giro(self):
+        s = self.e("SAPR11")["series"]
+        i = self.e("SAPR11")["anos"].index(2025)
+        self.assertGreater(s["fco_giro"][i], 3_000_000)  # R$ 3,3 bi de capital de giro em 2025
+
+    def test_fluxo_de_caixa_fecha_no_ultimo_ano(self):
+        quebras = []
+        for e in self.d["empresas"]:
+            s = e["series"]
+            fco, fci, fcf, vc = s["fco"][-1], s["fci"][-1], s["fcf"][-1], s["var_caixa"][-1]
+            if None in (fco, fci, fcf, vc):
+                continue
+            soma = fco + fci + fcf + (s["fx_caixa"][-1] or 0)
+            if abs(soma - vc) > max(0.02 * max(abs(fco), abs(fci), abs(fcf), 1), 1000):
+                quebras.append(e["ticker"])
+        self.assertLessEqual(len(quebras), 3, quebras)
+
     # ---- sanidade geral
     def test_ativo_positivo_no_ultimo_ano(self):
         ruins = [e["ticker"] for e in self.d["empresas"]

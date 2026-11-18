@@ -1,5 +1,5 @@
 {
- "gerado_em": "2026-11-17 23:59",
+ "gerado_em": "2026-11-18 00:05",
  "empresas": 345,
  "cobertura": 0.9967,
  "emissores_negociados": 303,
@@ -16,9 +16,9 @@
   "TFCO4|LPA divergente"
  ],
  "por_severidade": {
-  "info": 183,
-  "baixa": 318,
-  "média": 102,
+  "info": 200,
+  "baixa": 321,
+  "média": 103,
   "alta": 9
  }
 }

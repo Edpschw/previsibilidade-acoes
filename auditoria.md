@@ -1,6 +1,6 @@
 # Auditoria da base
 
-Gerada em 18/11/2026 sobre `data/empresas.js` de 2026-11-17 23:59 (balanços até 2025, cotações até 2026-11-17). Refaça com `python3 scripts/auditar.py --externo`.
+Gerada em 18/11/2026 sobre `data/empresas.js` de 2026-11-18 00:05 (balanços até 2025, cotações até 2026-11-17). Refaça com `python3 scripts/auditar.py --externo`.
 
 ## 1. Cobertura
 
@@ -47,6 +47,7 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | média | DY acima de 30% | 8 |
 | média | cotação parada | 4 |
 | média | P/VP extremo | 3 |
+| média | caixa operacional > 2× EBITDA sem explicação | 1 |
 | média | buraco no histórico | 1 |
 | baixa | salto de ações | 114 |
 | baixa | LPA divergente | 59 |
@@ -57,12 +58,14 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | baixa | LPA declarado por lote de mil | 10 |
 | baixa | ITR atrasado | 10 |
 | baixa | sem últimos 12 meses | 8 |
+| baixa | fluxo de caixa não fecha | 3 |
 | baixa | unit sem composição | 2 |
 | baixa | dividendos > 3× lucro | 2 |
-| info | DY 12m × DY do exercício | 57 |
+| info | DY 12m × DY do exercício | 58 |
 | info | só demonstração individual | 50 |
 | info | sem cotação | 43 |
 | info | PL negativo | 33 |
+| info | caixa operacional > 2× EBITDA | 16 |
 
 ### Ocorrências de severidade alta e média
 
@@ -139,6 +142,7 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | VIVR3 | VIVER INCORPORADORA E CONSTRUTORA | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 0.10× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | VVEO3 | CM Hospitalar | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 4.05× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | MLAS3 | GRUPO MULTILASER | média | buraco no histórico | sem DFP em 2018 |
+| ALPK3 | ALLPARK EMPREENDIMENTOS, PARTICIPAÇÕES E | média | caixa operacional > 2× EBITDA sem explicação | 2025: 545,220 × EBITDA 260,898; nem capital de giro (0) nem ajustes (0) explicam |
 | B1003 | B100 | média | cotação parada | último negócio de B1003 há mais de 14 dias |
 | EMAE4 | EMAE - EMPRESA METROP. DE AGUAS E ENERGI | média | cotação parada | último negócio de EMAE4 há mais de 14 dias |
 | FIEI3 | FICA EMPREENDIMENTOS IMOBILIÁRIOS | média | cotação parada | último negócio de FIEI3 há mais de 14 dias |

@@ -189,6 +189,31 @@ def checar_empresa(e, d):
                 add("média", "P/VP extremo", f"{pvp:.2f}x")
         if dv and dv / vm > 0.30:
             add("média", "DY acima de 30%", f"{dv / vm:.0%} (dividendo extraordinário ou valor de mercado subestimado)")
+    # fluxo de caixa: operacional + investimento + financiamento + câmbio = variação do caixa
+    for k in range(n):
+        fco, fci, fcf, vc = s["fco"][k], s["fci"][k], s["fcf"][k], s["var_caixa"][k]
+        if None in (fco, fci, fcf, vc):
+            continue
+        soma = fco + fci + fcf + (s["fx_caixa"][k] or 0)
+        escala = max(abs(fco), abs(fci), abs(fcf), 1)
+        if abs(soma - vc) > max(0.02 * escala, 1000):
+            add("alta" if k == ult else "baixa", "fluxo de caixa não fecha",
+                f"{anos[k]}: operacional + investimento + financiamento = {soma:,} × variação do caixa declarada {vc:,} "
+                "(erro de extração ou de preenchimento)")
+    # caixa operacional muito acima do EBITDA: de onde vem a diferença?
+    fco, eb = s["fco"][ult], s["ebitda"][ult]
+    if not e["financeiro"] and fco and eb and eb > 0 and fco > 2 * eb:
+        gap = fco - eb
+        giro = s["fco_giro"][ult] or 0
+        nao_caixa = (s["fco_operacoes"][ult] or eb) - eb
+        if giro >= 0.5 * gap:
+            add("info", "caixa operacional > 2× EBITDA", f"{anos[ult]}: {fco:,} × EBITDA {eb:,}; explicado por capital de giro ({giro:,})")
+        elif nao_caixa >= 0.5 * gap:
+            add("info", "caixa operacional > 2× EBITDA", f"{anos[ult]}: {fco:,} × EBITDA {eb:,}; explicado por itens que não mexem no caixa "
+                f"(impairment, provisões: {nao_caixa:,}) — o EBITDA contábil fica abaixo do 'ajustado' que a empresa divulga")
+        else:
+            add("média", "caixa operacional > 2× EBITDA sem explicação",
+                f"{anos[ult]}: {fco:,} × EBITDA {eb:,}; nem capital de giro ({giro:,}) nem ajustes ({nao_caixa:,}) explicam")
     # B3 × DFP: quantidade de ações e valor de mercado
     vd, ab = e.get("valor_mercado_dfp"), e.get("acoes_b3")
     if vm and vd and vd > 0:

@@ -371,6 +371,17 @@
     return out.join("");
   }
 
+  /** Caixa operacional inflado por capital de giro (Sanepar 2025): o fluxo de caixa livre não é recorrente. */
+  function avisoCaixa(e, i) {
+    var s = e.series, k = e.anos.length - 1;
+    var fco = s.fco[k], eb = s.ebitda[k], giro = s.fco_giro ? s.fco_giro[k] : null;
+    if (e.financeiro || !fco || !eb || eb <= 0 || fco <= 2 * eb || giro == null || giro < 0.5 * (fco - eb)) return "";
+    var g = serie(e, "fco_giro")[k], f = serie(e, "fco")[k];
+    return '<p class="aviso">' + esc(L(
+      "O caixa operacional de " + i.ano + " (" + dinheiro(f) + ") inclui " + dinheiro(g) + " de variação de capital de giro, um efeito em geral pontual: o fluxo de caixa livre do ano não deve ser tomado como recorrente.",
+      "Operating cash flow in " + i.ano + " (" + dinheiro(f) + ") includes " + dinheiro(g) + " from working-capital changes, usually a one-off: the year's free cash flow should not be taken as recurring.")) + "</p>";
+  }
+
   // ---------------------------------------------------------------- empresa
 
   function componentes() {
@@ -497,7 +508,7 @@
         '<span class="mudo sub">' + L("Até ", "To ") + data(i.d12.ate) + " · DFP + ITR</span></div>" + cartoes(doze12) + "</section>" : "") +
       '<section class="cartao secao" id="s-fund">' + titulo("s-fund", "", tf("fund_titulo", i.ano)) +
       '<span class="mudo sub">' + (estado.moeda === "usd" ? t("convertidos") : t("em_reais")) + "</span></div>" + cartoes(cards) +
-      (e.financeiro ? '<p class="aviso">' + t("aviso_fin") + "</p>" : "") + "</section>";
+      (e.financeiro ? '<p class="aviso">' + t("aviso_fin") + "</p>" : "") + avisoCaixa(e, i) + "</section>";
 
     var comp = '<section class="cartao secao" id="s-indice"><h2>' + capitulo(secs, "s-indice") + t("indice_titulo") + '</h2><div class="comp">' + (s ? componentes().map(function (c) {
       var v = s.componentes[c.id];

@@ -175,6 +175,13 @@
   "msg": "a empresa não publica consolidado"
  },
  {
+  "ticker": "ALLD3",
+  "nome": "ALLIED TECNOLOGIA S.A.",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 2,179,430 × EBITDA 551,870; explicado por capital de giro (1,628,059)"
+ },
+ {
   "ticker": "ALPA4",
   "nome": "ALPARGATAS S.A.",
   "sev": "info",
@@ -187,6 +194,13 @@
   "sev": "baixa",
   "regra": "LPA com sinal trocado na DRE",
   "msg": "2023: lucro -73,911 mas LPA declarado +0.34 (erro de preenchimento da empresa)"
+ },
+ {
+  "ticker": "ALPK3",
+  "nome": "ALLPARK EMPREENDIMENTOS, PARTICIPAÇÕES E SERVIÇOS S.A.",
+  "sev": "média",
+  "regra": "caixa operacional > 2× EBITDA sem explicação",
+  "msg": "2025: 545,220 × EBITDA 260,898; nem capital de giro (0) nem ajustes (0) explicam"
  },
  {
   "ticker": "AMAR3",
@@ -264,6 +278,13 @@
   "sev": "baixa",
   "regra": "salto de ações",
   "msg": "2024→2025: ×0.02 (desdobramento, grupamento, emissão ou escala)"
+ },
+ {
+  "ticker": "AMOB3",
+  "nome": "Automob Participações S.A.",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 1,089,712 × EBITDA 425,863; explicado por capital de giro (557,414)"
  },
  {
   "ticker": "ANIM3",
@@ -688,6 +709,13 @@
  {
   "ticker": "BHIA3",
   "nome": "Grupo Casas Bahia S.A. - Em Recuperação Judicial",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 15,129,000 × EBITDA 2,380,000; explicado por capital de giro (13,512,000)"
+ },
+ {
+  "ticker": "BHIA3",
+  "nome": "Grupo Casas Bahia S.A. - Em Recuperação Judicial",
   "sev": "média",
   "regra": "ações B3 × DFP",
   "msg": "valor de mercado com ações da B3 hoje é 1.55× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3"
@@ -705,6 +733,13 @@
   "sev": "baixa",
   "regra": "salto de ações",
   "msg": "2020→2021: ×7.29 (desdobramento, grupamento, emissão ou escala)"
+ },
+ {
+  "ticker": "BIED3",
+  "nome": "BIOMA EDUCAÇÃO S.A.",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 57,270 × EBITDA 12,495; explicado por itens que não mexem no caixa (impairment, provisões: 57,641) — o EBITDA contábil fica abaixo do 'ajustado' que a empresa divulga"
  },
  {
   "ticker": "BIOM3",
@@ -747,6 +782,13 @@
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 6.5% × pagos em 2025 (DFP) 2.1%"
+ },
+ {
+  "ticker": "BMGB4",
+  "nome": "BANCO BMG S/A",
+  "sev": "baixa",
+  "regra": "fluxo de caixa não fecha",
+  "msg": "2021: operacional + investimento + financiamento = 244,471 × variação do caixa declarada 0 (erro de extração ou de preenchimento)"
  },
  {
   "ticker": "BMIN4",
@@ -1001,6 +1043,13 @@
   "msg": "2025: declarado R$ 185.91 ≈ 1000 × calculado R$ 0.19 (erro de preenchimento da empresa)"
  },
  {
+  "ticker": "CBAV3",
+  "nome": "COMPANHIA BRASILEIRA DE ALUMÍNIO",
+  "sev": "baixa",
+  "regra": "fluxo de caixa não fecha",
+  "msg": "2021: operacional + investimento + financiamento = 641,895 × variação do caixa declarada 816,621 (erro de extração ou de preenchimento)"
+ },
+ {
   "ticker": "CBEE3",
   "nome": "AMPLA ENERGIA E SERVICOS S.A.",
   "sev": "info",
@@ -1193,6 +1242,13 @@
   "ticker": "CSAN3",
   "nome": "COSAN S.A.",
   "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 13,026,784 × EBITDA 3,690,968; explicado por itens que não mexem no caixa (impairment, provisões: 12,579,221) — o EBITDA contábil fica abaixo do 'ajustado' que a empresa divulga"
+ },
+ {
+  "ticker": "CSAN3",
+  "nome": "COSAN S.A.",
+  "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 20.9%"
  },
@@ -1328,6 +1384,13 @@
   "sev": "média",
   "regra": "DY acima de 30%",
   "msg": "31% (dividendo extraordinário ou valor de mercado subestimado)"
+ },
+ {
+  "ticker": "DOHL4",
+  "nome": "DOHLER S.A.",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 63,032 × EBITDA 19,626; explicado por itens que não mexem no caixa (impairment, provisões: 29,136) — o EBITDA contábil fica abaixo do 'ajustado' que a empresa divulga"
  },
  {
   "ticker": "DOHL4",
@@ -1475,6 +1538,13 @@
   "sev": "baixa",
   "regra": "LPA com sinal trocado na DRE",
   "msg": "2023: lucro -52,971 mas LPA declarado +0.26 (erro de preenchimento da empresa)"
+ },
+ {
+  "ticker": "ENJU3",
+  "nome": "ENJOEI S.A.",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 23,165 × EBITDA 10,435; explicado por itens que não mexem no caixa (impairment, provisões: 8,455) — o EBITDA contábil fica abaixo do 'ajustado' que a empresa divulga"
  },
  {
   "ticker": "ENJU3",
@@ -1636,6 +1706,13 @@
   "sev": "baixa",
   "regra": "LPA declarado por lote de mil",
   "msg": "2021: declarado R$ 1123.00 ≈ 1000 × calculado R$ 1.13 (erro de preenchimento da empresa)"
+ },
+ {
+  "ticker": "EVEN3",
+  "nome": "EVEN CONSTRUTORA E INCORPORADORA S.A.",
+  "sev": "info",
+  "regra": "DY 12m × DY do exercício",
+  "msg": "proventos 12m (B3) 4.2% × pagos em 2025 (DFP) 21.0%"
  },
  {
   "ticker": "FASA3",
@@ -2338,6 +2415,13 @@
   "msg": "nenhum negócio nos últimos pregões"
  },
  {
+  "ticker": "LAND3",
+  "nome": "Terra Santa Propriedades Agrícolas S.A.",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 36,017 × EBITDA 2,250; explicado por itens que não mexem no caixa (impairment, provisões: 88,524) — o EBITDA contábil fica abaixo do 'ajustado' que a empresa divulga"
+ },
+ {
   "ticker": "LIGT3",
   "nome": "LIGHT S.A.",
   "sev": "média",
@@ -2565,6 +2649,13 @@
   "ticker": "MGLU3",
   "nome": "MAGAZINE LUIZA S.A.",
   "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 15,719,373 × EBITDA 3,203,470; explicado por capital de giro (13,057,027)"
+ },
+ {
+  "ticker": "MGLU3",
+  "nome": "MAGAZINE LUIZA S.A.",
+  "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 1.0% × pagos em 2025 (DFP) 3.7%"
  },
@@ -2658,6 +2749,13 @@
   "sev": "média",
   "regra": "cotação parada",
   "msg": "último negócio de MSPA4 há mais de 14 dias"
+ },
+ {
+  "ticker": "MSPA4",
+  "nome": "CIA MELHORAMENTOS DE SAO PAULO",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 51,454 × EBITDA 12,690; explicado por itens que não mexem no caixa (impairment, provisões: 45,976) — o EBITDA contábil fica abaixo do 'ajustado' que a empresa divulga"
  },
  {
   "ticker": "MYPK3",
@@ -3038,6 +3136,13 @@
   "msg": "2016→2017: ×9.7"
  },
  {
+  "ticker": "PATI3",
+  "nome": "PANATLANTICA S.A.",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 218,404 × EBITDA 102,507; explicado por capital de giro (62,068)"
+ },
+ {
   "ticker": "PDGR3",
   "nome": "PDG REALTY S.A. EMPREEND E PARTICIPACOES",
   "sev": "baixa",
@@ -3190,6 +3295,13 @@
   "sev": "info",
   "regra": "PL negativo",
   "msg": "patrimônio líquido negativo em 2025 (P/VP e ROE não se aplicam)"
+ },
+ {
+  "ticker": "PLAS3",
+  "nome": "PLASCAR PARTICIPACOES INDUSTRIAIS S.A.",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 123,573 × EBITDA 41,451; explicado por capital de giro (58,031)"
  },
  {
   "ticker": "PMAM3",
@@ -3636,6 +3748,13 @@
   "ticker": "SAPR11",
   "nome": "CIA SANEAMENTO DO PARANA - SANEPAR",
   "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 7,060,384 × EBITDA 2,963,757; explicado por capital de giro (3,308,683)"
+ },
+ {
+  "ticker": "SAPR11",
+  "nome": "CIA SANEAMENTO DO PARANA - SANEPAR",
+  "sev": "info",
   "regra": "só demonstração individual",
   "msg": "a empresa não publica consolidado"
  },
@@ -3957,6 +4076,13 @@
  {
   "ticker": "TIMS3",
   "nome": "TIM S.A.",
+  "sev": "baixa",
+  "regra": "fluxo de caixa não fecha",
+  "msg": "2024: operacional + investimento + financiamento = 180,812 × variação do caixa declarada -180,812 (erro de extração ou de preenchimento)"
+ },
+ {
+  "ticker": "TIMS3",
+  "nome": "TIM S.A.",
   "sev": "info",
   "regra": "só demonstração individual",
   "msg": "a empresa não publica consolidado"
@@ -4035,6 +4161,13 @@
   "ticker": "TUPY3",
   "nome": "TUPY S.A.",
   "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 915,137 × EBITDA 225,013; explicado por itens que não mexem no caixa (impairment, provisões: 527,295) — o EBITDA contábil fica abaixo do 'ajustado' que a empresa divulga"
+ },
+ {
+  "ticker": "TUPY3",
+  "nome": "TUPY S.A.",
+  "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 7.3%"
  },
@@ -4044,6 +4177,13 @@
   "sev": "info",
   "regra": "PL negativo",
   "msg": "patrimônio líquido negativo em 2025 (P/VP e ROE não se aplicam)"
+ },
+ {
+  "ticker": "UCAS3",
+  "nome": "UNICASA INDÚSTRIA DE MÓVEIS S.A.",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 26,734 × EBITDA 7,252; explicado por itens que não mexem no caixa (impairment, provisões: 16,125) — o EBITDA contábil fica abaixo do 'ajustado' que a empresa divulga"
  },
  {
   "ticker": "UCAS3",
@@ -4169,7 +4309,7 @@
   "nome": "VULCABRAS S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 7.9% × pagos em 2025 (DFP) 27.3%"
+  "msg": "proventos 12m (B3) 6.8% × pagos em 2025 (DFP) 27.3%"
  },
  {
   "ticker": "VVEO3",
@@ -4191,6 +4331,13 @@
   "sev": "baixa",
   "regra": "salto de ações",
   "msg": "2020→2021: ×718.09 (desdobramento, grupamento, emissão ou escala)"
+ },
+ {
+  "ticker": "WDCN3",
+  "nome": "LIVETECH DA BAHIA INDÚSTRIA E COMÉRCIO S.A.",
+  "sev": "info",
+  "regra": "caixa operacional > 2× EBITDA",
+  "msg": "2025: 143,790 × EBITDA 54,530; explicado por itens que não mexem no caixa (impairment, provisões: 263,660) — o EBITDA contábil fica abaixo do 'ajustado' que a empresa divulga"
  },
  {
   "ticker": "WDCN3",
