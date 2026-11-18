@@ -235,7 +235,7 @@
   "nome": "AMBIPAR PARTICIP. E EMPREEND. S.A. - EM RECUPERAÇÃO JUDICIAL",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "AMBP3: 134.96 no fim de 2024 → 0.12 hoje (evento societário ou movimento forte)"
+  "msg": "AMBP3: 130.00 no fim de 2024 → 0.12 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "AMBP3",
@@ -562,9 +562,16 @@
  {
   "ticker": "B1003",
   "nome": "B100 S.A.",
-  "sev": "info",
-  "regra": "sem cotação",
-  "msg": "nenhum negócio nos últimos pregões"
+  "sev": "média",
+  "regra": "cotação parada",
+  "msg": "último negócio de B1003 há mais de 14 dias"
+ },
+ {
+  "ticker": "B1003",
+  "nome": "B100 S.A.",
+  "sev": "média",
+  "regra": "ações B3 × DFP",
+  "msg": "valor de mercado com ações da B3 hoje é 5.05× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3"
  },
  {
   "ticker": "B3SA3",
@@ -908,6 +915,13 @@
   "sev": "baixa",
   "regra": "salto de ações",
   "msg": "2020→2021: ×10.00 (desdobramento, grupamento, emissão ou escala)"
+ },
+ {
+  "ticker": "BSLI3",
+  "nome": "BRB BANCO DE BRASILIA S.A.",
+  "sev": "baixa",
+  "regra": "preço mudou de escala",
+  "msg": "BSLI3: 7.98 no fim de 2024 → 1.95 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "BSLI3",
@@ -1622,13 +1636,6 @@
   "sev": "baixa",
   "regra": "LPA declarado por lote de mil",
   "msg": "2021: declarado R$ 1123.00 ≈ 1000 × calculado R$ 1.13 (erro de preenchimento da empresa)"
- },
- {
-  "ticker": "EVEN3",
-  "nome": "EVEN CONSTRUTORA E INCORPORADORA S.A.",
-  "sev": "info",
-  "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 4.2% × pagos em 2025 (DFP) 21.0%"
  },
  {
   "ticker": "FASA3",
@@ -4162,7 +4169,7 @@
   "nome": "VULCABRAS S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 6.8% × pagos em 2025 (DFP) 27.3%"
+  "msg": "proventos 12m (B3) 7.9% × pagos em 2025 (DFP) 27.3%"
  },
  {
   "ticker": "VVEO3",

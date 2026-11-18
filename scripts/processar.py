@@ -279,6 +279,13 @@ def carregar_cadastro(forcar: bool, negociados=frozenset(), b3=()):
         if not segmento and b3_por_cnpj.get(dig):
             segmento = SEGMENTOS_B3.get(b3_por_cnpj[dig][0].get("market", ""), "")
         tickers = sorted(tickers, key=lambda t: (int(t[4:]) if t[4:].isdigit() else 99, t))
+        # setor da B3, em português e inglês (a B3 usa ". " onde seria ", ")
+        setor_b3 = None
+        for r in b3_por_cnpj.get(dig, []):
+            if r.get("segment") and not r["segment"].startswith("Não Classificad"):
+                setor_b3 = {"pt": r["segment"].replace(". ", ", ").replace(" ,", ","),
+                            "en": (r.get("segmentEng") or r["segment"]).replace(". ", ", ").replace(" ,", ",")}
+                break
         cad[cnpj] = {
             "cnpj": cnpj,
             "cd_cvm": g["Codigo_CVM"].lstrip("0"),
@@ -291,6 +298,7 @@ def carregar_cadastro(forcar: bool, negociados=frozenset(), b3=()):
             "site": (g["Pagina_Web"] or "").strip(),
             "exterior": sorted({l["Pais"] for l in exterior.get(cnpj, []) if l["Pais"] and l["Pais"] != "Brasil"}),
             "units": units,
+            "setor_b3": setor_b3,
         }
     print(f"  {len(cad)} companhias ativas com ação na B3 (tickers: {dict(origem)})")
     return cad

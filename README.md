@@ -26,7 +26,8 @@ A CVM regera os ZIPs dos últimos anos quando há reapresentação. Use `python3
 | `scripts/sources/` | ZIPs e JSON brutos baixados (fora do git, ~300 MB) |
 | `auditoria.md`, `auditoria.json` | Saída da auditoria (regerada a cada execução) |
 | `data/empresas.js` | `window.DADOS` com séries anuais em R$ mil, PTAX e índice. Gerado, não edite. |
-| `index.html`, `app.js`, `style.css` | Ranking (`#/`) e página da empresa (`#/PETR4`). Sem bibliotecas: gráficos em SVG próprio. |
+| `index.html`, `app.js`, `style.css` | Ranking (`#/`) e página da empresa (`#/PETR4`), com cabeçalho-resumo, selos e navegação por seções. Sem bibliotecas: gráficos em SVG próprio. |
+| `i18n.js` | Textos da interface em português e inglês (seletor PT/EN no topo; o padrão segue o idioma do navegador). Setor em inglês vem da B3; controle, segmento e país têm tradução em `I18N_MAPAS`. |
 
 Depois de editar `app.js` ou `style.css`, rode `python3 scripts/versionar.py` (o processamento já faz isso).
 

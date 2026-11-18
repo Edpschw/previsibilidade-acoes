@@ -1,5 +1,6 @@
 /* Lastro — ranking e página da empresa a partir de window.DADOS (gerado por scripts/processar.py).
- * Valores na base estão em R$ mil. Em US$, fluxos usam a PTAX média do ano e saldos de balanço a PTAX do fim do ano. */
+ * Valores na base estão em R$ mil. Em US$, fluxos usam a PTAX média do ano e saldos de balanço a PTAX do fim do ano.
+ * Textos em i18n.js (PT/EN); rótulos curtos dos cards usam L(pt, en) aqui mesmo. */
 (function () {
   "use strict";
 
@@ -12,6 +13,7 @@
 
   var estado = {
     moeda: ler("lastro-moeda") || "brl",
+    lingua: ler("lastro-lingua") || (/^pt/i.test(navigator.language || "") ? "pt" : "en"),
     ord: { col: "score", dir: -1 },
     filtros: { setor: "", controle: "", segmento: "", exterior: false, semFin: false, ativas: true },
     periodo: 10,
@@ -19,6 +21,20 @@
 
   function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* sem storage */ } }
+
+  // ---------------------------------------------------------------- idioma
+
+  function t(k) {
+    var d = window.I18N[estado.lingua] || window.I18N.pt;
+    return d[k] != null ? d[k] : (window.I18N.pt[k] != null ? window.I18N.pt[k] : k);
+  }
+  function tf(k) {
+    var args = arguments;
+    return t(k).replace(/\{(\d)\}/g, function (m, n) { return args[+n + 1]; });
+  }
+  function L(pt, en) { return estado.lingua === "en" ? en : pt; }
+  function mapa(tipo, v) { return estado.lingua === "en" ? (window.I18N_MAPAS[tipo][v] || v) : v; }
+  function locale() { return estado.lingua === "en" ? "en-US" : "pt-BR"; }
 
   // ---------------------------------------------------------------- números
 
@@ -34,8 +50,8 @@
   /** valor atual (cotação de hoje) em R$ → moeda da tela, pela PTAX mais recente */
   function hoje(v) { return v == null || estado.moeda === "brl" ? v : v / D.ptax_atual.valor; }
   /** fechamentos de fim de ano de um ticker na moeda da tela */
-  function precosAno(e, t) {
-    var p = e.precos_ano[t];
+  function precosAno(e, tk) {
+    var p = e.precos_ano[tk];
     if (!p) return null;
     return p.map(function (v, i) {
       if (v == null || estado.moeda === "brl") return v;
@@ -43,26 +59,28 @@
       return x ? v / x.fim : null;
     });
   }
-  function cotacaoDe(e, t) { return e.cotacao[t] || e.cotacao[e.ticker] || null; }
+  function cotacaoDe(e, tk) { return e.cotacao[tk] || e.cotacao[e.ticker] || null; }
   function ultimo(arr) { return arr[arr.length - 1]; }
   function div(a, b) { return a == null || b == null || b === 0 ? null : a / b; }
   function simbolo() { return estado.moeda === "usd" ? "US$" : "R$"; }
 
   var NF = {};
   function nf(casas) {
-    if (!NF[casas]) NF[casas] = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
-    return NF[casas];
+    var k = locale() + casas;
+    if (!NF[k]) NF[k] = new Intl.NumberFormat(locale(), { minimumFractionDigits: casas, maximumFractionDigits: casas });
+    return NF[k];
   }
 
-  /** valor em milhares → "R$ 12,3 bi" */
+  /** valor em milhares → "R$ 12,3 bi" / "R$ 12.3 bn" */
   function dinheiro(vMil, curto) {
     if (vMil == null || isNaN(vMil)) return "–";
     if (vMil === 0) return curto ? "0" : simbolo() + " 0";
     var v = vMil * 1000, a = Math.abs(v), s, suf;
-    if (a >= 1e12) { s = v / 1e12; suf = " tri"; }
-    else if (a >= 1e9) { s = v / 1e9; suf = " bi"; }
-    else if (a >= 1e6) { s = v / 1e6; suf = " mi"; }
-    else if (a >= 1e3) { s = v / 1e3; suf = " mil"; }
+    var SUF = estado.lingua === "en" ? [" tn", " bn", " M", " k"] : [" tri", " bi", " mi", " mil"];
+    if (a >= 1e12) { s = v / 1e12; suf = SUF[0]; }
+    else if (a >= 1e9) { s = v / 1e9; suf = SUF[1]; }
+    else if (a >= 1e6) { s = v / 1e6; suf = SUF[2]; }
+    else if (a >= 1e3) { s = v / 1e3; suf = SUF[3]; }
     else { s = v; suf = ""; }
     var casas = Math.abs(s) >= 100 ? 0 : Math.abs(s) >= 10 ? 1 : 2;
     return (curto ? "" : simbolo() + " ") + nf(casas).format(s) + suf;
@@ -71,6 +89,14 @@
   function pct(v, casas) { return v == null || !isFinite(v) ? "–" : nf(casas == null ? 1 : casas).format(v * 100) + "%"; }
   function vezes(v) { return v == null || !isFinite(v) ? "–" : nf(2).format(v) + "x"; }
   function classe(v) { return v == null ? "" : v < 0 ? "neg" : ""; }
+  function data(iso) {
+    if (!iso) return "–";
+    if (estado.lingua === "en") {
+      var dt = new Date(iso + "T12:00:00Z");
+      return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    }
+    return iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4);
+  }
 
   function cagr(arr, n) {
     var fim = arr.length - 1, ini = fim - n;
@@ -96,49 +122,49 @@
 
   /** múltiplos e retornos dos últimos 12 meses (DFP + ITR); null se a empresa não tem ITR recente */
   function doze(e) {
-    var t = e.ttm, vm = e.valor_mercado;
-    if (!t) return null;
-    var lc = t.lucro_controladora, plc = t.pl_controladora, eb = t.ebitda, dl = t.divida_liquida, rec = t.receita;
+    var x = e.ttm, vm = e.valor_mercado;
+    if (!x) return null;
+    var lc = x.lucro_controladora, plc = x.pl_controladora, eb = x.ebitda, dl = x.divida_liquida, rec = x.receita;
     var conv = function (v) {
       if (v == null || estado.moeda === "brl") return v;
-      var p = D.ptax[t.ate.slice(0, 4)];
+      var p = D.ptax[x.ate.slice(0, 4)];
       return p ? v / p.media : null;
     };
     return {
-      ate: t.ate,
+      ate: x.ate,
       pl: vm && lc > 0 ? vm / lc : null,
       pvp: vm && plc > 0 ? vm / plc : null,
       evEbitda: !e.financeiro && vm && eb > 0 && dl != null ? (vm + dl) / eb : null,
       psr: !e.financeiro && vm && rec > 0 ? vm / rec : null,
       roe: plc > 0 && lc != null ? lc / plc : null,
-      mLiq: rec > 0 && t.lucro_liquido != null ? t.lucro_liquido / rec : null,
+      mLiq: rec > 0 && x.lucro_liquido != null ? x.lucro_liquido / rec : null,
       dlEbitda: e.financeiro || !(eb > 0) || dl == null ? null : dl / eb,
-      receita: conv(rec), lucro: conv(t.lucro_liquido), dividendos: conv(t.dividendos_pagos),
+      lucroC: lc,
+      receita: conv(rec), lucro: conv(x.lucro_liquido), dividendos: conv(x.dividendos_pagos),
     };
   }
 
-  /** indicadores do último exercício na moeda atual */
+  /** indicadores do último exercício na moeda atual (múltiplos sobre 12 meses quando há ITR) */
   function indicadores(e) {
     var r = serie(e, "receita"), ll = serie(e, "lucro_liquido"), lc = serie(e, "lucro_controladora");
     var pl = serie(e, "pl_controladora"), ebitda = serie(e, "ebitda"), dl = serie(e, "divida_liquida");
     var acoes = ultimo(e.series.acoes);
     var fco = ultimo(serie(e, "fco")), capex = ultimo(serie(e, "capex")), dvd = ultimo(serie(e, "dividendos_pagos"));
-    var m = multiplos(e, e.valor_mercado, e.anos.length - 1), cot = cotacaoDe(e, e.ticker);
+    var m = multiplos(e, e.valor_mercado, e.anos.length - 1), cot = cotacaoDe(e, e.ticker), d12 = doze(e);
+    var base = d12 || m;
     return {
       preco: cot ? hoje(cot.preco) : null,
       vm: hoje(e.valor_mercado),
       liquidez: hoje(e.liquidez),
-      // múltiplos sobre os últimos 12 meses quando há ITR; senão, sobre o último exercício
-      d12: doze(e),
-      pl: (doze(e) || m).pl, pvp: (doze(e) || m).pvp, evEbitda: (doze(e) || m).evEbitda, psr: (doze(e) || m).psr,
-      roe12: doze(e) ? doze(e).roe : null, mLiq12: doze(e) ? doze(e).mLiq : null, dlEbitda12: doze(e) ? doze(e).dlEbitda : null,
+      d12: d12,
+      pl: base.pl, pvp: base.pvp, evEbitda: base.evEbitda, psr: base.psr,
+      roe12: d12 ? d12.roe : null, mLiq12: d12 ? d12.mLiq : null, dlEbitda12: d12 ? d12.dlEbitda : null,
       // DY de 12 meses pelos proventos com data-com na B3; sem ficha, cai no pago no exercício (DFP)
       dy: e.proventos_12m != null && e.valor_mercado ? e.proventos_12m / e.valor_mercado : m.dy,
       dyExercicio: m.dy,
       ano: ultimo(e.anos),
       receita: ultimo(r),
       lucro: ultimo(ll),
-      lucroC: ultimo(lc),
       lpa: acoes ? div(ultimo(lc) * 1000, acoes) : null,
       vpa: acoes ? div(ultimo(pl) * 1000, acoes) : null,
       dpa: acoes && dvd != null ? dvd * 1000 / acoes : null,
@@ -160,10 +186,10 @@
 
   function score(e) { return e.score[estado.moeda]; }
   function nivelScore(v) {
-    if (v == null) return { txt: "Sem histórico", cor: "var(--muted)" };
-    if (v >= 75) return { txt: "Alta", cor: "var(--pos)" };
-    if (v >= 50) return { txt: "Média", cor: "var(--warn)" };
-    return { txt: "Baixa", cor: "var(--neg)" };
+    if (v == null) return { txt: t("nivel_sem"), cor: "var(--muted)" };
+    if (v >= 75) return { txt: t("nivel_alta"), cor: "var(--pos)" };
+    if (v >= 50) return { txt: t("nivel_media"), cor: "var(--warn)" };
+    return { txt: t("nivel_baixa"), cor: "var(--neg)" };
   }
 
   // ---------------------------------------------------------------- utilidades de DOM
@@ -176,58 +202,62 @@
       .toLowerCase().replace(/(^|[\s.(/-])([a-zà-ú])/g, function (m, a, b) { return a + b.toUpperCase(); })
       .replace(/\b(De|Da|Do|Das|Dos|E)\b/g, function (m) { return m.toLowerCase(); });
   }
-  function dataBR(iso) { return iso ? iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4) : "–"; }
-  function setorCurto(s) { return s.replace(/^Emp\. Adm\. Part\. - /, "").replace(/^Emp\. Adm\. Part\.-/, ""); }
+  /** setor: classificação da B3 no idioma da tela; sem ela, a da CVM (em português) */
+  function setor(e) {
+    if (e.setor_b3) return e.setor_b3[estado.lingua] || e.setor_b3.pt;
+    return e.setor.replace(/^Emp\. Adm\. Part\. ?- ?/, "");
+  }
+  function maiuscula(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
   // ---------------------------------------------------------------- ranking
 
-  var COLUNAS = [
-    { id: "ticker", rot: "Ação", esq: true, val: function (e) { return e.ticker; } },
-    { id: "setor", rot: "Setor", esq: true, val: function (e) { return setorCurto(e.setor); } },
-    { id: "score", rot: "Previsibilidade", val: function (e) { var s = score(e); return s ? s.total : null; } },
-    { id: "preco", rot: "Cotação", val: function (e, i) { return i.preco; }, fmt: porAcao },
-    { id: "vm", rot: "Valor de mercado", val: function (e, i) { return i.vm; }, fmt: function (v) { return dinheiro(v); } },
-    { id: "pl", rot: "P/L", val: function (e, i) { return i.pl; }, fmt: vezes },
-    { id: "pvp", rot: "P/VP", val: function (e, i) { return i.pvp; }, fmt: vezes },
-    { id: "dy", rot: "DY", val: function (e, i) { return i.dy; }, fmt: function (v) { return pct(v); } },
-    { id: "roe", rot: "ROE 12m", val: function (e, i) { return i.d12 ? i.roe12 : i.roe; }, fmt: function (v) { return pct(v); } },
-    { id: "mLiq", rot: "Marg. líq. 12m", val: function (e, i) { return i.d12 ? i.mLiq12 : i.mLiq; }, fmt: function (v) { return pct(v); } },
-    { id: "dlEbitda", rot: "Dív.líq./EBITDA", val: function (e, i) { return i.d12 ? i.dlEbitda12 : i.dlEbitda; }, fmt: vezes },
-    { id: "liquidez", rot: "Liquidez/dia", val: function (e, i) { return i.liquidez; }, fmt: function (v) { return v ? dinheiro(v / 1000) : "–"; } },
-  ];
+  function colunas() {
+    return [
+      { id: "ticker", rot: t("col_acao"), esq: true, val: function (e) { return e.ticker; } },
+      { id: "setor", rot: t("col_setor"), esq: true, val: function (e) { return setor(e); } },
+      { id: "score", rot: t("col_score"), val: function (e) { var s = score(e); return s ? s.total : null; } },
+      { id: "preco", rot: t("col_preco"), val: function (e, i) { return i.preco; }, fmt: porAcao },
+      { id: "vm", rot: t("col_vm"), val: function (e, i) { return i.vm; }, fmt: function (v) { return dinheiro(v); } },
+      { id: "pl", rot: t("col_pl"), val: function (e, i) { return i.pl; }, fmt: vezes },
+      { id: "pvp", rot: t("col_pvp"), val: function (e, i) { return i.pvp; }, fmt: vezes },
+      { id: "dy", rot: t("col_dy"), val: function (e, i) { return i.dy; }, fmt: function (v) { return pct(v); } },
+      { id: "roe", rot: t("col_roe"), val: function (e, i) { return i.d12 ? i.roe12 : i.roe; }, fmt: function (v) { return pct(v); } },
+      { id: "mLiq", rot: t("col_mliq"), val: function (e, i) { return i.d12 ? i.mLiq12 : i.mLiq; }, fmt: function (v) { return pct(v); } },
+      { id: "dlEbitda", rot: t("col_dlebitda"), val: function (e, i) { return i.d12 ? i.dlEbitda12 : i.dlEbitda; }, fmt: vezes },
+      { id: "liquidez", rot: t("col_liq"), val: function (e, i) { return i.liquidez; }, fmt: function (v) { return v ? dinheiro(v / 1000) : "–"; } },
+    ];
+  }
 
   function opcoes(campo, rotulo) {
     var vals = {};
-    EMPRESAS.forEach(function (e) { var v = campo === "setor" ? setorCurto(e.setor) : e[campo]; vals[v] = (vals[v] || 0) + 1; });
-    return '<option value="">' + rotulo + "</option>" + Object.keys(vals).sort(function (a, b) { return a.localeCompare(b, "pt"); })
-      .map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + " (" + vals[v] + ")</option>"; }).join("");
+    EMPRESAS.forEach(function (e) { var v = campo === "setor" ? setor(e) : e[campo]; vals[v] = (vals[v] || 0) + 1; });
+    var nome = function (v) { return campo === "setor" ? v : mapa(campo, v); };
+    return '<option value="">' + rotulo + "</option>" + Object.keys(vals)
+      .sort(function (a, b) { return nome(a).localeCompare(nome(b), locale()); })
+      .map(function (v) { return '<option value="' + esc(v) + '">' + esc(nome(v)) + " (" + vals[v] + ")</option>"; }).join("");
   }
 
   function telaRanking() {
-    document.title = "Lastro · Ações brasileiras";
-    var app = $("#app");
-    app.innerHTML =
-      '<section class="intro"><h1>Ações brasileiras pelos fundamentos</h1>' +
-      "<p></p></section>";
+    document.title = t("titulo");
+    var app = $("#app"), cols = colunas();
     var anoIni = Math.min.apply(null, EMPRESAS.map(function (e) { return e.anos[0]; }));
-    $(".intro p", app).textContent = EMPRESAS.length + " empresas listadas na B3 com demonstrações anuais entregues à CVM de " + anoIni +
-      " a " + D.ano_final + ". O índice de previsibilidade (0–100) mede a regularidade de lucro, margem, receita e dividendos nos últimos 10 anos. Clique numa linha para ver a empresa.";
-
-    app.insertAdjacentHTML("beforeend",
+    app.innerHTML =
+      '<section class="intro"><h1>' + t("h1") + "</h1><p>" + esc(tf("intro", EMPRESAS.length, anoIni, D.ano_final)) + "</p></section>" +
       '<div class="filtros">' +
-      '<select id="f-setor" aria-label="Setor">' + opcoes("setor", "Todos os setores") + "</select>" +
-      '<select id="f-segmento" aria-label="Segmento de listagem">' + opcoes("segmento", "Todos os segmentos") + "</select>" +
-      '<select id="f-controle" aria-label="Controle acionário">' + opcoes("controle", "Qualquer controle") + "</select>" +
-      '<label class="check"><input type="checkbox" id="f-exterior"> Negociada no exterior</label>' +
-      '<label class="check"><input type="checkbox" id="f-semfin"> Ocultar financeiras</label>' +
-      '<label class="check" title="Esconde empresas sem negócio na B3 no último mês (deslistadas ou sem liquidez)"><input type="checkbox" id="f-ativas"> Só negociadas no último mês</label>' +
+      '<select id="f-setor" aria-label="' + t("rot_setor") + '">' + opcoes("setor", t("todos_setores")) + "</select>" +
+      '<select id="f-segmento" aria-label="' + t("rot_segmento") + '">' + opcoes("segmento", t("todos_segmentos")) + "</select>" +
+      '<select id="f-controle" aria-label="' + t("rot_controle") + '">' + opcoes("controle", t("qualquer_controle")) + "</select>" +
+      '<label class="check"><input type="checkbox" id="f-exterior"> ' + t("f_exterior") + "</label>" +
+      '<label class="check"><input type="checkbox" id="f-semfin"> ' + t("f_semfin") + "</label>" +
+      '<label class="check" title="' + esc(t("f_ativas_dica")) + '"><input type="checkbox" id="f-ativas"> ' + t("f_ativas") + "</label>" +
       '<span class="contagem" id="contagem"></span></div>' +
       '<div class="tabela-wrap"><table id="ranking"><thead><tr>' +
-      COLUNAS.map(function (c) { return '<th data-ord="' + c.id + '"' + (c.esq ? ' class="esq"' : "") + ">" + c.rot + "</th>"; }).join("") +
-      "</tr></thead><tbody></tbody></table></div>");
+      cols.map(function (c) { return '<th data-ord="' + c.id + '"' + (c.esq ? ' class="esq"' : "") + ">" + c.rot + "</th>"; }).join("") +
+      "</tr></thead><tbody></tbody></table></div>";
 
     var f = estado.filtros;
     $("#f-setor").value = f.setor; $("#f-segmento").value = f.segmento; $("#f-controle").value = f.controle;
+    if ($("#f-setor").value !== f.setor) f.setor = "";  // setor do outro idioma
     $("#f-exterior").checked = f.exterior; $("#f-semfin").checked = f.semFin; $("#f-ativas").checked = f.ativas;
     ["setor", "segmento", "controle"].forEach(function (k) {
       $("#f-" + k).addEventListener("change", function (ev) { f[k] = ev.target.value; corpoRanking(); });
@@ -250,184 +280,261 @@
   }
 
   function corpoRanking() {
-    var f = estado.filtros;
+    var f = estado.filtros, cols = colunas();
     var linhas = EMPRESAS.filter(function (e) {
-      return (!f.setor || setorCurto(e.setor) === f.setor) && (!f.segmento || e.segmento === f.segmento) &&
+      return (!f.setor || setor(e) === f.setor) && (!f.segmento || e.segmento === f.segmento) &&
         (!f.controle || e.controle === f.controle) && (!f.exterior || e.exterior.length) && (!f.semFin || !e.financeiro) &&
         (!f.ativas || Object.keys(e.cotacao).length);
     }).map(function (e) { return { e: e, i: indicadores(e) }; });
 
-    var col = COLUNAS.filter(function (c) { return c.id === estado.ord.col; })[0];
+    var col = cols.filter(function (c) { return c.id === estado.ord.col; })[0];
     linhas.sort(function (a, b) {
       var va = col.val(a.e, a.i), vb = col.val(b.e, b.i);
       if (va == null && vb == null) return 0;
       if (va == null) return 1;
       if (vb == null) return -1;
-      if (typeof va === "string") return estado.ord.dir * va.localeCompare(vb, "pt");
+      if (typeof va === "string") return estado.ord.dir * va.localeCompare(vb, locale());
       return estado.ord.dir * (va - vb);
     });
 
     $$("#ranking th").forEach(function (th) {
       th.setAttribute("aria-sort", th.getAttribute("data-ord") === estado.ord.col ? (estado.ord.dir > 0 ? "ascending" : "descending") : "none");
     });
-    $("#contagem").textContent = linhas.length + " empresas · cotações de " + dataBR(D.cotacoes_em) + ", balanços de " + D.ano_final +
-      (estado.moeda === "usd" ? " · em US$" : " · em R$");
+    $("#contagem").textContent = tf("contagem", linhas.length, data(D.cotacoes_em), D.ano_final, simbolo());
 
     $("#ranking tbody").innerHTML = linhas.length ? linhas.map(function (l) {
       var e = l.e, i = l.i, s = score(e), nv = nivelScore(s && s.total);
-      var ext = e.exterior.length ? ' <span class="selo" title="Também negociada em: ' + esc(e.exterior.join(", ")) + '">ADR</span>' : "";
-      var ano = i.ano < D.ano_final ? ' <span class="selo" title="Último exercício disponível">' + i.ano + "</span>" : "";
+      var ext = e.exterior.length ? ' <span class="selo" title="' + esc(tf("tambem_em", e.exterior.map(function (p) { return mapa("pais", p); }).join(", "))) + '">ADR</span>' : "";
+      var ano = i.ano < D.ano_final ? ' <span class="selo" title="' + esc(t("ultimo_exercicio")) + '">' + i.ano + "</span>" : "";
       return '<tr data-t="' + e.ticker + '">' +
         '<td><div class="tk"><b>' + e.ticker + ext + ano + "</b><span>" + esc(nomeCurto(e.nome)) + "</span></div></td>" +
-        '<td class="esq setor-cel" title="' + esc(e.setor) + '">' + esc(setorCurto(e.setor)) + "</td>" +
+        '<td class="esq setor-cel" title="' + esc(setor(e)) + '">' + esc(setor(e)) + "</td>" +
         "<td>" + (s ? '<span class="barra-score" title="' + nv.txt + '"><i style="--w:' + s.total + "%;--cor:" + nv.cor + '"></i><b>' + s.total + "</b></span>" : '<span class="mudo">–</span>') + "</td>" +
-        COLUNAS.slice(3).map(function (c) { var v = c.val(e, i); return '<td class="num ' + classe(v) + '">' + c.fmt(v) + "</td>"; }).join("") +
+        cols.slice(3).map(function (c) { var v = c.val(e, i); return '<td class="num ' + classe(v) + '">' + c.fmt(v) + "</td>"; }).join("") +
         "</tr>";
-    }).join("") : '<tr><td colspan="' + COLUNAS.length + '" class="vazio">Nenhuma empresa com esses filtros.</td></tr>';
+    }).join("") : '<tr><td colspan="' + cols.length + '" class="vazio">' + t("nenhuma") + "</td></tr>";
+  }
+
+  // ---------------------------------------------------------------- empresa: resumo e selos
+
+  /** Frase de resumo gerada a partir dos números (lucro, dívida, dividendos, tendência de 12 meses). */
+  function resumo(e, i) {
+    var s = e.series, partes = [];
+    var idx = e.anos.map(function (a, k) { return k; }).filter(function (k) { return s.receita[k] != null && s.lucro_liquido[k] != null; }).slice(-10);
+    var n = idx.length;
+    if (n >= 3) {
+      var pos = idx.filter(function (k) { return s.lucro_liquido[k] > 0; }).length;
+      partes.push(pos === n ? tf("r_lucro_todos", n) : pos === 0 ? tf("r_lucro_nunca", n) : tf("r_lucro", pos, n));
+    }
+    if (!e.financeiro) {
+      var dl = i.d12 ? e.ttm.divida_liquida : ultimo(s.divida_liquida);
+      var eb = i.d12 ? e.ttm.ebitda : ultimo(s.ebitda);
+      if (dl != null) {
+        if (dl < 0) partes.push(t("r_caixa"));
+        else if (eb != null && eb <= 0) partes.push(t("r_div_ebitda_neg"));
+        else if (eb) {
+          var x = dl / eb, txt = vezes(x);
+          partes.push(tf(x < 1 ? "r_div_baixa" : x < 3 ? "r_div_mod" : "r_div_alta", txt));
+        }
+      }
+    }
+    var comDvd = idx.filter(function (k) { return s.dividendos_pagos[k] != null; });
+    if (comDvd.length >= 3) {
+      var pagou = comDvd.filter(function (k) { return s.dividendos_pagos[k] > 0; }).length;
+      partes.push(pagou === comDvd.length ? t("r_dvd_todos") : pagou === 0 ? t("r_dvd_nunca") : tf("r_dvd", pagou, comDvd.length));
+    }
+    var fy = ultimo(s.lucro_controladora);
+    if (i.d12 && i.d12.lucroC != null && fy > 0) {
+      if (i.d12.lucroC < 0) partes.push(t("r_12m_prej"));
+      else {
+        var v = i.d12.lucroC / fy - 1;
+        if (v > 0.2) partes.push(tf("r_12m_acima", pct(v, 0), i.ano));
+        else if (v < -0.2) partes.push(tf("r_12m_abaixo", pct(-v, 0), i.ano));
+      }
+    }
+    if (!partes.length) return "";
+    var frase = partes.slice(0, -1).join(", ") + (partes.length > 1 ? L("; ", "; ") : "") + ultimo(partes);
+    return maiuscula(frase) + ".";
+  }
+
+  function selos(e) {
+    var out = [];
+    var add = function (txt, cls, dica) { out.push('<span class="selo-h ' + (cls || "") + '"' + (dica ? ' title="' + esc(dica) + '"' : "") + ">" + esc(txt) + "</span>"); };
+    add(setor(e), "forte");
+    if (e.segmento && e.segmento !== "Não informado") add(mapa("segmento", e.segmento));
+    if (/^Estatal/.test(e.controle)) add(t("selo_estatal"), "aviso");
+    if (/^Estrangeiro/.test(e.controle)) add(t("selo_estrangeiro"));
+    if (e.exterior.length) add(tf("selo_adr", e.exterior.map(function (p) { return mapa("pais", p); }).join(", ")));
+    if (e.financeiro) add(t("selo_financeira"), "", t("dica_financeira"));
+    if (e.individual) add(t("selo_individual"), "", t("dica_individual"));
+    if (e.anos.length < 3) add(t("selo_ipo"), "", t("dica_ipo"));
+    return out.join("");
   }
 
   // ---------------------------------------------------------------- empresa
 
-  var COMPONENTES = [
-    { id: "lucro", nome: "Lucro positivo", peso: 30, desc: "Fração dos anos com lucro líquido acima de zero." },
-    { id: "margem", nome: "Margem estável", peso: 25, desc: "Quanto menos a margem líquida oscila, maior a nota. Desvio de 15 p.p. ou mais zera." },
-    { id: "receita", nome: "Receita estável", peso: 15, desc: "Oscilação do crescimento anual da receita. Desvio de 30 p.p. ou mais zera." },
-    { id: "tendencia", nome: "Crescimento constante", peso: 15, desc: "Quanto a receita segue uma reta ascendente (R²). Tendência de queda zera." },
-    { id: "dividendos", nome: "Dividendos regulares", peso: 15, desc: "Fração dos anos com dividendos ou JCP pagos." },
-  ];
+  function componentes() {
+    return [
+      { id: "lucro", peso: 30, nome: L("Lucro positivo", "Positive earnings"), desc: L("Fração dos anos com lucro líquido acima de zero.", "Share of years with net income above zero.") },
+      { id: "margem", peso: 25, nome: L("Margem estável", "Stable margin"), desc: L("Quanto menos a margem líquida oscila, maior a nota. Desvio de 15 p.p. ou mais zera.", "The less the net margin swings, the higher the score. A 15-point standard deviation or more scores zero.") },
+      { id: "receita", peso: 15, nome: L("Receita estável", "Stable revenue"), desc: L("Oscilação do crescimento anual da receita. Desvio de 30 p.p. ou mais zera.", "Volatility of annual revenue growth. A 30-point standard deviation or more scores zero.") },
+      { id: "tendencia", peso: 15, nome: L("Crescimento constante", "Steady growth"), desc: L("Quanto a receita segue uma reta ascendente (R²). Tendência de queda zera.", "How closely revenue follows a rising straight line (R²). A falling trend scores zero.") },
+      { id: "dividendos", peso: 15, nome: L("Dividendos regulares", "Regular dividends"), desc: L("Fração dos anos com dividendos ou JCP pagos.", "Share of years with dividends or interest on equity paid.") },
+    ];
+  }
+
+  /** seções da página: [id, chave do rótulo] na ordem em que aparecem */
+  function secoesDe(i) {
+    var s = [["s-valuation", "sec_valuation"]];
+    if (i.d12) s.push(["s-12m", "sec_12m"]);
+    s.push(["s-fund", "sec_fund"], ["s-hist", "sec_hist"], ["s-indice", "sec_indice"], ["s-dem", "sec_dem"], ["s-metodo", "sec_metodo"]);
+    return s;
+  }
+  function capitulo(secs, id) {
+    var k = secs.map(function (x) { return x[0]; }).indexOf(id);
+    return '<span class="capitulo">' + (k < 9 ? "0" : "") + (k + 1) + "</span>";
+  }
 
   function telaEmpresa(ticker) {
     var e = POR_TICKER[ticker];
     var app = $("#app");
     if (!e) {
-      app.innerHTML = '<a class="voltar" href="#/">← Todas as empresas</a><div class="cartao vazio">Ticker <b>' + esc(ticker) + "</b> não encontrado na base.</div>";
+      app.innerHTML = '<a class="voltar" href="#/">' + t("voltar") + '</a><div class="cartao vazio">' + tf("nao_encontrado", esc(ticker)) + "</div>";
       return;
     }
     document.title = ticker + " · " + nomeCurto(e.nome) + " · Lastro";
     estado.ticker = ticker;
     var i = indicadores(e), s = score(e), nv = nivelScore(s && s.total), cot = cotacaoDe(e, ticker);
-    var raio = 33, circ = 2 * Math.PI * raio;
+    var secs = secoesDe(i);
+    var raio = 44, circ = 2 * Math.PI * raio;
+    var frase = resumo(e, i);
 
+    // --- cabeçalho
+    var stat = function (rot, val) { return '<div class="stat"><span>' + rot + '</span><b class="num">' + val + "</b></div>"; };
     var cab =
-      '<a class="voltar" href="#/">← Todas as empresas</a>' +
-      '<section class="cartao cab-empresa"><div>' +
+      '<a class="voltar" href="#/">' + t("voltar") + "</a>" +
+      '<section class="cartao hero">' +
+      '<div class="hero-principal">' +
       "<h1>" + esc(nomeCurto(e.nome)) + "</h1>" +
-      '<div class="tickers">' + e.tickers.map(function (t) { return '<a class="chip' + (t === ticker ? " ativo" : "") + '" href="#/' + t + '">' + t + "</a>"; }).join("") + "</div>" +
-      (cot ? '<div class="preco-linha"><span class="preco num">' + porAcao(hoje(cot.preco)) + "</span>" +
-        '<span class="mudo">' + ticker + " · fechamento de " + dataBR(cot.data) +
-        (e.cotacao[ticker] ? "" : " (sem negócio no período; preço de " + e.ticker + ")") +
-        " · valor de mercado <b>" + dinheiro(i.vm) + "</b> · liquidez média <b>" + dinheiro(i.liquidez / 1000) + "/dia</b></span></div>"
-        : '<div class="preco-linha mudo">Sem negócios na B3 no último mês.</div>') +
-      '<div class="meta">' +
-      "<span>Setor <b>" + esc(setorCurto(e.setor)) + "</b></span>" +
-      "<span>Segmento <b>" + esc(e.segmento) + "</b></span>" +
-      "<span>Controle <b>" + esc(e.controle) + "</b></span>" +
-      (e.exterior.length ? "<span>Também negociada em <b>" + esc(e.exterior.join(", ")) + "</b></span>" : "") +
-      (e.individual ? '<span title="A empresa não tem controladas e publica só a demonstração individual"><b>Demonstração individual</b></span>' : "") +
-      (e.site ? '<span><a href="' + esc(/^https?:/.test(e.site) ? e.site : "https://" + e.site) + '" target="_blank" rel="noopener">' + esc(e.site.replace(/^https?:\/\//, "")) + " ↗</a></span>" : "") +
-      "</div></div>" +
-      '<div class="score-box"><svg class="anel" viewBox="0 0 78 78" aria-hidden="true"><circle class="fundo" cx="39" cy="39" r="' + raio + '"/>' +
-      (s ? '<circle cx="39" cy="39" r="' + raio + '" stroke="' + nv.cor + '" stroke-dasharray="' + (circ * s.total / 100) + " " + circ + '" stroke-linecap="round" transform="rotate(-90 39 39)"/>' : "") +
-      "<text x=\"39\" y=\"40\">" + (s ? s.total : "–") + "</text></svg>" +
-      '<div><div class="rot">Previsibilidade</div><div class="nivel" style="color:' + nv.cor + '">' + nv.txt + "</div>" +
-      '<div class="mudo" style="font-size:12.5px">' + (s ? s.anos[0] + "–" + s.anos[1] + ", em " + simbolo() : "menos de 5 anos de dados") + "</div></div></div>" +
+      '<div class="tickers">' + e.tickers.map(function (tk) { return '<a class="chip' + (tk === ticker ? " ativo" : "") + '" href="#/' + tk + '">' + tk + "</a>"; }).join("") + "</div>" +
+      (cot ? '<div class="hero-preco"><span class="preco num">' + porAcao(hoje(cot.preco)) + "</span>" +
+        '<span class="mudo">' + esc(tf("fechamento", ticker, data(cot.data))) + (e.cotacao[ticker] ? "" : esc(tf("sem_negocio_ticker", e.ticker))) + "</span></div>"
+        : '<div class="hero-preco mudo">' + t("sem_negocios") + "</div>") +
+      (frase ? '<p class="resumo">' + esc(frase) + "</p>" : "") +
+      '<div class="selos">' + selos(e) + "</div>" +
+      '<div class="stats">' +
+      stat(t("st_vm"), dinheiro(i.vm)) + stat(t("st_pl"), vezes(i.pl)) + stat(t("st_dy"), pct(i.dy)) +
+      stat(t("st_liq"), i.liquidez ? dinheiro(i.liquidez / 1000) + t("por_dia") : "–") +
+      "</div>" +
+      (e.site ? '<a class="site" href="' + esc(/^https?:/.test(e.site) ? e.site : "https://" + e.site) + '" target="_blank" rel="noopener">' + esc(e.site.replace(/^https?:\/\//, "")) + " ↗</a>" : "") +
+      "</div>" +
+      '<div class="score-box"><svg class="anel" viewBox="0 0 104 104" aria-hidden="true"><circle class="fundo" cx="52" cy="52" r="' + raio + '"/>' +
+      (s ? '<circle cx="52" cy="52" r="' + raio + '" stroke="' + nv.cor + '" stroke-dasharray="' + (circ * s.total / 100) + " " + circ + '" stroke-linecap="round" transform="rotate(-90 52 52)"/>' : "") +
+      '<text x="52" y="53">' + (s ? s.total : "–") + "</text></svg>" +
+      '<div><div class="rot">' + t("previsibilidade") + '</div><div class="nivel" style="color:' + nv.cor + '">' + nv.txt + "</div>" +
+      '<div class="mudo janela">' + (s ? esc(tf("janela_score", s.anos[0], s.anos[1], simbolo())) : t("menos_5")) + "</div>" +
+      '<a class="mini" href="#" data-ir="s-indice">' + L("Como sai o índice ↓", "How it is built ↓") + "</a></div></div>" +
       "</section>";
 
+    // --- navegação por seções
+    var nav = '<nav class="secoes" aria-label="' + esc(t("secoes")) + '"><div class="secoes-trilho"><i></i></div><ol>' +
+      secs.map(function (x, k) {
+        return '<li><a href="#" data-ir="' + x[0] + '"><span class="n">' + (k < 9 ? "0" : "") + (k + 1) + '</span><span class="r">' + t(x[1]) + "</span></a></li>";
+      }).join("") + "</ol></nav>";
+
+    // --- cards
     var valuation = [
-      ["P/L", vezes(i.pl), "Valor de mercado / lucro da controladora " + (i.d12 ? "dos 12 meses até " + dataBR(i.d12.ate) : "de " + i.ano)],
-      ["P/VP", vezes(i.pvp), "Valor de mercado / patrimônio da controladora " + (i.d12 ? "em " + dataBR(i.d12.ate) : "no fim de " + i.ano)],
-      ["DY 12 meses", pct(i.dy), e.proventos_12m != null ? "Proventos em dinheiro com data-com nos últimos 12 meses (B3) / valor de mercado" : "Sem ficha na B3: dividendos e JCP pagos em " + i.ano + " / valor de mercado"],
-      ["DY do exercício", pct(i.dyExercicio), "Dividendos e JCP pagos em " + i.ano + " (fluxo de caixa da DFP) / valor de mercado atual"],
-      ["EV/EBITDA", vezes(i.evEbitda), "(Valor de mercado + dívida líquida) / EBITDA" + (i.d12 ? " dos últimos 12 meses" : "")],
-      ["P/Receita", vezes(i.psr), "Valor de mercado / receita" + (i.d12 ? " dos últimos 12 meses" : "")],
-      ["Valor de mercado", dinheiro(i.vm), (e.acoes_b3 ? "Ações ON e PN atuais segundo a B3, sem tesouraria," : "Ações ON e PN da DFP de " + i.ano + ",") + " × cotação de cada classe"],
+      [L("P/L", "P/E"), vezes(i.pl), L("Valor de mercado / lucro da controladora ", "Market cap / net income attributable to shareholders ") + (i.d12 ? L("dos 12 meses até ", "over the 12 months to ") + data(i.d12.ate) : L("de ", "for ") + i.ano)],
+      [L("P/VP", "P/B"), vezes(i.pvp), L("Valor de mercado / patrimônio da controladora ", "Market cap / shareholders' equity ") + (i.d12 ? L("em ", "on ") + data(i.d12.ate) : L("no fim de ", "at year-end ") + i.ano)],
+      [L("DY 12 meses", "Yield, 12 months"), pct(i.dy), e.proventos_12m != null ? L("Proventos em dinheiro com data-com nos últimos 12 meses (B3) / valor de mercado", "Cash distributions with ex-date in the last 12 months (B3) / market cap") : L("Sem ficha na B3: dividendos e JCP pagos em ", "No B3 record: dividends and interest on equity paid in ") + i.ano + L(" / valor de mercado", " / market cap")],
+      [L("DY do exercício", "Yield, fiscal year"), pct(i.dyExercicio), L("Dividendos e JCP pagos em ", "Dividends and interest on equity paid in ") + i.ano + L(" (fluxo de caixa da DFP) / valor de mercado atual", " (cash flow statement) / current market cap")],
+      ["EV/EBITDA", vezes(i.evEbitda), L("(Valor de mercado + dívida líquida) / EBITDA", "(Market cap + net debt) / EBITDA") + (i.d12 ? L(" dos últimos 12 meses", ", trailing 12 months") : "")],
+      [L("P/Receita", "P/Sales"), vezes(i.psr), L("Valor de mercado / receita", "Market cap / revenue") + (i.d12 ? L(" dos últimos 12 meses", ", trailing 12 months") : "")],
+      [L("Valor de mercado", "Market cap"), dinheiro(i.vm), e.acoes_b3 ? L("Ações ON e PN atuais segundo a B3, sem tesouraria, × cotação de cada classe", "Current common and preferred shares per B3, ex-treasury, × each class's price") : L("Ações ON e PN da DFP × cotação de cada classe", "Common and preferred shares from the annual filing × each class's price")],
     ];
+    var doze12 = i.d12 ? [
+      [L("Receita 12m", "Revenue TTM"), dinheiro(i.d12.receita), L("Receita dos 12 meses até ", "Revenue over the 12 months to ") + data(i.d12.ate)],
+      [L("Lucro 12m", "Net income TTM"), dinheiro(i.d12.lucro), L("Lucro líquido dos 12 meses até ", "Net income over the 12 months to ") + data(i.d12.ate)],
+      [L("Margem líquida 12m", "Net margin TTM"), pct(i.d12.mLiq), L("Lucro / receita dos últimos 12 meses", "Net income / revenue, trailing 12 months")],
+      [L("ROE 12m", "ROE TTM"), pct(i.d12.roe), L("Lucro da controladora 12m / patrimônio em ", "Trailing net income to shareholders / equity on ") + data(i.d12.ate)],
+      [L("Dív. líq./EBITDA 12m", "Net debt/EBITDA TTM"), vezes(i.d12.dlEbitda), L("Dívida líquida em ", "Net debt on ") + data(i.d12.ate) + L(" / EBITDA dos últimos 12 meses", " / trailing 12-month EBITDA")],
+      [L("Dividendos pagos 12m", "Dividends paid TTM"), dinheiro(i.d12.dividendos), L("Dividendos e JCP pagos nos 12 meses (fluxo de caixa)", "Dividends and interest on equity paid over 12 months (cash flow)")],
+    ] : null;
     var cards = [
-      ["Receita", dinheiro(i.receita), "Receita líquida do exercício"],
-      ["Lucro líquido", dinheiro(i.lucro), "Lucro consolidado, inclui minoritários"],
-      ["LPA", porAcao(i.lpa), "Lucro da controladora por ação em circulação"],
-      ["VPA", porAcao(i.vpa), "Patrimônio da controladora por ação"],
-      ["ROE", pct(i.roe), "Lucro da controladora / patrimônio da controladora"],
-      ["ROA", pct(i.roa), "Lucro líquido / ativo total"],
-      ["Margem bruta", pct(i.mBruta), "Resultado bruto / receita"],
-      ["Margem EBIT", pct(i.mEbit), "Resultado antes do financeiro / receita"],
-      ["Margem EBITDA", pct(i.mEbitda), "EBIT + depreciação e amortização do fluxo de caixa"],
-      ["Margem líquida", pct(i.mLiq), "Lucro líquido / receita"],
-      ["Dív. líquida", dinheiro(i.dividaLiq), "Empréstimos e financiamentos − caixa e aplicações"],
-      ["Dív. líq./EBITDA", vezes(i.dlEbitda), "Anos de geração operacional para quitar a dívida líquida"],
-      ["Dív. líq./PL", vezes(i.dlPl), "Dívida líquida / patrimônio da controladora"],
-      ["Dividendos pagos", dinheiro(ultimo(serie(e, "dividendos_pagos"))), "Dividendos e JCP pagos no ano (caixa)"],
-      ["Dividendo/ação", porAcao(i.dpa), "Dividendos e JCP pagos no ano / ações em circulação"],
-      ["Payout (caixa)", pct(i.payout, 0), "Dividendos pagos no ano / lucro da controladora do ano"],
-      ["Fluxo de caixa livre", dinheiro(i.fcl), "Caixa operacional − investimento em imobilizado e intangível"],
-      ["CAGR receita 5a", pct(i.cagrRec), "Crescimento anual composto da receita em 5 anos"],
-      ["CAGR lucro 5a", pct(i.cagrLuc), "Crescimento anual composto do lucro em 5 anos"],
+      [L("Receita", "Revenue"), dinheiro(i.receita), L("Receita líquida do exercício", "Net revenue for the fiscal year")],
+      [L("Lucro líquido", "Net income"), dinheiro(i.lucro), L("Lucro consolidado, inclui minoritários", "Consolidated, includes minority interests")],
+      [L("LPA", "EPS"), porAcao(i.lpa), L("Lucro da controladora por ação em circulação", "Net income to shareholders per share outstanding")],
+      [L("VPA", "Book value/share"), porAcao(i.vpa), L("Patrimônio da controladora por ação", "Shareholders' equity per share")],
+      ["ROE", pct(i.roe), L("Lucro da controladora / patrimônio da controladora", "Net income to shareholders / shareholders' equity")],
+      ["ROA", pct(i.roa), L("Lucro líquido / ativo total", "Net income / total assets")],
+      [L("Margem bruta", "Gross margin"), pct(i.mBruta), L("Resultado bruto / receita", "Gross profit / revenue")],
+      [L("Margem EBIT", "EBIT margin"), pct(i.mEbit), L("Resultado antes do financeiro / receita", "Operating income / revenue")],
+      [L("Margem EBITDA", "EBITDA margin"), pct(i.mEbitda), L("EBIT + depreciação e amortização do fluxo de caixa", "EBIT + depreciation and amortization from the cash flow statement")],
+      [L("Margem líquida", "Net margin"), pct(i.mLiq), L("Lucro líquido / receita", "Net income / revenue")],
+      [L("Dív. líquida", "Net debt"), dinheiro(i.dividaLiq), L("Empréstimos e financiamentos − caixa e aplicações", "Loans and financing − cash and investments"), "divida"],
+      [L("Dív. líq./EBITDA", "Net debt/EBITDA"), vezes(i.dlEbitda), L("Anos de geração operacional para quitar a dívida líquida", "Years of operating cash generation to repay net debt"), "divida"],
+      [L("Dív. líq./PL", "Net debt/equity"), vezes(i.dlPl), L("Dívida líquida / patrimônio da controladora", "Net debt / shareholders' equity"), "divida"],
+      [L("Dividendos pagos", "Dividends paid"), dinheiro(ultimo(serie(e, "dividendos_pagos"))), L("Dividendos e JCP pagos no ano (caixa)", "Dividends and interest on equity paid in the year (cash)")],
+      [L("Dividendo/ação", "Dividend/share"), porAcao(i.dpa), L("Dividendos e JCP pagos no ano / ações em circulação", "Dividends and interest on equity paid / shares outstanding")],
+      [L("Payout (caixa)", "Payout (cash)"), pct(i.payout, 0), L("Dividendos pagos no ano / lucro da controladora do ano", "Dividends paid in the year / net income to shareholders")],
+      [L("Fluxo de caixa livre", "Free cash flow"), dinheiro(i.fcl), L("Caixa operacional − investimento em imobilizado e intangível", "Operating cash flow − capital expenditure")],
+      [L("CAGR receita 5a", "Revenue CAGR 5y"), pct(i.cagrRec), L("Crescimento anual composto da receita em 5 anos", "Compound annual revenue growth over 5 years")],
+      [L("CAGR lucro 5a", "Earnings CAGR 5y"), pct(i.cagrLuc), L("Crescimento anual composto do lucro em 5 anos", "Compound annual earnings growth over 5 years")],
     ];
     var cartoes = function (lista) {
       return '<div class="grade-ind">' + lista.map(function (c) {
-        return '<div class="ind"><div class="r"><abbr title="' + esc(c[2]) + '">' + c[0] + '</abbr></div><div class="v ' + (!/^Dív/.test(c[0]) && /^-|^R\$ -|^US\$ -/.test(c[1]) ? "neg" : "") + '">' + c[1] + "</div></div>";
+        var negativo = c[3] !== "divida" && /^-|^R\$ -|^US\$ -/.test(c[1]);
+        return '<div class="ind"><div class="r"><abbr title="' + esc(c[2]) + '">' + c[0] + '</abbr></div><div class="v ' + (negativo ? "neg" : "") + '">' + c[1] + "</div></div>";
       }).join("") + "</div>";
     };
-    var doze12 = i.d12 ? [
-      ["Receita 12m", dinheiro(i.d12.receita), "Receita dos 12 meses até " + dataBR(i.d12.ate) + " (DFP + ITR)"],
-      ["Lucro 12m", dinheiro(i.d12.lucro), "Lucro líquido dos 12 meses até " + dataBR(i.d12.ate)],
-      ["Margem líquida 12m", pct(i.d12.mLiq), "Lucro / receita dos últimos 12 meses"],
-      ["ROE 12m", pct(i.d12.roe), "Lucro da controladora 12m / patrimônio da controladora em " + dataBR(i.d12.ate)],
-      ["Dív. líq./EBITDA 12m", vezes(i.d12.dlEbitda), "Dívida líquida em " + dataBR(i.d12.ate) + " / EBITDA dos últimos 12 meses"],
-      ["Dividendos pagos 12m", dinheiro(i.d12.dividendos), "Dividendos e JCP pagos nos 12 meses (fluxo de caixa)"],
-    ] : null;
-    var grade = '<section class="cartao"><div class="cab-secao"><h2>Valuation</h2>' +
-      '<span class="mudo" style="font-size:13px">Cotação de ' + dataBR(cot && cot.data) + " sobre " +
-      (i.d12 ? "os 12 meses até " + dataBR(i.d12.ate) : "o balanço de " + i.ano) + "</span></div>" + cartoes(valuation) +
-      (doze12 ? '<h3 style="margin:16px 0 10px">Últimos 12 meses</h3>' + cartoes(doze12) : "") +
-      '</section><section class="cartao"><div class="cab-secao"><h2>Fundamentos de ' + i.ano + "</h2>" +
-      '<span class="mudo" style="font-size:13px">' + (estado.moeda === "usd" ? "Convertidos pela PTAX" : "Em reais") + "</span></div>" + cartoes(cards) +
-      (e.financeiro ? '<p class="aviso">Para bancos e seguradoras, margens operacionais e dívida não se aplicam da mesma forma e ficam em branco.</p>' : "") + "</section>";
+    var titulo = function (id, chave, extra) { return '<div class="cab-secao"><h2>' + capitulo(secs, id) + (extra || t(chave)) + "</h2>"; };
 
-    var comp = '<section class="cartao"><h2>Como sai o índice</h2><div class="comp">' + (s ? COMPONENTES.map(function (c) {
+    var blocos =
+      '<section class="cartao secao" id="s-valuation">' + titulo("s-valuation", "sec_valuation") +
+      '<span class="mudo sub">' + esc(tf("valuation_sub", data(cot && cot.data), i.d12 ? tf("sobre_12m", data(i.d12.ate)) : tf("sobre_balanco", i.ano))) + "</span></div>" +
+      cartoes(valuation) + "</section>" +
+      (doze12 ? '<section class="cartao secao" id="s-12m">' + titulo("s-12m", "sec_12m") +
+        '<span class="mudo sub">' + L("Até ", "To ") + data(i.d12.ate) + " · DFP + ITR</span></div>" + cartoes(doze12) + "</section>" : "") +
+      '<section class="cartao secao" id="s-fund">' + titulo("s-fund", "", tf("fund_titulo", i.ano)) +
+      '<span class="mudo sub">' + (estado.moeda === "usd" ? t("convertidos") : t("em_reais")) + "</span></div>" + cartoes(cards) +
+      (e.financeiro ? '<p class="aviso">' + t("aviso_fin") + "</p>" : "") + "</section>";
+
+    var comp = '<section class="cartao secao" id="s-indice"><h2>' + capitulo(secs, "s-indice") + t("indice_titulo") + '</h2><div class="comp">' + (s ? componentes().map(function (c) {
       var v = s.componentes[c.id];
       if (v == null) {
-        return '<div class="comp-item"><span class="nome">' + c.nome + '</span><span class="peso">sem dado · peso redistribuído</span>' +
-          '<span class="trilho"></span><span class="desc">A empresa não detalha o fluxo de financiamento na DFP.</span></div>';
+        return '<div class="comp-item"><span class="nome">' + c.nome + '</span><span class="peso">' + t("sem_dado_peso") + "</span>" +
+          '<span class="trilho"></span><span class="desc">' + t("sem_fin_detalhado") + "</span></div>";
       }
-      return '<div class="comp-item"><span class="nome">' + c.nome + '</span><span class="peso num">' + v + "/100 · peso " + c.peso + "</span>" +
+      return '<div class="comp-item"><span class="nome">' + c.nome + '</span><span class="peso num">' + v + "/100 · " + t("peso") + " " + c.peso + "</span>" +
         '<span class="trilho"><i style="width:' + v + '%"></i></span><span class="desc">' + c.desc + "</span></div>";
-    }).join("") : '<p class="mudo">Precisa de pelo menos 5 anos de receita e lucro.</p>') + "</div></section>";
+    }).join("") : '<p class="mudo">' + t("precisa_5") + "</p>") + "</div></section>";
 
-    var periodo = '<div class="seg" role="group" aria-label="Período">' + [[5, "5a"], [10, "10a"], [0, "Tudo"]].map(function (p) {
+    var periodo = '<div class="seg" role="group" aria-label="' + t("periodo") + '">' + [[5, t("a5")], [10, t("a10")], [0, t("tudo")]].map(function (p) {
       return '<button data-periodo="' + p[0] + '" aria-pressed="' + (estado.periodo === p[0]) + '">' + p[1] + "</button>";
     }).join("") + "</div>";
 
     var graficos =
       '<div class="duas bloco">' +
-      '<section class="cartao"><h2>Cotação de ' + ticker + ' no fim de cada ano</h2><div class="grafico" id="g-cotacao"></div>' +
-      '<p class="aviso">Sem ajuste por desdobramentos e grupamentos: saltos bruscos podem ser eventos societários.</p></section>' +
-      '<section class="cartao"><h2>P/L e P/VP no fim de cada ano</h2><div class="grafico" id="g-multiplos"></div>' +
-      '<p class="aviso">Anos com prejuízo ficam sem P/L. Antes de 2020 a CVM não publica a quantidade de ações na DFP; ela é estimada pelo LPA declarado.</p></section></div>' +
+      '<section class="cartao"><h2>' + esc(tf("g_cotacao", ticker)) + '</h2><div class="grafico" id="g-cotacao"></div>' +
+      '<p class="aviso">' + t("g_cotacao_aviso") + "</p></section>" +
+      '<section class="cartao"><h2>' + t("g_mult") + '</h2><div class="grafico" id="g-multiplos"></div>' +
+      '<p class="aviso">' + t("g_mult_aviso") + "</p></section></div>" +
       '<div class="duas bloco">' +
-      '<section class="cartao"><h2>Receita e lucro</h2><div class="grafico" id="g-resultado"></div></section>' + comp + "</div>" +
+      '<section class="cartao"><h2>' + t("g_resultado") + '</h2><div class="grafico" id="g-resultado"></div></section>' +
+      '<section class="cartao"><h2>' + t("g_margens") + '</h2><div class="grafico" id="g-margens"></div></section></div>' +
       '<div class="duas bloco">' +
-      '<section class="cartao"><h2>Margens</h2><div class="grafico" id="g-margens"></div></section>' +
-      '<section class="cartao"><h2>' + (e.financeiro ? "Patrimônio líquido" : "Dívida líquida e EBITDA") + '</h2><div class="grafico" id="g-divida"></div></section></div>' +
+      '<section class="cartao"><h2>' + (e.financeiro ? t("g_pl") : t("g_divida")) + '</h2><div class="grafico" id="g-divida"></div></section>' +
+      '<section class="cartao"><h2>' + t("g_caixa") + '</h2><div class="grafico" id="g-caixa"></div></section></div>' +
       '<div class="duas bloco">' +
-      '<section class="cartao"><h2>Fluxo de caixa</h2><div class="grafico" id="g-caixa"></div></section>' +
-      '<section class="cartao"><h2>Dividendos e JCP pagos</h2><div class="grafico" id="g-dividendos"></div></section></div>';
+      '<section class="cartao"><h2>' + t("g_dividendos") + '</h2><div class="grafico" id="g-dividendos"></div></section>' + comp + "</div>";
 
-    app.innerHTML = cab + '<div class="bloco" style="margin-top:16px">' + grade + "</div>" +
-      '<div class="cab-secao bloco" style="margin-top:24px"><h2>Histórico</h2>' + periodo + "</div>" + graficos +
-      '<section class="cartao bloco"><h2>Demonstrações resumidas</h2><div class="tabela-wrap" id="t-dem"></div></section>' +
-      '<section class="cartao bloco metodo"><details><summary>Metodologia e limitações</summary><ul>' +
-      "<li>Dados consolidados da DFP. Quando a empresa reapresenta, vale a última versão entregue; um ano sem DFP própria usa a coluna de comparação do ano seguinte.</li>" +
-      "<li>Contas localizadas pelo nome no plano de contas da CVM, porque o código varia entre empresas e setores.</li>" +
-      "<li>EBITDA = resultado antes do financeiro + depreciação, amortização e exaustão lançadas no fluxo de caixa. Dívida = empréstimos e financiamentos (inclui debêntures e, em geral, arrendamentos).</li>" +
-      "<li>Dividendos pelo regime de caixa (pagos no ano), por isso o payout pode passar de 100% num ano e ficar baixo no outro.</li>" +
-      "<li>Em US$, resultado e fluxo usam a PTAX média do ano; balanço usa a PTAX do último dia útil. O índice em US$ é recalculado com receita e lucro convertidos, o que capta o efeito do câmbio.</li>" +
-      "<li>Tickers e quantidade atual de ações vêm da B3 (lista de emissores e ficha de cada empresa); setor, controle e composição de units, do formulário cadastral da CVM. Empresas sem controladas publicam só a demonstração individual, usada no lugar da consolidada.</li>" +
-      "<li>Valor de mercado atual = ações ON e PN informadas pela B3, menos a tesouraria do último balanço, × cotação de cada classe. No histórico, ações da DFP do ano (antes de 2020, estimadas pelo LPA declarado), com correção de erros de escala quando a quantidade salta por potência de 10 e o valor de mercado saltaria mais de 5×. Cotações sem ajuste por desdobramento.</li>" +
-      "<li>Últimos 12 meses = último exercício (DFP) + acumulado do ano corrente − acumulado do mesmo período do ano anterior, os dois do ITR mais recente. P/L, P/VP, EV/EBITDA, ROE e margem do ranking usam os 12 meses quando a empresa tem ITR posterior ao último balanço anual.</li>" +
-      "<li>DY 12 meses = proventos em dinheiro com data-com nos últimos 12 meses (B3) / valor de mercado. DY do exercício = dividendos e JCP pagos no último exercício (fluxo de caixa da DFP) / valor de mercado.</li>" +
-      "<li>Ticker principal = o de maior volume negociado no último mês.</li>" +
-      "</ul></details></section>";
+    app.innerHTML = cab + nav +
+      '<div class="corpo-empresa">' + blocos +
+      '<div class="cab-secao bloco secao" id="s-hist" style="margin-top:28px"><h2>' + capitulo(secs, "s-hist") + t("sec_hist") + "</h2>" + periodo + "</div>" + graficos +
+      '<section class="cartao bloco secao" id="s-dem"><h2>' + capitulo(secs, "s-dem") + t("dem_titulo") + '</h2><div class="tabela-wrap" id="t-dem"></div></section>' +
+      '<section class="cartao bloco metodo secao" id="s-metodo"><details><summary>' + capitulo(secs, "s-metodo") + t("metodo_titulo") + "</summary><ul>" +
+      window.I18N_METODO[estado.lingua].map(function (li) { return "<li>" + esc(li) + "</li>"; }).join("") +
+      "</ul></details></section></div>";
 
     $$("[data-periodo]", app).forEach(function (b) {
       b.addEventListener("click", function () {
@@ -436,7 +543,50 @@
         desenharEmpresa(e);
       });
     });
+    $$("[data-ir]", app).forEach(function (a) {
+      a.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        var alvo = document.getElementById(a.getAttribute("data-ir"));
+        if (!alvo) return;
+        var det = alvo.querySelector("details");
+        if (det) det.open = true;
+        alvo.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+      });
+    });
     desenharEmpresa(e);
+    observarSecoes();
+  }
+
+  // ---------------------------------------------------------------- navegação por seções
+
+  var observador = null;
+  function observarSecoes() {
+    if (observador) observador.disconnect();
+    var nav = $(".secoes");
+    if (!nav || !("IntersectionObserver" in window)) return;
+    var links = $$("a[data-ir]", nav);
+    var marcar = function (id) {
+      links.forEach(function (a) { a.classList.toggle("ativa", a.getAttribute("data-ir") === id); });
+      var ativo = $("a.ativa", nav), ol = $("ol", nav);
+      if (ativo && ol.scrollWidth > ol.clientWidth) {  // barra horizontal: mantém o item ativo visível
+        ol.scrollTo({ left: Math.max(0, ativo.parentNode.offsetLeft - ol.offsetLeft - 24), behavior: "smooth" });
+      }
+    };
+    observador = new IntersectionObserver(function (entradas) {
+      var visiveis = entradas.filter(function (x) { return x.isIntersecting; });
+      if (visiveis.length) marcar(visiveis[0].target.id);
+    }, { rootMargin: "-30% 0px -60% 0px" });
+    $$(".secao[id]").forEach(function (s) { observador.observe(s); });
+    marcar(links.length ? links[0].getAttribute("data-ir") : "");
+    progresso();
+  }
+
+  /** fração da página já rolada, para o trilho de progresso da navegação */
+  function progresso() {
+    var nav = $(".secoes");
+    if (!nav) return;
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    nav.style.setProperty("--progresso", h > 0 ? Math.min(1, window.scrollY / h) : 0);
   }
 
   function recorte(e) {
@@ -451,56 +601,56 @@
   function desenharEmpresa(e) {
     var r = recorte(e), anos = r.anos, ini = e.anos.length - anos.length;
 
-    var t = e.precos_ano[estado.ticker] ? estado.ticker : e.ticker;
-    var px = precosAno(e, t);
+    var tk = e.precos_ano[estado.ticker] ? estado.ticker : e.ticker;
+    var px = precosAno(e, tk);
     if (px) {
-      linhas($("#g-cotacao"), anos, [{ nome: t, cor: "var(--c1)", v: px.slice(ini) }], porAcao,
+      linhas($("#g-cotacao"), anos, [{ nome: tk, cor: "var(--c1)", v: px.slice(ini) }], porAcao,
         { eixo: function (v) { return nf(v >= 100 ? 0 : 2).format(v); }, limites: null });
     } else {
-      $("#g-cotacao").innerHTML = '<p class="mudo">Sem cotações de fim de ano para ' + t + ".</p>";
+      $("#g-cotacao").innerHTML = '<p class="mudo">' + esc(tf("sem_cot_ano", tk)) + "</p>";
     }
     var mult = anos.map(function (a, k) { return multiplos(e, e.series.valor_mercado[ini + k], ini + k); });
     linhas($("#g-multiplos"), anos, [
-      { nome: "P/L", cor: "var(--c3)", v: mult.map(function (m) { return m.pl; }) },
-      { nome: "P/VP", cor: "var(--c4)", v: mult.map(function (m) { return m.pvp; }) },
+      { nome: L("P/L", "P/E"), cor: "var(--c3)", v: mult.map(function (m) { return m.pl; }) },
+      { nome: L("P/VP", "P/B"), cor: "var(--c4)", v: mult.map(function (m) { return m.pvp; }) },
     ], vezes, { eixo: function (v) { return nf(0).format(v) + "x"; }, limites: [0, 60] });
     var rec = r.s("receita"), ll = r.s("lucro_liquido");
     barras($("#g-resultado"), anos, [
-      { nome: "Receita", cor: "var(--c1)", v: rec },
-      { nome: "Lucro líquido", cor: "var(--c2)", v: ll },
+      { nome: t("s_receita"), cor: "var(--c1)", v: rec },
+      { nome: t("s_lucro"), cor: "var(--c2)", v: ll },
     ], dinheiro);
 
     var margem = function (num) { return num.map(function (v, k) { return div(v, rec[k]); }); };
-    var linhasM = [{ nome: "Margem líquida", cor: "var(--c2)", v: margem(ll) }];
+    var linhasM = [{ nome: t("s_mliq"), cor: "var(--c2)", v: margem(ll) }];
     if (!e.financeiro) {
-      linhasM.unshift({ nome: "Margem EBIT", cor: "var(--c3)", v: margem(r.s("ebit")) });
-      linhasM.unshift({ nome: "Margem bruta", cor: "var(--c1)", v: margem(r.s("lucro_bruto")) });
+      linhasM.unshift({ nome: t("s_mebit"), cor: "var(--c3)", v: margem(r.s("ebit")) });
+      linhasM.unshift({ nome: t("s_mbruta"), cor: "var(--c1)", v: margem(r.s("lucro_bruto")) });
     }
     linhas($("#g-margens"), anos, linhasM, function (v) { return pct(v); });
 
     if (e.financeiro) {
-      barras($("#g-divida"), anos, [{ nome: "Patrimônio líquido", cor: "var(--c4)", v: r.s("pl") }], dinheiro);
+      barras($("#g-divida"), anos, [{ nome: t("s_pl"), cor: "var(--c4)", v: r.s("pl") }], dinheiro);
     } else {
       barras($("#g-divida"), anos, [
-        { nome: "Dívida líquida", cor: "var(--c5)", v: r.s("divida_liquida") },
-        { nome: "EBITDA", cor: "var(--c3)", v: r.s("ebitda") },
+        { nome: t("s_dl"), cor: "var(--c5)", v: r.s("divida_liquida") },
+        { nome: t("s_ebitda"), cor: "var(--c3)", v: r.s("ebitda") },
       ], dinheiro);
     }
 
     var neg = function (arr) { return arr.map(function (v) { return v == null ? null : -v; }); };
     barras($("#g-caixa"), anos, [
-      { nome: "Operacional", cor: "var(--c2)", v: r.s("fco") },
-      { nome: "Capex", cor: "var(--c5)", v: neg(r.s("capex")) },
-      { nome: "Dividendos", cor: "var(--c4)", v: neg(r.s("dividendos_pagos")) },
+      { nome: t("s_fco"), cor: "var(--c2)", v: r.s("fco") },
+      { nome: t("s_capex"), cor: "var(--c5)", v: neg(r.s("capex")) },
+      { nome: t("s_dividendos"), cor: "var(--c4)", v: neg(r.s("dividendos_pagos")) },
     ], dinheiro);
 
     var acoes = e.series.acoes.slice(e.anos.length - anos.length);
     var dvd = r.s("dividendos_pagos");
-    barras($("#g-dividendos"), anos, [{ nome: "Total pago", cor: "var(--c4)", v: dvd }], dinheiro, {
+    barras($("#g-dividendos"), anos, [{ nome: t("s_total_pago"), cor: "var(--c4)", v: dvd }], dinheiro, {
       extra: function (k) {
         var out = [];
-        if (acoes[k] && dvd[k] != null) out.push(["Por ação", porAcao(dvd[k] * 1000 / acoes[k])]);
-        if (mult[k].dy != null) out.push(["Yield no ano", pct(mult[k].dy)]);
+        if (acoes[k] && dvd[k] != null) out.push([t("s_por_acao"), porAcao(dvd[k] * 1000 / acoes[k])]);
+        if (mult[k].dy != null) out.push([t("s_yield_ano"), pct(mult[k].dy)]);
         return out;
       },
     });
@@ -511,17 +661,17 @@
   function tabelaDemonstracoes(e, r) {
     var anos = r.anos;
     var lin = [
-      ["Receita líquida", "receita"], ["Resultado bruto", "lucro_bruto", 1], ["EBIT", "ebit", 1], ["EBITDA", "ebitda", 1],
-      ["Lucro líquido", "lucro_liquido"], ["Atribuído à controladora", "lucro_controladora", 1],
-      ["Ativo total", "ativo_total"], ["Patrimônio líquido", "pl"], ["Dívida bruta", "divida_bruta", 1], ["Caixa e aplicações", "caixa", 1],
-      ["Dívida líquida", "divida_liquida", 1], ["Caixa operacional", "fco"], ["Capex", "capex", 1], ["Dividendos e JCP pagos", "dividendos_pagos", 1],
+      ["d_receita", "receita"], ["d_bruto", "lucro_bruto", 1], ["d_ebit", "ebit", 1], ["d_ebitda", "ebitda", 1],
+      ["d_lucro", "lucro_liquido"], ["d_controladora", "lucro_controladora", 1],
+      ["d_ativo", "ativo_total"], ["d_pl", "pl"], ["d_div_bruta", "divida_bruta", 1], ["d_caixa", "caixa", 1],
+      ["d_dl", "divida_liquida", 1], ["d_fco", "fco"], ["d_capex", "capex", 1], ["d_dvd", "dividendos_pagos", 1],
     ];
     $("#t-dem").innerHTML = '<table class="tabela-dem"><thead><tr><th>' + simbolo() + "</th>" +
       anos.map(function (a) { return "<th>" + a + "</th>"; }).join("") + "</tr></thead><tbody>" +
       lin.map(function (l) {
         var v = r.s(l[1]);
         if (v.every(function (x) { return x == null; })) return "";
-        return '<tr class="' + (l[2] ? "sub" : "") + '"><td>' + l[0] + "</td>" +
+        return '<tr class="' + (l[2] ? "sub" : "") + '"><td>' + t(l[0]) + "</td>" +
           v.map(function (x) { return '<td class="num ' + classe(x) + '">' + dinheiro(x, true) + "</td>"; }).join("") + "</tr>";
       }).join("") + "</tbody></table>";
   }
@@ -535,7 +685,7 @@
     var bruto = (max - min) / 4, mag = Math.pow(10, Math.floor(Math.log10(bruto))), f = bruto / mag;
     var passo = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
     var lo = Math.floor(min / passo) * passo, hi = Math.ceil(max / passo) * passo, ticks = [];
-    for (var t = lo; t <= hi + passo / 2; t += passo) ticks.push(Math.abs(t) < passo / 1e6 ? 0 : t);
+    for (var x = lo; x <= hi + passo / 2; x += passo) ticks.push(Math.abs(x) < passo / 1e6 ? 0 : x);
     return { lo: lo, hi: hi, ticks: ticks };
   }
 
@@ -551,9 +701,9 @@
     var x = function (k) { return M.l + bw * k + bw / 2; };
     var passoRot = Math.ceil(anos.length / Math.max(1, Math.floor(iw / 44)));
     var svg = '<svg viewBox="0 0 ' + w + " " + h + '" height="' + h + '" role="img">' +
-      esc_.ticks.map(function (t) {
-        return '<line class="' + (t === 0 ? "zero" : "grade") + '" x1="' + M.l + '" x2="' + (w - M.r) + '" y1="' + y(t) + '" y2="' + y(t) + '"/>' +
-          '<text class="eixo" x="' + (M.l - 8) + '" y="' + (y(t) + 4) + '" text-anchor="end">' + fmtEixo(t) + "</text>";
+      esc_.ticks.map(function (tk) {
+        return '<line class="' + (tk === 0 ? "zero" : "grade") + '" x1="' + M.l + '" x2="' + (w - M.r) + '" y1="' + y(tk) + '" y2="' + y(tk) + '"/>' +
+          '<text class="eixo" x="' + (M.l - 8) + '" y="' + (y(tk) + 4) + '" text-anchor="end">' + fmtEixo(tk) + "</text>";
       }).join("") +
       anos.map(function (a, k) {
         return k % passoRot === (anos.length - 1) % passoRot ? '<text class="eixo" x="' + x(k) + '" y="' + (h - 6) + '" text-anchor="middle">' + a + "</text>" : "";
@@ -563,7 +713,7 @@
 
   function legenda(series, linha) {
     return '<div class="legenda">' + series.map(function (s) {
-      return '<span><i class="' + (linha ? "linha" : "") + '" style="--c:' + s.cor + '"></i>' + s.nome + "</span>";
+      return '<span><i class="' + (linha ? "linha" : "") + '" style="--c:' + s.cor + '"></i>' + esc(s.nome) + "</span>";
     }).join("") + "</div>";
   }
 
@@ -576,7 +726,7 @@
       if (k < 0 || k >= anos.length) { esconder(); return; }
       foco.setAttribute("x", M.l + g.bw * k); foco.removeAttribute("hidden");
       var html = "<b>" + anos[k] + "</b>" + series.map(function (s) {
-        return '<div><span><i style="--c:' + s.cor + '"></i>' + s.nome + '</span><span class="num">' + fmt(s.v[k]) + "</span></div>";
+        return '<div><span><i style="--c:' + s.cor + '"></i>' + esc(s.nome) + '</span><span class="num">' + fmt(s.v[k]) + "</span></div>";
       }).join("");
       var x = extra && extra(k);
       if (x && x.length) (Array.isArray(x[0]) ? x : [x]).forEach(function (p) {
@@ -598,7 +748,7 @@
   function barras(el, anos, series, fmt, opts) {
     if (!el) return;
     var todos = [].concat.apply([], series.map(function (s) { return s.v; }));
-    if (!todos.some(function (v) { return v != null; })) { el.innerHTML = '<p class="mudo">Sem dados no período.</p>'; return; }
+    if (!todos.some(function (v) { return v != null; })) { el.innerHTML = '<p class="mudo">' + t("sem_dados") + "</p>"; return; }
     var g = base(el, anos, todos, function (v) { return dinheiro(v, true); });
     var n = series.length, gap = Math.max(2, g.bw * 0.22), larg = Math.max(2, (g.bw - gap) / n - 1);
     var corpo = focoRect(g);
@@ -620,7 +770,7 @@
     var lim = opts.limites === undefined ? [-1, 1.5] : opts.limites;
     var corta = function (v) { return v == null || !lim ? v : Math.max(lim[0], Math.min(lim[1], v)); };
     var todos = [].concat.apply([], series.map(function (s) { return s.v; })).map(corta);
-    if (!todos.some(function (v) { return v != null; })) { el.innerHTML = '<p class="mudo">Sem dados no período.</p>'; return; }
+    if (!todos.some(function (v) { return v != null; })) { el.innerHTML = '<p class="mudo">' + t("sem_dados") + "</p>"; return; }
     var g = base(el, anos, todos, opts.eixo || function (v) { return nf(0).format(v * 100) + "%"; });
     var corpo = focoRect(g);
     series.forEach(function (s) {
@@ -647,16 +797,16 @@
       var q = norm(input.value.trim());
       if (!q) { lista.hidden = true; return; }
       achados = EMPRESAS.filter(function (e) {
-        return e.tickers.some(function (t) { return norm(t).indexOf(q) === 0; }) || norm(e.nome).indexOf(q) >= 0;
+        return e.tickers.some(function (tk) { return norm(tk).indexOf(q) === 0; }) || norm(e.nome).indexOf(q) >= 0;
       }).slice(0, 8);
       sel = achados.length ? 0 : -1;
       lista.innerHTML = achados.map(function (e, k) {
-        var t = e.tickers.filter(function (t) { return norm(t).indexOf(q) === 0; })[0] || e.ticker;
-        return '<li role="option" data-t="' + t + '" aria-selected="' + (k === sel) + '"><b>' + t + "</b><span>" + esc(nomeCurto(e.nome)) + "</span></li>";
-      }).join("") || '<li class="mudo">Nada encontrado</li>';
+        var tk = e.tickers.filter(function (x) { return norm(x).indexOf(q) === 0; })[0] || e.ticker;
+        return '<li role="option" data-t="' + tk + '" aria-selected="' + (k === sel) + '"><b>' + tk + "</b><span>" + esc(nomeCurto(e.nome)) + "</span></li>";
+      }).join("") || '<li class="mudo">' + t("nada_encontrado") + "</li>";
       lista.hidden = false;
     }
-    function ir(t) { location.hash = "#/" + t; input.value = ""; lista.hidden = true; input.blur(); }
+    function ir(tk) { location.hash = "#/" + tk; input.value = ""; lista.hidden = true; input.blur(); }
     input.addEventListener("input", render);
     input.addEventListener("keydown", function (ev) {
       var itens = $$("li[data-t]", lista);
@@ -683,22 +833,47 @@
   function rota() {
     var m = location.hash.match(/^#\/([A-Z0-9]+)/i);
     $("#dica").hidden = true;
+    if (observador) { observador.disconnect(); observador = null; }
     if (m) telaEmpresa(m[1].toUpperCase()); else telaRanking();
+  }
+
+  /** textos fixos do index.html (data-i18n, data-i18n-html, data-i18n-ph, data-i18n-aria) */
+  function aplicarLingua() {
+    document.documentElement.lang = estado.lingua === "en" ? "en" : "pt-BR";
+    $$("[data-i18n]").forEach(function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
+    $$("[data-i18n-html]").forEach(function (el) { el.innerHTML = t(el.getAttribute("data-i18n-html")); });
+    $$("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.getAttribute("data-i18n-ph")); });
+    $$("[data-i18n-aria]").forEach(function (el) { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
+    $$("[data-lingua]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-lingua") === estado.lingua)); });
+    $("#gerado").textContent = tf("rodape_gerado", D.gerado_em, D.ano_final, nf(4).format(D.ptax[String(D.ano_final)].media));
   }
 
   function aplicarMoeda() {
     $$("[data-moeda]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-moeda") === estado.moeda)); });
   }
 
+  /** altura do cabeçalho fixo, para a barra de seções grudar logo abaixo dele */
+  function medirTopo() {
+    document.documentElement.style.setProperty("--topo-h", $(".topo").offsetHeight + "px");
+  }
+
+  function redesenhar() {
+    var rolagem = window.scrollY; rota(); window.scrollTo(0, rolagem);
+  }
+
   function iniciar() {
-    $("#gerado").textContent = "Base gerada em " + D.gerado_em + ". PTAX média de " + D.ano_final + ": R$ " + nf(4).format(D.ptax[String(D.ano_final)].media) + " por US$.";
     $$("[data-moeda]").forEach(function (b) {
       b.addEventListener("click", function () {
-        estado.moeda = b.getAttribute("data-moeda"); gravar("lastro-moeda", estado.moeda); aplicarMoeda();
-        var rolagem = window.scrollY; rota(); window.scrollTo(0, rolagem);
+        estado.moeda = b.getAttribute("data-moeda"); gravar("lastro-moeda", estado.moeda); aplicarMoeda(); redesenhar();
+      });
+    });
+    $$("[data-lingua]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        estado.lingua = b.getAttribute("data-lingua"); gravar("lastro-lingua", estado.lingua); aplicarLingua(); redesenhar();
       });
     });
     aplicarMoeda();
+    aplicarLingua();
 
     var tema = ler("lastro-tema");
     if (tema) document.documentElement.setAttribute("data-theme", tema);
@@ -709,12 +884,18 @@
       document.documentElement.setAttribute("data-theme", novo); gravar("lastro-tema", novo);
     });
 
-    var t;
+    var tm;
     window.addEventListener("resize", function () {
-      clearTimeout(t);
-      t = setTimeout(function () { var m = location.hash.match(/^#\/([A-Z0-9]+)/i); if (m && POR_TICKER[m[1].toUpperCase()]) desenharEmpresa(POR_TICKER[m[1].toUpperCase()]); }, 150);
+      clearTimeout(tm);
+      tm = setTimeout(function () {
+        medirTopo();
+        var m = location.hash.match(/^#\/([A-Z0-9]+)/i);
+        if (m && POR_TICKER[m[1].toUpperCase()]) desenharEmpresa(POR_TICKER[m[1].toUpperCase()]);
+      }, 150);
     });
+    window.addEventListener("scroll", progresso, { passive: true });
     window.addEventListener("hashchange", function () { rota(); window.scrollTo(0, 0); });
+    medirTopo();
     busca();
     rota();
   }

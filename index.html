@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lastro · Ações brasileiras</title>
-<meta name="description" content="Fundamentos e índice de previsibilidade das ações da B3, a partir das demonstrações financeiras abertas da CVM, em reais ou em dólar.">
-<link rel="stylesheet" href="style.css?v=70cad6f599">
+<meta name="description" content="Fundamentals, valuation and a predictability score for every stock listed on B3, Brazil's exchange, from CVM open data, in reais or US dollars. Fundamentos e índice de previsibilidade das ações da B3.">
+<link rel="stylesheet" href="style.css?v=8abf532dce">
 </head>
 <body>
 <header class="topo">
@@ -16,15 +16,19 @@
     </a>
     <label class="busca">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-      <input id="busca" type="search" placeholder="Buscar ticker ou empresa" autocomplete="off" aria-label="Buscar ticker ou empresa">
+      <input id="busca" type="search" placeholder="Buscar ticker ou empresa" autocomplete="off" aria-label="Buscar ticker ou empresa" data-i18n-ph="buscar" data-i18n-aria="buscar">
       <ul id="sugestoes" class="sugestoes" role="listbox" hidden></ul>
     </label>
     <div class="topo-acoes">
-      <div class="seg" role="group" aria-label="Moeda">
+      <div class="seg" role="group" aria-label="Idioma" data-i18n-aria="idioma">
+        <button data-lingua="pt" aria-pressed="true" lang="pt-BR">PT</button>
+        <button data-lingua="en" aria-pressed="false" lang="en">EN</button>
+      </div>
+      <div class="seg" role="group" aria-label="Moeda" data-i18n-aria="moeda">
         <button data-moeda="brl" aria-pressed="true">R$</button>
         <button data-moeda="usd" aria-pressed="false">US$</button>
       </div>
-      <button id="tema" class="icone" aria-label="Alternar tema claro/escuro" title="Tema">
+      <button id="tema" class="icone" aria-label="Alternar tema claro/escuro" data-i18n-aria="tema">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg>
       </button>
     </div>
@@ -35,15 +39,16 @@
 
 <footer class="rodape">
   <div class="rodape-in">
-    <p><strong>Fontes:</strong> demonstrações financeiras padronizadas (DFP) e formulário cadastral (FCA) da CVM, dados abertos; cotações da série histórica da B3 (COTAHIST); dólar pela PTAX de venda do Banco Central (média do ano para resultados, último dia útil para balanço).</p>
-    <p>Ferramenta de dados, não recomendação de investimento. Os números vêm como as empresas os entregaram à CVM e podem conter reapresentações ou erros de preenchimento.</p>
+    <p data-i18n-html="rodape_fontes"></p>
+    <p data-i18n="rodape_aviso"></p>
     <p id="gerado" class="mudo"></p>
   </div>
 </footer>
 
 <div id="dica" class="dica" hidden></div>
 
-<script src="data/empresas.js?v=759691d566"></script>
-<script src="app.js?v=327d805172"></script>
+<script src="data/empresas.js?v=01a5314ca8"></script>
+<script src="i18n.js?v=a8df54e6f7"></script>
+<script src="app.js?v=357db6b791"></script>
 </body>
 </html>
