@@ -1,6 +1,6 @@
 # Auditoria da base
 
-Gerada em 18/11/2026 sobre `data/empresas.js` de 2026-11-18 02:20 (balanços até 2025, cotações até 2026-11-16). Refaça com `python3 scripts/auditar.py --externo`.
+Gerada em 18/11/2026 sobre `data/empresas.js` de 2026-11-18 02:37 (balanços até 2025, cotações até 2026-11-17). Refaça com `python3 scripts/auditar.py --externo`.
 
 ## 1. Cobertura
 
@@ -44,7 +44,7 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | média | receita não positiva | 12 |
 | média | P/L extremo | 9 |
 | média | LPA com sinal trocado na DRE | 8 |
-| média | DY acima de 30% | 7 |
+| média | DY acima de 30% | 8 |
 | média | cotação parada | 3 |
 | média | P/VP extremo | 3 |
 | média | buraco no histórico | 1 |
@@ -52,7 +52,7 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | baixa | LPA divergente | 59 |
 | baixa | receita salta | 55 |
 | baixa | LPA com sinal trocado na DRE | 30 |
-| baixa | preço mudou de escala | 14 |
+| baixa | preço mudou de escala | 16 |
 | baixa | controladora × consolidado | 11 |
 | baixa | LPA declarado por lote de mil | 10 |
 | baixa | ITR atrasado | 10 |
@@ -78,12 +78,13 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | PDGR3 | PDG REALTY | alta | LPA divergente | 2025: calculado R$ -0.10 × declarado R$ -0.37 (razão 0.27) |
 | TFCO4 | TRACK & FIELD CO | alta | LPA divergente | 2025: calculado R$ 0.15 × declarado R$ 0.09 (razão 1.61) |
 | BALM4 | BAUMER | média | DY acima de 30% | 33% (dividendo extraordinário ou valor de mercado subestimado) |
-| BMKS3 | BICICLETAS MONARK | média | DY acima de 30% | 36% (dividendo extraordinário ou valor de mercado subestimado) |
+| BMKS3 | BICICLETAS MONARK | média | DY acima de 30% | 37% (dividendo extraordinário ou valor de mercado subestimado) |
+| DIRR3 | DIRECIONAL ENGENHARIA | média | DY acima de 30% | 31% (dividendo extraordinário ou valor de mercado subestimado) |
 | LPSB3 | LPS BRASIL - CONSULTORIA DE IMOVEIS | média | DY acima de 30% | 31% (dividendo extraordinário ou valor de mercado subestimado) |
-| POMO4 | MARCOPOLO | média | DY acima de 30% | 31% (dividendo extraordinário ou valor de mercado subestimado) |
+| POMO4 | MARCOPOLO | média | DY acima de 30% | 30% (dividendo extraordinário ou valor de mercado subestimado) |
 | RIAA3 | GUARARAPES CONFECCOES | média | DY acima de 30% | 37% (dividendo extraordinário ou valor de mercado subestimado) |
-| SCAR3 | SAO CARLOS EMPREEND E PARTICIPACOES | média | DY acima de 30% | 83% (dividendo extraordinário ou valor de mercado subestimado) |
-| SYNE3 | SYN PROP & TECH | média | DY acima de 30% | 32% (dividendo extraordinário ou valor de mercado subestimado) |
+| SCAR3 | SAO CARLOS EMPREEND E PARTICIPACOES | média | DY acima de 30% | 77% (dividendo extraordinário ou valor de mercado subestimado) |
+| SYNE3 | SYN PROP & TECH | média | DY acima de 30% | 33% (dividendo extraordinário ou valor de mercado subestimado) |
 | AERI3 | AERIS IND. E COM. DE EQUIP. PARA GER. DE | média | LPA com sinal trocado na DRE | 2025: lucro -901,213 mas LPA declarado +14.68 (erro de preenchimento da empresa) |
 | ECOM3 | ECONOMATICA | média | LPA com sinal trocado na DRE | 2025: lucro 86,707 mas LPA declarado -2.05 (erro de preenchimento da empresa) |
 | HBSA3 | HIDROVIAS DO BRASIL | média | LPA com sinal trocado na DRE | 2025: lucro -140,918 mas LPA declarado +0.05 (erro de preenchimento da empresa) |
@@ -92,17 +93,17 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | SHOW3 | T4F ENTRETENIMENTO | média | LPA com sinal trocado na DRE | 2025: lucro -52,219 mas LPA declarado +0.77 (erro de preenchimento da empresa) |
 | WEST3 | WESTWING COMÉRCIO VAREJISTA | média | LPA com sinal trocado na DRE | 2025: lucro -9,913 mas LPA declarado +0.89 (erro de preenchimento da empresa) |
 | ZAMP3 | ZAMP | média | LPA com sinal trocado na DRE | 2025: lucro 107,137 mas LPA declarado -0.27 (erro de preenchimento da empresa) |
-| DXCO3 | DEXCO | média | P/L extremo | 3678.2x |
+| DXCO3 | DEXCO | média | P/L extremo | 3762.7x |
 | ECOM3 | ECONOMATICA | média | P/L extremo | 0.4x |
 | ESTR4 | MANUFATURA DE BRINQUEDOS ESTRELA | média | P/L extremo | 0.1x |
 | GSHP3 | GENERAL SHOPPING E OUTLETS DO BRASIL BRA | média | P/L extremo | 0.3x |
 | MGEL4 | MANGELS INDUSTRIAL | média | P/L extremo | 0.6x |
 | MNPR3 | MINUPAR PARTICIPACOES | média | P/L extremo | 0.5x |
 | NEXP3 | Nexpe Participações | média | P/L extremo | 0.1x |
-| PDTC3 | PADTEC HOLDING | média | P/L extremo | 19299.7x |
+| PDTC3 | PADTEC HOLDING | média | P/L extremo | 18505.0x |
 | RVEE3 | REVEE | média | P/L extremo | 0.6x |
 | GFSA3 | GAFISA | média | P/VP extremo | 0.02x |
-| PDTC3 | PADTEC HOLDING | média | P/VP extremo | 1000.73x |
+| PDTC3 | PADTEC HOLDING | média | P/VP extremo | 959.52x |
 | TOKY3 | GRUPO TOKY | média | P/VP extremo | 0.03x |
 | AGXY3 | Agrogalaxy Participações | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 0.07× o calculado com as da DFP de 2024 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | AMBP3 | AMBIPAR PARTICIP. E EMPREEND. | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 10.01× o calculado com as da DFP de 2024 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
@@ -183,9 +184,9 @@ As de severidade baixa e informativas ficam em `auditoria.json`.
 
 | Ticker | Cotação base | Cotação brapi | Valor de mercado base | brapi | Diferença |
 |---|---|---|---|---|---|
-| PETR4 | 44.02 | 43.98 | 613.3 bi | 607.3 bi | +1.0% |
-| VALE3 | 60.7 | 60.34 | 253.1 bi | 241.9 bi | +4.6% |
-| ITUB4 | 41.3 | 40.89 | 478.7 bi | 477.7 bi | +0.2% |
-| MGLU3 | 7.49 | 7.95 | 5.8 bi | 5.3 bi | +9.9% |
+| PETR4 | 43.98 | 43.98 | 613.4 bi | 607.3 bi | +1.0% |
+| VALE3 | 60.34 | 60.34 | 251.6 bi | 241.9 bi | +4.0% |
+| ITUB4 | 40.89 | 40.89 | 474.4 bi | 477.7 bi | -0.7% |
+| MGLU3 | 7.95 | 7.95 | 6.2 bi | 5.3 bi | +16.6% |
 
 A base usa a quantidade de ações atual informada pela B3, menos as ações em tesouraria do último balanço (mesmo critério do LPA). Fontes de mercado variam: algumas usam o total emitido, outras uma contagem defasada. A cotação é o teste mais direto, e deve bater exatamente.
