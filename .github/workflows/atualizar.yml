@@ -1,0 +1,72 @@
+# Atualiza a base todo dia útil depois do fechamento da B3 e publica no GitHub Pages.
+# Ordem: processa → testa → audita com trava → resume mudanças → commita (o Pages publica o commit).
+# Se a trava ou os testes falharem, nada é commitado e um issue avisa.
+name: Atualizar base
+
+on:
+  schedule:
+    - cron: "30 23 * * 1-5"   # 20h30 em Brasília
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency: atualizar-base
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # ZIPs da CVM, pregões da B3, fichas e PTAX (~400 MB). Só o que falta ou venceu é baixado de novo.
+      - name: Cache das fontes
+        uses: actions/cache@v4
+        with:
+          path: scripts/sources
+          key: fontes-${{ github.run_id }}
+          restore-keys: fontes-
+
+      - name: Processar
+        run: python3 scripts/processar.py
+
+      - name: Testes
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Auditoria com trava de qualidade
+        run: python3 scripts/auditar.py --externo --trava
+
+      - name: Resumo de mudanças
+        run: python3 scripts/mudancas.py
+
+      - name: Commitar e publicar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/empresas.js index.html auditoria.md auditoria.json auditoria_resumo.json
+          if git diff --cached --quiet; then echo "sem mudanças"; exit 0; fi
+          git commit -m "Atualiza base ($(date -u +%F))"
+          git push
+
+      - name: Avisar mudanças relevantes
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! head -1 mudancas.md | grep -q "^Nada relevante"; then
+            gh issue create --title "Lastro: $(head -1 mudancas.md) ($(date -u +%d/%m/%Y))" --body-file mudancas.md
+          fi
+
+      - name: Avisar falha
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --title "Lastro: atualização falhou ($(date -u +%d/%m/%Y))" \
+            --body "A base não foi publicada. Detalhes: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"

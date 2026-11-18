@@ -1,0 +1,4 @@
+scripts/sources/
+__pycache__/
+.DS_Store
+mudancas.md
