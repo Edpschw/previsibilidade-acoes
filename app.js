@@ -847,34 +847,20 @@
 
   // ---------------------------------------------------------------- roteamento e controles
 
-  /** "#/" início · "#/acoes" ranking · "#/mapa" mapa 3D · "#/PETR4" empresa */
+  /** "#/" início · "#/acoes" ranking · "#/teia/PETR4,VALE3" teia (o antigo "#/mapa" cai nela) · "#/PETR4" empresa */
   function rota() {
     var m = location.hash.match(/^#\/([A-Za-z0-9]+)/);
     var alvo = m ? m[1] : "";
     $("#dica").hidden = true;
     if (observador) { observador.disconnect(); observador = null; }
-    if (window.RealTermsMapa && window.RealTermsMapa.parar) window.RealTermsMapa.parar();
-    var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "mapa" ? "mapa" : "empresa";
+    if (window.RealTermsTeia) window.RealTermsTeia.parar();
+    var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "teia" || alvo === "mapa" ? "teia" : "empresa";
     $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
     document.body.setAttribute("data-pagina", pagina);
     if (pagina === "inicio" && window.RealTermsInicio) window.RealTermsInicio.render($("#app"));
     else if (pagina === "inicio" || pagina === "acoes") telaRanking();
-    else if (pagina === "mapa") telaMapa();
+    else if (pagina === "teia") { if (window.RealTermsTeia) window.RealTermsTeia.render($("#app")); }
     else telaEmpresa(alvo.toUpperCase());
-  }
-
-  /** o mapa (three.js, ~700 KB) só é baixado quando alguém abre #/mapa */
-  function telaMapa() {
-    document.title = t("nav_mapa") + " · Real Terms";
-    var app = $("#app");
-    app.innerHTML = '<div class="cartao vazio">' + t("mapa_carregando") + "</div>";
-    var link = $('link[rel="prefetch"][data-modulo="mapa"]');
-    import(link ? link.href : "./mapa.js").then(function (mod) {
-      if (document.body.getAttribute("data-pagina") === "mapa") mod.render(app, window.RealTerms);
-    }).catch(function (err) {
-      if (window.console) console.error(err);
-      app.innerHTML = '<div class="cartao vazio">' + t("mapa_erro") + ' <a href="#/acoes">' + t("nav_acoes") + "</a>.</div>";
-    });
   }
 
   /** textos fixos do index.html (data-i18n, data-i18n-html, data-i18n-ph, data-i18n-aria) */
@@ -940,7 +926,7 @@
     rota();
   }
 
-  // API para inicio.js e mapa.js (mesmos números, formatos e textos da página)
+  // API para inicio.js e teia.js (mesmos números, formatos e textos da página)
   window.RealTerms = {
     D: D, EMPRESAS: EMPRESAS, POR_TICKER: POR_TICKER, estado: estado,
     t: t, tf: tf, L: L, mapa: mapa, locale: locale,
