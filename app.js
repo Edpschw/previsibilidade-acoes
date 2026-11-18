@@ -1,4 +1,4 @@
-/* Lastro — ranking e página da empresa a partir de window.DADOS (gerado por scripts/processar.py).
+/* Real Terms — ranking e página da empresa a partir de window.DADOS (gerado por scripts/processar.py).
  * Valores na base estão em R$ mil. Em US$, fluxos usam a PTAX média do ano e saldos de balanço a PTAX do fim do ano.
  * Textos em i18n.js (PT/EN); rótulos curtos dos cards usam L(pt, en) aqui mesmo. */
 (function () {
@@ -12,15 +12,18 @@
   var SALDOS = { ativo_total: 1, pl: 1, pl_controladora: 1, divida_bruta: 1, caixa: 1, divida_liquida: 1, valor_mercado: 1 };
 
   var estado = {
-    moeda: ler("lastro-moeda") || "brl",
-    lingua: ler("lastro-lingua") || (/^pt/i.test(navigator.language || "") ? "pt" : "en"),
+    moeda: ler("moeda") || "brl",
+    lingua: ler("lingua") || (/^pt/i.test(navigator.language || "") ? "pt" : "en"),
     ord: { col: "score", dir: -1 },
     filtros: { setor: "", controle: "", segmento: "", exterior: false, semFin: false, ativas: true },
     periodo: 10,
   };
 
-  function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-  function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* sem storage */ } }
+  // preferências do visitante; lê também as chaves da marca anterior (lastro-*) para ninguém perdê-las
+  function ler(k) {
+    try { return localStorage.getItem("realterms-" + k) || localStorage.getItem("lastro-" + k); } catch (e) { return null; }
+  }
+  function gravar(k, v) { try { localStorage.setItem("realterms-" + k, v); } catch (e) { /* sem storage */ } }
 
   // ---------------------------------------------------------------- idioma
 
@@ -413,7 +416,7 @@
       app.innerHTML = '<a class="voltar" href="#/acoes">' + t("voltar") + '</a><div class="cartao vazio">' + tf("nao_encontrado", esc(ticker)) + "</div>";
       return;
     }
-    document.title = ticker + " · " + nomeCurto(e.nome) + " · Lastro";
+    document.title = ticker + " · " + nomeCurto(e.nome) + " · Real Terms";
     estado.ticker = ticker;
     var i = indicadores(e), s = score(e), nv = nivelScore(s && s.total), cot = cotacaoDe(e, ticker);
     var secs = secoesDe(i);
@@ -850,11 +853,11 @@
     var alvo = m ? m[1] : "";
     $("#dica").hidden = true;
     if (observador) { observador.disconnect(); observador = null; }
-    if (window.LastroMapa && window.LastroMapa.parar) window.LastroMapa.parar();
+    if (window.RealTermsMapa && window.RealTermsMapa.parar) window.RealTermsMapa.parar();
     var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "mapa" ? "mapa" : "empresa";
     $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
     document.body.setAttribute("data-pagina", pagina);
-    if (pagina === "inicio" && window.LastroInicio) window.LastroInicio.render($("#app"));
+    if (pagina === "inicio" && window.RealTermsInicio) window.RealTermsInicio.render($("#app"));
     else if (pagina === "inicio" || pagina === "acoes") telaRanking();
     else if (pagina === "mapa") telaMapa();
     else telaEmpresa(alvo.toUpperCase());
@@ -862,12 +865,12 @@
 
   /** o mapa (three.js, ~700 KB) só é baixado quando alguém abre #/mapa */
   function telaMapa() {
-    document.title = t("nav_mapa") + " · Lastro";
+    document.title = t("nav_mapa") + " · Real Terms";
     var app = $("#app");
     app.innerHTML = '<div class="cartao vazio">' + t("mapa_carregando") + "</div>";
     var link = $('link[rel="prefetch"][data-modulo="mapa"]');
     import(link ? link.href : "./mapa.js").then(function (mod) {
-      if (document.body.getAttribute("data-pagina") === "mapa") mod.render(app, window.Lastro);
+      if (document.body.getAttribute("data-pagina") === "mapa") mod.render(app, window.RealTerms);
     }).catch(function (err) {
       if (window.console) console.error(err);
       app.innerHTML = '<div class="cartao vazio">' + t("mapa_erro") + ' <a href="#/acoes">' + t("nav_acoes") + "</a>.</div>";
@@ -901,24 +904,24 @@
   function iniciar() {
     $$("[data-moeda]").forEach(function (b) {
       b.addEventListener("click", function () {
-        estado.moeda = b.getAttribute("data-moeda"); gravar("lastro-moeda", estado.moeda); aplicarMoeda(); redesenhar();
+        estado.moeda = b.getAttribute("data-moeda"); gravar("moeda", estado.moeda); aplicarMoeda(); redesenhar();
       });
     });
     $$("[data-lingua]").forEach(function (b) {
       b.addEventListener("click", function () {
-        estado.lingua = b.getAttribute("data-lingua"); gravar("lastro-lingua", estado.lingua); aplicarLingua(); redesenhar();
+        estado.lingua = b.getAttribute("data-lingua"); gravar("lingua", estado.lingua); aplicarLingua(); redesenhar();
       });
     });
     aplicarMoeda();
     aplicarLingua();
 
-    var tema = ler("lastro-tema");
+    var tema = ler("tema");
     if (tema) document.documentElement.setAttribute("data-theme", tema);
     $("#tema").addEventListener("click", function () {
       var atual = document.documentElement.getAttribute("data-theme") ||
         (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
       var novo = atual === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", novo); gravar("lastro-tema", novo);
+      document.documentElement.setAttribute("data-theme", novo); gravar("tema", novo);
     });
 
     var tm;
@@ -938,7 +941,7 @@
   }
 
   // API para inicio.js e mapa.js (mesmos números, formatos e textos da página)
-  window.Lastro = {
+  window.RealTerms = {
     D: D, EMPRESAS: EMPRESAS, POR_TICKER: POR_TICKER, estado: estado,
     t: t, tf: tf, L: L, mapa: mapa, locale: locale,
     dinheiro: dinheiro, porAcao: porAcao, pct: pct, vezes: vezes, nf: nf, data: data, esc: esc,

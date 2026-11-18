@@ -1,4 +1,4 @@
-/* Lastro — mapa 3D do mercado (#/mapa). Módulo ES carregado sob demanda por app.js.
+/* Real Terms — mapa 3D do mercado (#/mapa). Módulo ES carregado sob demanda por app.js.
  * Cada empresa é um ponto: três indicadores escolhíveis nos eixos, tamanho = valor de mercado,
  * cor = nível de previsibilidade. Arrastar gira, roda/pinça aproxima, passar o mouse mostra a
  * empresa, clicar (ou tocar duas vezes) abre a página dela. */
@@ -13,7 +13,7 @@ export function parar() {
   atual.parar();
   atual = null;
 }
-window.LastroMapa = { parar: parar };
+window.RealTermsMapa = { parar: parar };
 
 const LIQUIDEZ_MIN = 1e6;
 
@@ -69,7 +69,7 @@ export function render(app, X) {
   const setores = [...new Set(base.map((b) => X.setor(b.e)))].sort((a, b) => a.localeCompare(b, X.locale()));
   const opcoes = (sel) => M.map((m) => `<option value="${m.id}"${m.id === sel ? " selected" : ""}>${esc(m.rot)}</option>`).join("");
 
-  document.title = X.t("nav_mapa") + " · Lastro";
+  document.title = X.t("nav_mapa") + " · Real Terms";
   app.innerHTML =
     `<section class="mapa-cab">
       <span class="olho"><span class="capitulo">3D</span>${esc(L("Mapa do mercado", "Market map"))}</span>
@@ -418,7 +418,7 @@ export function render(app, X) {
   laco();
 
   // inspeção (depuração e testes): estado da câmera e quantos pontos estão no mapa
-  window.LastroMapa.estado = () => ({ dist: vista.dist, zoomManual: vista.zoomManual, aspect: camera.aspect,
+  window.RealTermsMapa.estado = () => ({ dist: vista.dist, zoomManual: vista.zoomManual, aspect: camera.aspect,
     escala: material.uniforms.escala.value, pontos: visiveis.length, canvas: [canvas.clientWidth, canvas.clientHeight] });
 
   atual = {

@@ -1,4 +1,6 @@
-# Lastro — previsibilidade de ações brasileiras
+# Real Terms — ações brasileiras, em termos reais
+
+*Brazilian stocks, in real terms.* (Nome anterior: Lastro.)
 
 Fundamentos, cotações, múltiplos (P/L, P/VP, DY, EV/EBITDA) e um índice de previsibilidade (0–100) das empresas listadas na B3, em reais ou em dólar, pensado para o investidor estrangeiro. Usa só dados públicos: CVM, B3 e Banco Central.
 
@@ -26,7 +28,7 @@ A CVM regera os ZIPs dos últimos anos quando há reapresentação. Use `python3
 | `scripts/sources/` | ZIPs e JSON brutos baixados (fora do git, ~300 MB) |
 | `auditoria.md`, `auditoria.json` | Saída da auditoria (regerada a cada execução) |
 | `data/empresas.js` | `window.DADOS` com séries anuais em R$ mil, PTAX e índice. Gerado, não edite. |
-| `index.html`, `app.js`, `style.css` | Rotas: entrada (`#/`), ranking (`#/acoes`), mapa 3D (`#/mapa`) e página da empresa (`#/PETR4`), com cabeçalho-resumo, selos e navegação por seções. Gráficos em SVG próprio. `app.js` expõe `window.Lastro` (dados, formatos, textos) para os módulos abaixo. |
+| `index.html`, `app.js`, `style.css` | Rotas: entrada (`#/`), ranking (`#/acoes`), mapa 3D (`#/mapa`) e página da empresa (`#/PETR4`), com cabeçalho-resumo, selos e navegação por seções. Gráficos em SVG próprio. `app.js` expõe `window.RealTerms` (dados, formatos, textos) para os módulos abaixo. |
 | `inicio.js` | Página de entrada em cinco capítulos (o mercado em números, previsibilidade, real × dólar, glossário, três passos), calculada da base. |
 | `mapa.js` | Mapa 3D (módulo ES, three.js), baixado só quando alguém abre `#/mapa`: cada empresa é um ponto, eixos escolhíveis, tamanho = valor de mercado, cor = previsibilidade. |
 | `vendor/three/` | three.js r169 vendorizado (mesma cópia do `bastion-line`), sem CDN. |

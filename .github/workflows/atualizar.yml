@@ -60,7 +60,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if ! head -1 mudancas.md | grep -q "^Nada relevante"; then
-            gh issue create --title "Lastro: $(head -1 mudancas.md) ($(date -u +%d/%m/%Y))" --body-file mudancas.md
+            gh issue create --title "Real Terms: $(head -1 mudancas.md) ($(date -u +%d/%m/%Y))" --body-file mudancas.md
           fi
 
       - name: Avisar falha
@@ -68,5 +68,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue create --title "Lastro: atualização falhou ($(date -u +%d/%m/%Y))" \
+          gh issue create --title "Real Terms: atualização falhou ($(date -u +%d/%m/%Y))" \
             --body "A base não foi publicada. Detalhes: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"

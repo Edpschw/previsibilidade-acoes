@@ -1,10 +1,10 @@
-/* Lastro — página de entrada em capítulos (#/), para quem chega de fora.
- * Todos os números vêm da base (window.DADOS) pela API window.Lastro exposta em app.js. */
+/* Real Terms — página de entrada em capítulos (#/), para quem chega de fora.
+ * Todos os números vêm da base (window.DADOS) pela API window.RealTerms exposta em app.js. */
 (function () {
   "use strict";
 
   function render(app) {
-    var X = window.Lastro, D = X.D, L = X.L, esc = X.esc;
+    var X = window.RealTerms, D = X.D, L = X.L, esc = X.esc;
     document.title = X.t("titulo");
 
     // ---------------------------------------------------------------- números da base
@@ -55,7 +55,7 @@
     var c1 =
       '<section class="i-hero secao" id="s-i1">' +
       '<span class="olho">' + cap(0) + esc(L("Ações brasileiras para quem investe de fora", "Brazilian equities for international investors")) + "</span>" +
-      "<h1>" + esc(L("O mercado brasileiro, pelos números.", "Brazil's stock market, by the numbers.")) + "</h1>" +
+      "<h1>" + esc(L("Ações brasileiras, em termos reais.", "Brazilian stocks, in real terms.")) + "</h1>" +
       '<p class="i-lead">' + esc(L(
         "Balanços oficiais entregues à CVM desde " + anoIni + ", cotações da B3 e o câmbio do Banco Central, num só lugar. Sem opinião, sem recomendação: dados que você pode conferir na fonte.",
         "Official statements filed with the CVM since " + anoIni + ", B3 prices and the Central Bank exchange rate, in one place. No opinions, no recommendations: data you can check at the source.")) + "</p>" +
@@ -100,8 +100,8 @@
         "Quem investe de fora recebe em reais e mede em dólares. Em " + anosPtax[0] + " um dólar valia R$ " + X.nf(2).format(p0) + "; hoje vale R$ " + X.nf(2).format(p1) + ". Uma empresa que cresce todo ano em reais pode encolher em dólar.",
         "International investors are paid in reais but measure in dollars. In " + anosPtax[0] + " one dollar bought R$ " + X.nf(2).format(p0) + "; today it buys R$ " + X.nf(2).format(p1) + ". A company that grows every year in reais can shrink in dollars.")) + "</p>" +
       "<p>" + esc(L(
-        "Por isso o Lastro calcula o índice também em US$, com receita e lucro convertidos pela PTAX. Entre as ações líquidas, " + caem + " perdem 5 pontos ou mais quando medidas em dólar" + (pior ? "; a maior queda é a de " + pior.e.ticker + " (" + pior.e.score.brl.total + " → " + pior.e.score.usd.total + ")." : "."),
-        "That is why Lastro also computes the score in US$, with revenue and earnings converted at the PTAX rate. Among liquid stocks, " + caem + " lose 5 points or more when measured in dollars" + (pior ? "; the largest drop is " + pior.e.ticker + " (" + pior.e.score.brl.total + " → " + pior.e.score.usd.total + ")." : "."))) + "</p>" +
+        "Por isso o Real Terms calcula o índice também em US$, com receita e lucro convertidos pela PTAX. Entre as ações líquidas, " + caem + " perdem 5 pontos ou mais quando medidas em dólar" + (pior ? "; a maior queda é a de " + pior.e.ticker + " (" + pior.e.score.brl.total + " → " + pior.e.score.usd.total + ")." : "."),
+        "That is why Real Terms also computes the score in US$, with revenue and earnings converted at the PTAX rate. Among liquid stocks, " + caem + " lose 5 points or more when measured in dollars" + (pior ? "; the largest drop is " + pior.e.ticker + " (" + pior.e.score.brl.total + " → " + pior.e.score.usd.total + ")." : "."))) + "</p>" +
       '<p class="mudo pequeno">' + esc(L("Use o seletor R$ | US$ no topo: todas as páginas mudam junto.", "Use the R$ | US$ switch at the top: every page follows.")) + "</p>" +
       '</div><div><div class="grafico" id="g-ptax"></div><p class="aviso">' +
       esc(L("Reais por dólar, PTAX média de cada ano (Banco Central).", "Reais per dollar, yearly average PTAX rate (Central Bank of Brazil).")) + "</p></div></div></section>";
@@ -152,7 +152,7 @@
     X.observarSecoes();
   }
 
-  window.LastroInicio = { render: render };
+  window.RealTermsInicio = { render: render };
   // app.js roda primeiro; se a página aberta é o início, desenha agora
   if (document.body.getAttribute("data-pagina") === "inicio") render(document.getElementById("app"));
 })();

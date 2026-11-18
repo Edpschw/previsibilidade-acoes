@@ -372,3 +372,7 @@ tbody tr:last-child td { border-bottom: 0; }
   .mapa-presets { margin-left: 0; }
   .mapa-palco canvas { height: 62vh; }
 }
+
+/* logotipo: "Real" na cor de destaque */
+.marca-nome { font-weight: 650; letter-spacing: -.02em; white-space: nowrap; }
+.marca-nome b { color: var(--accent); font-weight: 800; }

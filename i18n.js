@@ -1,9 +1,9 @@
-/* Lastro — textos da interface em português e inglês.
+/* Real Terms — textos da interface em português e inglês.
  * Chave → texto; "{0}", "{1}"… são preenchidos por tf(). Valores que vêm da CVM em português
  * (controle, segmento, país) têm tradução em MAPAS; o setor em inglês vem da própria B3. */
 window.I18N = {
   pt: {
-    titulo: "Lastro · Ações brasileiras",
+    titulo: "Real Terms · Ações brasileiras em termos reais",
     nav_inicio: "Início", nav_acoes: "Ações", nav_mapa: "Mapa 3D", nav_principal: "Navegação principal",
     mapa_carregando: "Carregando o mapa 3D…",
     mapa_erro: "Não foi possível carregar o mapa 3D neste navegador. Veja as empresas em",
@@ -94,7 +94,7 @@ window.I18N = {
     rodape_gerado: "Base gerada em {0}. PTAX média de {1}: R$ {2} por US$.",
   },
   en: {
-    titulo: "Lastro · Brazilian stocks",
+    titulo: "Real Terms · Brazilian stocks, in real terms",
     nav_inicio: "Home", nav_acoes: "Stocks", nav_mapa: "3D map", nav_principal: "Main navigation",
     mapa_carregando: "Loading the 3D map…",
     mapa_erro: "The 3D map could not load in this browser. Browse the companies under",
