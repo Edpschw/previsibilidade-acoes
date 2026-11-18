@@ -32,14 +32,14 @@
   "nome": "ALLIANÇA SAÚDE E PARTICIPAÇÕES S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 13.6%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 11.9%"
  },
  {
   "ticker": "AALR3",
   "nome": "ALLIANÇA SAÚDE E PARTICIPAÇÕES S.A.",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "AALR3: 5.05 no fim de 2025 → 0.83 hoje (evento societário ou movimento forte)"
+  "msg": "AALR3: 5.05 no fim de 2025 → 0.95 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "AALR3",
@@ -123,7 +123,7 @@
   "nome": "BRASILAGRO - CIA BRAS DE PROP AGRICOLAS",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 1.7% × pagos em 2025 (DFP) 9.0%"
+  "msg": "proventos 12m (B3) 1.7% × pagos em 2025 (DFP) 8.7%"
  },
  {
   "ticker": "AGRO3",
@@ -179,7 +179,7 @@
   "nome": "ALPARGATAS S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 14.9% × pagos em 2025 (DFP) 3.8%"
+  "msg": "proventos 12m (B3) 15.2% × pagos em 2025 (DFP) 3.8%"
  },
  {
   "ticker": "ALPK3",
@@ -228,14 +228,14 @@
   "nome": "AMBIPAR PARTICIP. E EMPREEND. S.A. - EM RECUPERAÇÃO JUDICIAL",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2024 (DFP) 15.3%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2024 (DFP) 14.1%"
  },
  {
   "ticker": "AMBP3",
   "nome": "AMBIPAR PARTICIP. E EMPREEND. S.A. - EM RECUPERAÇÃO JUDICIAL",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "AMBP3: 130.00 no fim de 2024 → 0.12 hoje (evento societário ou movimento forte)"
+  "msg": "AMBP3: 134.96 no fim de 2024 → 0.13 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "AMBP3",
@@ -326,7 +326,7 @@
   "nome": "ARMAC LOCAÇÃO, LOGÍSTICA E SERVIÇOS S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 9.8% × pagos em 2025 (DFP) 2.0%"
+  "msg": "proventos 12m (B3) 10.3% × pagos em 2025 (DFP) 2.1%"
  },
  {
   "ticker": "ARND3",
@@ -466,7 +466,7 @@
   "nome": "AZEVEDO E TRAVASSOS S.A.",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "AZEV3: 0.25 no fim de 2025 → 11.47 hoje (evento societário ou movimento forte)"
+  "msg": "AZEV3: 0.25 no fim de 2025 → 8.75 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "AZTE3",
@@ -562,16 +562,9 @@
  {
   "ticker": "B1003",
   "nome": "B100 S.A.",
-  "sev": "média",
-  "regra": "cotação parada",
-  "msg": "último negócio de B1003 há mais de 14 dias"
- },
- {
-  "ticker": "B1003",
-  "nome": "B100 S.A.",
-  "sev": "média",
-  "regra": "ações B3 × DFP",
-  "msg": "valor de mercado com ações da B3 hoje é 5.05× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3"
+  "sev": "info",
+  "regra": "sem cotação",
+  "msg": "nenhum negócio nos últimos pregões"
  },
  {
   "ticker": "B3SA3",
@@ -585,7 +578,7 @@
   "nome": "B3 S.A. - BRASIL, BOLSA, BALCÃO",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 6.2% × pagos em 2025 (DFP) 2.0%"
+  "msg": "proventos 12m (B3) 6.1% × pagos em 2025 (DFP) 2.0%"
  },
  {
   "ticker": "BALM4",
@@ -697,7 +690,7 @@
   "nome": "Grupo Casas Bahia S.A. - Em Recuperação Judicial",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "BHIA3: 3.15 no fim de 2025 → 0.66 hoje (evento societário ou movimento forte)"
+  "msg": "BHIA3: 3.15 no fim de 2025 → 0.68 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "BIED3",
@@ -746,7 +739,7 @@
   "nome": "BCO MERCANTIL DO BRASIL S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 6.5% × pagos em 2025 (DFP) 2.1%"
+  "msg": "proventos 12m (B3) 6.4% × pagos em 2025 (DFP) 2.1%"
  },
  {
   "ticker": "BMIN4",
@@ -767,7 +760,7 @@
   "nome": "BICICLETAS MONARK S.A.",
   "sev": "média",
   "regra": "DY acima de 30%",
-  "msg": "37% (dividendo extraordinário ou valor de mercado subestimado)"
+  "msg": "36% (dividendo extraordinário ou valor de mercado subestimado)"
  },
  {
   "ticker": "BMKS3",
@@ -865,7 +858,7 @@
   "nome": "BRBI BR Partners S.A",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 18.1%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 18.4%"
  },
  {
   "ticker": "BRFS3",
@@ -915,13 +908,6 @@
   "sev": "baixa",
   "regra": "salto de ações",
   "msg": "2020→2021: ×10.00 (desdobramento, grupamento, emissão ou escala)"
- },
- {
-  "ticker": "BSLI3",
-  "nome": "BRB BANCO DE BRASILIA S.A.",
-  "sev": "baixa",
-  "regra": "preço mudou de escala",
-  "msg": "BSLI3: 7.98 no fim de 2024 → 1.95 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "BSLI3",
@@ -1194,14 +1180,14 @@
   "nome": "COSAN S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 20.9%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 22.0%"
  },
  {
   "ticker": "CSNA3",
   "nome": "CIA SIDERURGICA NACIONAL",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 13.9%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 14.2%"
  },
  {
   "ticker": "CTAX3",
@@ -1323,13 +1309,6 @@
   "msg": "2024→2025: ×3.00 (desdobramento, grupamento, emissão ou escala)"
  },
  {
-  "ticker": "DIRR3",
-  "nome": "DIRECIONAL ENGENHARIA S.A.",
-  "sev": "média",
-  "regra": "DY acima de 30%",
-  "msg": "31% (dividendo extraordinário ou valor de mercado subestimado)"
- },
- {
   "ticker": "DOHL4",
   "nome": "DOHLER S.A.",
   "sev": "info",
@@ -1390,7 +1369,7 @@
   "nome": "DEXCO S.A.",
   "sev": "média",
   "regra": "P/L extremo",
-  "msg": "3762.7x"
+  "msg": "3678.2x"
  },
  {
   "ticker": "EALT4",
@@ -1488,21 +1467,21 @@
   "nome": "ENJOEI S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 3.2% × pagos em 2025 (DFP) 0.0%"
+  "msg": "proventos 12m (B3) 3.3% × pagos em 2025 (DFP) 0.0%"
  },
  {
   "ticker": "ENJU3",
   "nome": "ENJOEI S.A.",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "ENJU3: 1.07 no fim de 2025 → 6.29 hoje (evento societário ou movimento forte)"
+  "msg": "ENJU3: 1.07 no fim de 2025 → 6.20 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "ENMT3",
   "nome": "ENERGISA MATO GROSSO-DISTRIBUIDORA DE ENERGIA S/A",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 2.8% × pagos em 2025 (DFP) 20.0%"
+  "msg": "proventos 12m (B3) 2.8% × pagos em 2025 (DFP) 19.9%"
  },
  {
   "ticker": "ENMT3",
@@ -1551,7 +1530,7 @@
   "nome": "EQUATORIAL MARANHÃO DISTRIBUIDORA DE ENERGIA S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 2.6% × pagos em 2025 (DFP) 8.9%"
+  "msg": "proventos 12m (B3) 2.8% × pagos em 2025 (DFP) 9.3%"
  },
  {
   "ticker": "EQMA3B",
@@ -1572,7 +1551,7 @@
   "nome": "EQUATORIAL S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.4% × pagos em 2025 (DFP) 12.5%"
+  "msg": "proventos 12m (B3) 0.4% × pagos em 2025 (DFP) 12.6%"
  },
  {
   "ticker": "ESPA3",
@@ -1600,7 +1579,7 @@
   "nome": "MPM Corpóreos S.A.",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "ESPA3: 1.04 no fim de 2025 → 4.88 hoje (evento societário ou movimento forte)"
+  "msg": "ESPA3: 1.04 no fim de 2025 → 4.91 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "ESTR4",
@@ -1636,6 +1615,13 @@
   "sev": "baixa",
   "regra": "LPA declarado por lote de mil",
   "msg": "2021: declarado R$ 1123.00 ≈ 1000 × calculado R$ 1.13 (erro de preenchimento da empresa)"
+ },
+ {
+  "ticker": "EVEN3",
+  "nome": "EVEN CONSTRUTORA E INCORPORADORA S.A.",
+  "sev": "info",
+  "regra": "DY 12m × DY do exercício",
+  "msg": "proventos 12m (B3) 4.1% × pagos em 2025 (DFP) 21.0%"
  },
  {
   "ticker": "FASA3",
@@ -2300,7 +2286,7 @@
   "nome": "JSL S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 32.3% × pagos em 2025 (DFP) 6.4%"
+  "msg": "proventos 12m (B3) 32.1% × pagos em 2025 (DFP) 6.3%"
  },
  {
   "ticker": "KEPL3",
@@ -2349,7 +2335,7 @@
   "nome": "Lojas Quero Quero S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 9.1%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 10.8%"
  },
  {
   "ticker": "LOGG3",
@@ -2387,13 +2373,6 @@
   "msg": "valor de mercado com ações da B3 hoje é 0.10× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3"
  },
  {
-  "ticker": "LUPA3",
-  "nome": "LUPATECH S.A",
-  "sev": "baixa",
-  "regra": "preço mudou de escala",
-  "msg": "LUPA3: 1.00 no fim de 2025 → 4.05 hoje (evento societário ou movimento forte)"
- },
- {
   "ticker": "LUXM4",
   "nome": "TREVISA INVESTIMENTOS S.A.",
   "sev": "baixa",
@@ -2419,7 +2398,7 @@
   "nome": "LWSA S/A",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 9.1% × pagos em 2025 (DFP) 1.6%"
+  "msg": "proventos 12m (B3) 9.2% × pagos em 2025 (DFP) 1.7%"
  },
  {
   "ticker": "MAPT4",
@@ -2510,14 +2489,14 @@
   "nome": "MARFRIG GLOBAL FOODS S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 15.8%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 15.9%"
  },
  {
   "ticker": "MDNE3",
   "nome": "MOURA DUBEUX ENGENHARIA S/A",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 23.8% × pagos em 2025 (DFP) 5.5%"
+  "msg": "proventos 12m (B3) 23.6% × pagos em 2025 (DFP) 5.5%"
  },
  {
   "ticker": "MEAL3",
@@ -2566,7 +2545,7 @@
   "nome": "MAGAZINE LUIZA S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 1.0% × pagos em 2025 (DFP) 3.7%"
+  "msg": "proventos 12m (B3) 1.1% × pagos em 2025 (DFP) 3.9%"
  },
  {
   "ticker": "MLAS3",
@@ -2650,7 +2629,7 @@
   "nome": "MOVIDA PARTICIPACOES SA",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 12.6% × pagos em 2025 (DFP) 2.2%"
+  "msg": "proventos 12m (B3) 12.8% × pagos em 2025 (DFP) 2.2%"
  },
  {
   "ticker": "MSPA4",
@@ -2671,7 +2650,7 @@
   "nome": "IOCHPE MAXION S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 6.1%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 6.0%"
  },
  {
   "ticker": "NATU3",
@@ -2902,7 +2881,7 @@
   "nome": "ONCOCLÍNICAS DO BRASIL SERVIÇOS MÉDICOS S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 4.6%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 4.3%"
  },
  {
   "ticker": "OPCT3",
@@ -3126,7 +3105,7 @@
   "nome": "PDG REALTY S.A. EMPREEND E PARTICIPACOES",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "PDGR3: 1.43 no fim de 2025 → 0.16 hoje (evento societário ou movimento forte)"
+  "msg": "PDGR3: 1.43 no fim de 2025 → 0.17 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "PDTC3",
@@ -3161,14 +3140,14 @@
   "nome": "PADTEC HOLDING S.A.",
   "sev": "média",
   "regra": "P/L extremo",
-  "msg": "18505.0x"
+  "msg": "19299.7x"
  },
  {
   "ticker": "PDTC3",
   "nome": "PADTEC HOLDING S.A.",
   "sev": "média",
   "regra": "P/VP extremo",
-  "msg": "959.52x"
+  "msg": "1000.73x"
  },
  {
   "ticker": "PEAB3",
@@ -3217,7 +3196,7 @@
   "nome": "MARCOPOLO S.A.",
   "sev": "média",
   "regra": "DY acima de 30%",
-  "msg": "30% (dividendo extraordinário ou valor de mercado subestimado)"
+  "msg": "31% (dividendo extraordinário ou valor de mercado subestimado)"
  },
  {
   "ticker": "POSI3",
@@ -3399,7 +3378,7 @@
   "nome": "RUMO S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.6% × pagos em 2025 (DFP) 4.8%"
+  "msg": "proventos 12m (B3) 0.7% × pagos em 2025 (DFP) 5.0%"
  },
  {
   "ticker": "RAIZ4",
@@ -3427,7 +3406,7 @@
   "nome": "RANDONCORP S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 9.1%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 9.2%"
  },
  {
   "ticker": "RCSL4",
@@ -3511,7 +3490,7 @@
   "nome": "REDE ENERGIA PARTICIPAÇÕES S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 3.0% × pagos em 2025 (DFP) 14.1%"
+  "msg": "proventos 12m (B3) 3.0% × pagos em 2025 (DFP) 13.9%"
  },
  {
   "ticker": "RIAA3",
@@ -3525,7 +3504,7 @@
   "nome": "GUARARAPES CONFECCOES S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 5.6% × pagos em 2025 (DFP) 36.9%"
+  "msg": "proventos 12m (B3) 5.5% × pagos em 2025 (DFP) 36.8%"
  },
  {
   "ticker": "RNEW3",
@@ -3658,28 +3637,28 @@
   "nome": "CIA SANEAMENTO BASICO EST SAO PAULO",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 15.2% × pagos em 2025 (DFP) 2.4%"
+  "msg": "proventos 12m (B3) 15.6% × pagos em 2025 (DFP) 2.5%"
  },
  {
   "ticker": "SBSP3",
   "nome": "CIA SANEAMENTO BASICO EST SAO PAULO",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "SBSP3: 133.39 no fim de 2025 → 27.76 hoje (evento societário ou movimento forte)"
+  "msg": "SBSP3: 133.39 no fim de 2025 → 27.10 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "SCAR3",
   "nome": "SAO CARLOS EMPREEND E PARTICIPACOES S.A.",
   "sev": "média",
   "regra": "DY acima de 30%",
-  "msg": "77% (dividendo extraordinário ou valor de mercado subestimado)"
+  "msg": "83% (dividendo extraordinário ou valor de mercado subestimado)"
  },
  {
   "ticker": "SEER3",
   "nome": "SER EDUCACIONAL S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 7.8% × pagos em 2025 (DFP) 1.4%"
+  "msg": "proventos 12m (B3) 7.9% × pagos em 2025 (DFP) 1.4%"
  },
  {
   "ticker": "SEQL3",
@@ -3784,14 +3763,14 @@
   "nome": "SMARTFIT ESCOLA DE GINÁSTICA E DANÇA S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 5.9% × pagos em 2025 (DFP) 1.7%"
+  "msg": "proventos 12m (B3) 5.8% × pagos em 2025 (DFP) 1.7%"
  },
  {
   "ticker": "SMTO3",
   "nome": "SAO MARTINHO S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 1.2% × pagos em 2025 (DFP) 6.7%"
+  "msg": "proventos 12m (B3) 1.2% × pagos em 2025 (DFP) 6.9%"
  },
  {
   "ticker": "SMTO3",
@@ -3875,7 +3854,7 @@
   "nome": "SYN PROP & TECH S.A.",
   "sev": "média",
   "regra": "DY acima de 30%",
-  "msg": "33% (dividendo extraordinário ou valor de mercado subestimado)"
+  "msg": "32% (dividendo extraordinário ou valor de mercado subestimado)"
  },
  {
   "ticker": "TASA4",
@@ -3896,7 +3875,7 @@
   "nome": "TECNISA S.A.",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "TCSA3: 1.13 no fim de 2025 → 4.66 hoje (evento societário ou movimento forte)"
+  "msg": "TCSA3: 1.13 no fim de 2025 → 4.67 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "TELB4",
@@ -3994,7 +3973,7 @@
   "nome": "GRUPO TOKY S.A. - EM RECUPERAÇÃO JUDICIAL",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "TOKY3: 0.81 no fim de 2025 → 4.25 hoje (evento societário ou movimento forte)"
+  "msg": "TOKY3: 0.81 no fim de 2025 → 4.35 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "TPIS3",
@@ -4022,7 +4001,7 @@
   "nome": "TPI - TRIUNFO PARTICIP. E INVEST. S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 4.8% × pagos em 2025 (DFP) 0.0%"
+  "msg": "proventos 12m (B3) 5.0% × pagos em 2025 (DFP) 0.0%"
  },
  {
   "ticker": "TPIS3",
@@ -4036,7 +4015,7 @@
   "nome": "TUPY S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 7.3%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 7.4%"
  },
  {
   "ticker": "TXRX4",
@@ -4050,7 +4029,7 @@
   "nome": "UNICASA INDÚSTRIA DE MÓVEIS S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 17.5%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 19.9%"
  },
  {
   "ticker": "VAMO3",
@@ -4078,7 +4057,7 @@
   "nome": "Vivara Participações S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 4.3% × pagos em 2025 (DFP) 13.3%"
+  "msg": "proventos 12m (B3) 4.2% × pagos em 2025 (DFP) 13.3%"
  },
  {
   "ticker": "VIVR3",
@@ -4109,18 +4088,11 @@
   "msg": "valor de mercado com ações da B3 hoje é 0.10× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3"
  },
  {
-  "ticker": "VIVR3",
-  "nome": "VIVER INCORPORADORA E CONSTRUTORA S.A.",
-  "sev": "baixa",
-  "regra": "preço mudou de escala",
-  "msg": "VIVR3: 0.62 no fim de 2025 → 3.10 hoje (evento societário ou movimento forte)"
- },
- {
   "ticker": "VIVT3",
   "nome": "TELEFÔNICA BRASIL S.A",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 7.2% × pagos em 2025 (DFP) 1.9%"
+  "msg": "proventos 12m (B3) 7.4% × pagos em 2025 (DFP) 2.0%"
  },
  {
   "ticker": "VSPT4",
@@ -4169,7 +4141,7 @@
   "nome": "VULCABRAS S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 7.9% × pagos em 2025 (DFP) 27.3%"
+  "msg": "proventos 12m (B3) 6.8% × pagos em 2025 (DFP) 27.1%"
  },
  {
   "ticker": "VVEO3",
@@ -4197,7 +4169,7 @@
   "nome": "LIVETECH DA BAHIA INDÚSTRIA E COMÉRCIO S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 7.5%"
+  "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 8.2%"
  },
  {
   "ticker": "WEST3",
@@ -4260,7 +4232,7 @@
   "nome": "WHIRLPOOL S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 3.8% × pagos em 2025 (DFP) 16.9%"
+  "msg": "proventos 12m (B3) 3.8% × pagos em 2025 (DFP) 16.8%"
  },
  {
   "ticker": "ZAMP3",
