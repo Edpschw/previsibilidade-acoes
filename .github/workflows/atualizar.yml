@@ -1,5 +1,6 @@
 # Atualiza a base todo dia útil depois do fechamento da B3 e publica no GitHub Pages.
-# Ordem: processa → testa → audita com trava → resume mudanças → commita (o Pages publica o commit).
+# Ordem: processa → testa → audita com trava → resume mudanças → commita (o Pages publica o commit)
+# → carrega a mesma base no Postgres (só se o segredo DATABASE_URL existir).
 # Se a trava ou os testes falharem, nada é commitado e um issue avisa.
 name: Atualizar base
 
@@ -18,12 +19,28 @@ jobs:
   atualizar:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}           # base de produção (opcional)
+      DATABASE_URL_TESTE: postgresql://postgres:teste@localhost:5432/postgres
+    # Postgres descartável para os testes da base (tests/test_base.py)
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: teste
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Dependências
+        run: pip install -r requirements.txt
 
       # ZIPs da CVM, pregões da B3, fichas e PTAX (~400 MB). Só o que falta ou venceu é baixado de novo.
       - name: Cache das fontes
@@ -63,8 +80,22 @@ jobs:
             gh issue create --title "Real Terms: $(head -1 mudancas.md) ($(date -u +%d/%m/%Y))" --body-file mudancas.md
           fi
 
+      # Carga no Postgres, conferida campo a campo com o JSON; se divergir, nada é gravado.
+      - name: Carregar base (Postgres)
+        id: base
+        if: env.DATABASE_URL != ''
+        run: python3 scripts/carregar_base.py
+
+      - name: Avisar falha na base Postgres
+        if: failure() && steps.base.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --title "Real Terms: carga no Postgres falhou ($(date -u +%d/%m/%Y))" \
+            --body "O site foi publicado normalmente; a carga no Postgres foi desfeita e nada foi gravado nela. Detalhes: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
       - name: Avisar falha
-        if: failure()
+        if: failure() && steps.base.outcome != 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

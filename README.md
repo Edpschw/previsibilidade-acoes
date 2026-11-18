@@ -24,7 +24,10 @@ A CVM regera os ZIPs dos últimos anos quando há reapresentação. Use `python3
 | `scripts/mudancas.py` | Compara a base nova com a commitada e escreve `mudancas.md` (entradas e saídas, balanços novos, cotações que mudaram mais de 15% em papéis com liquidez de pelo menos R$ 1 mi/dia, índice que mudou 5 pontos ou mais). |
 | `scripts/versionar.py` | Atualiza o `?v=` dos assets no `index.html` com o hash do conteúdo. Roda sozinho no fim do processamento. |
 | `docs/arquitetura-comercial.md` | Proposta de arquitetura para vender acesso: formato da base (bruto → staging → Postgres), modelo de dados, API, planos, bloqueios jurídicos e fases. |
-| `tests/` | `test_regras.py` (regras com dados sintéticos) e `test_dados.py` (invariantes da base gerada). `python3 -m unittest discover -s tests` |
+| `tests/` | `test_regras.py` (regras com dados sintéticos), `test_dados.py` (invariantes da base gerada) e `test_base.py` (base em Postgres; precisa de `DATABASE_URL_TESTE`). `python3 -m unittest discover -s tests` |
+| `db/schema.sql` | Esquema da base em PostgreSQL (histórico por intervalo de cargas, retratos diários, catálogo de métricas). |
+| `scripts/carregar_base.py` | Carrega `data/empresas.js` no Postgres numa transação, remonta a base a partir do banco e compara campo a campo; se divergir, desfaz tudo. |
+| `requirements.txt` | Única dependência externa: `psycopg` (só para a base em Postgres; o processamento continua só com a biblioteca padrão). |
 | `.github/workflows/atualizar.yml` | Atualização diária no GitHub Actions |
 | `scripts/sources/` | ZIPs e JSON brutos baixados (fora do git, ~300 MB) |
 | `auditoria.md`, `auditoria.json` | Saída da auditoria (regerada a cada execução) |
@@ -46,8 +49,44 @@ O GitHub Actions roda `.github/workflows/atualizar.yml` em todo dia útil, às 2
 4. `mudancas.py` resume o que mudou desde o último commit.
 5. Commit de `data/empresas.js`, `index.html` e da auditoria; o GitHub Pages publica o commit.
 6. Um issue avisa quando há mudanças relevantes ou quando a atualização falha (o GitHub manda por e-mail).
+7. Se o segredo `DATABASE_URL` existir, `carregar_base.py` grava a mesma base no Postgres. Se a carga falhar, o site já foi publicado e um issue próprio avisa; nada fica gravado pela metade.
 
 Os dados trimestrais (ITR) entram nos indicadores de 12 meses: último exercício + acumulado do ano − acumulado do mesmo período do ano anterior.
+
+## Base em PostgreSQL
+
+Primeiro passo da Fase 1 de [`docs/arquitetura-comercial.md`](docs/arquitetura-comercial.md): a mesma base do site, agora num Postgres com histórico. O site continua lendo `data/empresas.js`; nada muda para quem usa.
+
+- **Histórico por carga.** Cada atualização é uma carga. Cadastro, tickers, fundamentos, ajustes, preços de fim de exercício e PTAX têm `carga_de`/`carga_ate`: só ganha linha nova o que mudou (uma reapresentação, por exemplo), e qualquer carga passada pode ser remontada. Cotação, valor de mercado e índice ficam em retratos por carga (`retrato_empresa`, `retrato_papel`, `indice`), o que guarda o histórico diário desde a primeira carga.
+- **Correções como dado.** Ações estimadas pelo LPA e ações com escala corrigida viram linhas da tabela `ajuste`.
+- **Reais, não R$ mil.** Valores monetários são gravados em reais. O catálogo `metrica` diz unidade, natureza (fluxo ou saldo, que decide a PTAX) e nome em português e inglês.
+- **Conferência.** Antes de confirmar, o script remonta o JSON a partir do banco e compara campo a campo (345 empresas, ~133 mil valores). Qualquer diferença desfaz a transação.
+
+Para ligar em produção:
+
+1. Crie um Postgres gerenciado (Supabase ou Neon têm plano grátis) e copie a string de conexão.
+2. No GitHub: *Settings → Secrets and variables → Actions → New repository secret*, nome `DATABASE_URL`.
+3. A próxima atualização diária cria as tabelas e faz a primeira carga. Para carregar já:
+
+```bash
+DATABASE_URL='postgresql://…' python3 scripts/carregar_base.py
+```
+
+Consultas de exemplo:
+
+```sql
+-- maiores empresas hoje
+select ticker_principal, nome, valor_mercado, indice_brl from empresa_atual order by valor_mercado desc nulls last limit 10;
+
+-- receita anual da WEGE, em reais
+select f.exercicio, f.valor from fundamento_anual_atual f join empresa_atual e using (empresa_id)
+where e.ticker_principal = 'WEGE3' and f.metrica = 'receita' order by 1;
+
+-- valores reapresentados: o que mudou e em que carga
+select * from fundamento_anual where carga_ate is not null order by carga_ate desc limit 20;
+```
+
+O esquema é idempotente (`create … if not exists`) e roda a cada carga. Mudança em tabela que já existe pede um `alter table` à mão até a base ganhar uma ferramenta de migração.
 
 ## Fontes
 

@@ -434,6 +434,9 @@ flowchart TB
 | **3 — Dado profissional** | trimestral histórico, preço diário e ajustado, proventos, deslistadas, *point-in-time*, histórico de múltiplos, exportação | médio: depende da fonte licenciada |
 | **4 — Escala** | API paga, alertas por e-mail (o `mudancas.py` já é o embrião), páginas públicas para SEO | baixo |
 
+> [!done] Fase 1, primeiro passo (18/11/2026)
+> `scripts/carregar_base.py` grava a base no Postgres com histórico por carga e confere campo a campo com o JSON (`db/schema.sql`, `tests/test_base.py`, passo opcional na atualização diária). Diferenças em relação ao modelo da §3.2, por limitação do JSON de hoje: fundamentos anuais por exercício (o JSON não traz a data exata de fim) em `fundamento_anual`, 12 meses em `fundamento_12m`; papel identificado pelo ticker até o ISIN vir do COTAHIST; histórico pela carga em que o valor apareceu, e não ainda pela data de entrega à CVM. Próximos passos: staging em Parquet, arquivos brutos no R2, auditoria em SQL.
+
 A Fase 1 pode começar já. Ela não depende de nenhuma decisão jurídica, não muda nada para quem usa o site hoje e é a base de todas as outras.
 
 ---
