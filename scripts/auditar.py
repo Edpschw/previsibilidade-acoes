@@ -306,6 +306,7 @@ def main():
         "empresas": len(empresas),
         "cobertura": round(len(raizes_base) / max(len(raizes_b3), 1), 4),
         "emissores_negociados": len(raizes_b3),
+        "cotacoes_em": d["cotacoes_em"],
         "graves": sorted(f"{a['ticker']}|{a['regra']}" for a in achados if a["sev"] == "alta"),
         "por_severidade": dict(Counter(a["sev"] for a in achados)),
     }
@@ -328,6 +329,9 @@ def trava(novo, anterior):
     if novo["cobertura"] < 0.97:
         problemas.append(f"cobertura de {novo['cobertura']:.1%} (mínimo 97%)")
     if anterior:
+        if anterior.get("cotacoes_em") and novo["cotacoes_em"] < anterior["cotacoes_em"]:
+            problemas.append(f"cotações recuaram de {anterior['cotacoes_em']} para {novo['cotacoes_em']} "
+                             "(pregão mais recente não foi baixado)")
         if novo["empresas"] < anterior["empresas"] * 0.95:
             problemas.append(f"base encolheu de {anterior['empresas']} para {novo['empresas']} empresas")
         novas = sorted(set(novo["graves"]) - set(anterior["graves"]))

@@ -31,6 +31,7 @@ import re
 import statistics
 import sys
 import time
+import urllib.error
 import urllib.request
 import zipfile
 from collections import Counter
@@ -72,8 +73,21 @@ def baixar(url: str, destino: Path, forcar: bool = False, max_dias: float = None
     destino.parent.mkdir(parents=True, exist_ok=True)
     print(f"  baixando {url}")
     req = urllib.request.Request(url, headers={"User-Agent": "previsibilidade-acoes/0.1"})
-    with urllib.request.urlopen(req, timeout=120) as r:
-        destino.write_bytes(r.read())
+    for tentativa in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                dados = r.read()
+            temp = destino.with_name(destino.name + ".parcial")  # nunca deixa arquivo pela metade
+            temp.write_bytes(dados)
+            temp.replace(destino)
+            return destino
+        except urllib.error.HTTPError as e:
+            if e.code == 404 or tentativa == 2:
+                raise  # 404 é resposta definitiva (arquivo não existe)
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
+            if tentativa == 2:
+                raise
+        time.sleep(3 * (tentativa + 1))  # falha passageira: tenta de novo
     return destino
 
 
@@ -688,9 +702,15 @@ def baixar_dia(dia: date):
         return None
     try:
         return baixar(URL_COTA.format(nome=nome), destino)
-    except Exception:  # noqa: BLE001
-        marca.parent.mkdir(parents=True, exist_ok=True)
-        marca.touch()
+    except urllib.error.HTTPError as e:
+        if e.code == 404:  # não houve pregão (feriado) ou a B3 ainda não publicou
+            marca.parent.mkdir(parents=True, exist_ok=True)
+            marca.touch()
+        else:
+            print(f"  aviso: {nome} falhou com HTTP {e.code}; fica de fora desta execução")
+        return None
+    except Exception as e:  # noqa: BLE001
+        print(f"  aviso: {nome} falhou ({e}); fica de fora desta execução")
         return None
 
 

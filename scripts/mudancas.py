@@ -63,7 +63,8 @@ def comparar(a, b):
             s["Últimos 12 meses atualizados"].append(f"{eb['ticker']}: ITR até {tb}")
         pa = (ea["cotacao"].get(ea["ticker"]) or {}).get("preco")
         pb = (eb["cotacao"].get(ea["ticker"]) or {}).get("preco")
-        if pa and pb and abs(pb / pa - 1) > LIMIAR_PRECO:
+        avancou = (b.get("cotacoes_em") or "") > (a.get("cotacoes_em") or "")
+        if avancou and pa and pb and abs(pb / pa - 1) > LIMIAR_PRECO:
             s["Cotação mudou mais de 15%"].append(f"{ea['ticker']}: R$ {pa:.2f} → R$ {pb:.2f} ({pb / pa - 1:+.0%})")
         ia, ib = (ea["score"]["brl"] or {}).get("total"), (eb["score"]["brl"] or {}).get("total")
         if ia is not None and ib is not None and abs(ib - ia) >= LIMIAR_INDICE:

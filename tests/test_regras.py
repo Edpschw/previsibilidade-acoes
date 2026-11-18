@@ -168,6 +168,25 @@ class UltimosDozeMeses(unittest.TestCase):
         self.assertIsNone(P.ultimos_12m([2025], s, {"2026-09-30": {"receita": 1, "lucro_liquido": 1}}))
 
 
+class Trava(unittest.TestCase):
+    def setUp(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+        import auditar
+        self.trava = auditar.trava
+        self.base = {"emissores_negociados": 303, "cobertura": 0.99, "empresas": 345, "graves": [],
+                     "cotacoes_em": "2026-11-17"}
+
+    def test_aprova_base_igual_ou_melhor(self):
+        self.assertEqual(self.trava(dict(self.base, cotacoes_em="2026-11-18"), self.base), [])
+
+    def test_barra_cotacoes_que_recuam(self):
+        self.assertTrue(self.trava(dict(self.base, cotacoes_em="2026-11-16"), self.base))
+
+    def test_barra_cobertura_baixa_e_base_menor(self):
+        self.assertTrue(self.trava(dict(self.base, cobertura=0.90), self.base))
+        self.assertTrue(self.trava(dict(self.base, empresas=300), self.base))
+
+
 class Proventos(unittest.TestCase):
     def test_janela_de_12_meses_por_especie(self):
         sup = {"cashDividends": [
