@@ -15,7 +15,8 @@
     moeda: ler("moeda") || "brl",
     lingua: ler("lingua") || (/^pt/i.test(navigator.language || "") ? "pt" : "en"),
     ord: { col: "score", dir: -1 },
-    filtros: { setor: "", controle: "", segmento: "", exterior: false, semFin: false },
+    filtros: { controle: "", segmento: "", exterior: false, semFin: false },
+    setor: "",  // filtro global de setor (chave = nome em português), vale para todas as abas
     periodo: 10,
   };
 
@@ -264,6 +265,54 @@
     if (e.setor_b3) return e.setor_b3[estado.lingua] || e.setor_b3.pt;
     return e.setor.replace(/^Emp\. Adm\. Part\. ?- ?/, "");
   }
+
+  // ---------------------------------------------------------------- filtro global de setor
+  // Escolhido na barra sob o cabeçalho, vale para todas as abas e fica gravado no navegador.
+  // A chave é o nome em português, que não muda com o idioma; a tela mostra o nome no idioma atual.
+
+  function setorChave(e) { return e.setor_b3 ? e.setor_b3.pt : e.setor.replace(/^Emp\. Adm\. Part\. ?- ?/, ""); }
+
+  function setores() {
+    var por = {};
+    EMPRESAS.forEach(function (e) {
+      var k = setorChave(e);
+      if (!por[k]) por[k] = { chave: k, nome: setor(e), n: 0 };
+      por[k].n++;
+    });
+    return Object.keys(por).map(function (k) { return por[k]; })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome, locale()); });
+  }
+
+  /** empresas que as abas mostram: todas, ou só as do setor escolhido */
+  function visiveis() {
+    return estado.setor ? EMPRESAS.filter(function (e) { return setorChave(e) === estado.setor; }) : EMPRESAS;
+  }
+
+  /** setor escolhido, como {chave, nome no idioma da tela, n}; null sem filtro */
+  function setorAtivo() {
+    if (!estado.setor) return null;
+    var lista = visiveis();
+    return lista.length ? { chave: estado.setor, nome: setor(lista[0]), n: lista.length } : null;
+  }
+
+  function definirSetor(chave) {
+    estado.setor = chave || "";
+    gravar("setor", estado.setor);
+    desenharFiltroSetor();
+    redesenhar();
+  }
+
+  function desenharFiltroSetor() {
+    var sel = $("#setor-global"), ativo = setorAtivo();
+    sel.innerHTML = '<option value="">' + esc(t("todos_setores")) + " (" + EMPRESAS.length + ")</option>" + setores().map(function (s) {
+      return '<option value="' + esc(s.chave) + '">' + esc(s.nome) + " (" + s.n + ")</option>";
+    }).join("");
+    sel.value = estado.setor;
+    $("#filtro-setor").classList.toggle("ativo", !!ativo);
+    $("#setor-limpar").hidden = !ativo;
+    $("#setor-info").textContent = ativo ? tf("setor_ativo", ativo.n) : t("setor_dica");
+    medirTopo();
+  }
   function maiuscula(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
   // ---------------------------------------------------------------- ranking
@@ -287,7 +336,7 @@
 
   function opcoes(campo, rotulo) {
     var vals = {};
-    EMPRESAS.forEach(function (e) { var v = campo === "setor" ? setor(e) : e[campo]; vals[v] = (vals[v] || 0) + 1; });
+    visiveis().forEach(function (e) { var v = campo === "setor" ? setor(e) : e[campo]; vals[v] = (vals[v] || 0) + 1; });
     var nome = function (v) { return campo === "setor" ? v : mapa(campo, v); };
     return '<option value="">' + rotulo + "</option>" + Object.keys(vals)
       .sort(function (a, b) { return nome(a).localeCompare(nome(b), locale()); })
@@ -301,7 +350,6 @@
     app.innerHTML =
       '<section class="intro"><h1>' + t("h1") + "</h1><p>" + esc(tf("intro", EMPRESAS.length, anoIni, D.ano_final)) + "</p></section>" +
       '<div class="filtros">' +
-      '<select id="f-setor" aria-label="' + t("rot_setor") + '">' + opcoes("setor", t("todos_setores")) + "</select>" +
       '<select id="f-segmento" aria-label="' + t("rot_segmento") + '">' + opcoes("segmento", t("todos_segmentos")) + "</select>" +
       '<select id="f-controle" aria-label="' + t("rot_controle") + '">' + opcoes("controle", t("qualquer_controle")) + "</select>" +
       '<label class="check"><input type="checkbox" id="f-exterior"> ' + t("f_exterior") + "</label>" +
@@ -312,10 +360,12 @@
       "</tr></thead><tbody></tbody></table></div>";
 
     var f = estado.filtros;
-    $("#f-setor").value = f.setor; $("#f-segmento").value = f.segmento; $("#f-controle").value = f.controle;
-    if ($("#f-setor").value !== f.setor) f.setor = "";  // setor do outro idioma
+    $("#f-segmento").value = f.segmento; $("#f-controle").value = f.controle;
+    // valor que não existe no setor escolhido volta para "todos"
+    if ($("#f-segmento").value !== f.segmento) f.segmento = "";
+    if ($("#f-controle").value !== f.controle) f.controle = "";
     $("#f-exterior").checked = f.exterior; $("#f-semfin").checked = f.semFin;
-    ["setor", "segmento", "controle"].forEach(function (k) {
+    ["segmento", "controle"].forEach(function (k) {
       $("#f-" + k).addEventListener("change", function (ev) { f[k] = ev.target.value; corpoRanking(); });
     });
     $("#f-exterior").addEventListener("change", function (ev) { f.exterior = ev.target.checked; corpoRanking(); });
@@ -336,8 +386,8 @@
 
   function corpoRanking() {
     var f = estado.filtros, cols = colunas();
-    var linhas = EMPRESAS.filter(function (e) {
-      return (!f.setor || setor(e) === f.setor) && (!f.segmento || e.segmento === f.segmento) &&
+    var linhas = visiveis().filter(function (e) {
+      return (!f.segmento || e.segmento === f.segmento) &&
         (!f.controle || e.controle === f.controle) && (!f.exterior || e.exterior.length) && (!f.semFin || !e.financeiro);
     }).map(function (e) { return { e: e, i: indicadores(e) }; });
 
@@ -1051,6 +1101,7 @@
     $$("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.getAttribute("data-i18n-ph")); });
     $$("[data-i18n-aria]").forEach(function (el) { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
     $$("[data-lingua]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-lingua") === estado.lingua)); });
+    desenharFiltroSetor();
     $("#gerado").textContent = tf("rodape_gerado", D.gerado_em, D.ano_final, nf(4).format(D.ptax[String(D.ano_final)].media));
   }
 
@@ -1078,6 +1129,10 @@
         estado.lingua = b.getAttribute("data-lingua"); gravar("lingua", estado.lingua); aplicarLingua(); redesenhar();
       });
     });
+    var guardado = ler("setor");
+    if (guardado && EMPRESAS.some(function (e) { return setorChave(e) === guardado; })) estado.setor = guardado;
+    $("#setor-global").addEventListener("change", function (ev) { definirSetor(ev.target.value); });
+    $("#setor-limpar").addEventListener("click", function () { definirSetor(""); });
     aplicarMoeda();
     aplicarLingua();
 
@@ -1111,7 +1166,7 @@
     D: D, EMPRESAS: EMPRESAS, POR_TICKER: POR_TICKER, estado: estado,
     t: t, tf: tf, L: L, mapa: mapa, locale: locale,
     dinheiro: dinheiro, porAcao: porAcao, pct: pct, vezes: vezes, nf: nf, data: data, esc: esc,
-    nomeCurto: nomeCurto, setor: setor, score: score, nivelScore: nivelScore, indicadores: indicadores,
+    nomeCurto: nomeCurto, setor: setor, setorChave: setorChave, visiveis: visiveis, setorAtivo: setorAtivo, definirSetor: definirSetor, score: score, nivelScore: nivelScore, indicadores: indicadores,
     linhas: linhas, observarSecoes: observarSecoes, componentes: componentes,
   };
 

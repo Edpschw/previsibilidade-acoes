@@ -2,7 +2,9 @@
  * ângulo e área são lidos com pouca precisão. Tudo aqui usa posição ou comprimento numa escala comum.
  *  - Placar: indicadores × empresas, com o valor real e a cor da posição entre as ações líquidas.
  *  - Régua do mercado, previsibilidade por componente, qualidade × preço, crescimento, margem e tamanho.
- * As empresas escolhidas ficam no endereço: #/comparar/PETR4,VALE3 (#/teia/… e #/mapa continuam valendo). */
+ * As empresas escolhidas ficam no endereço: #/comparar/PETR4,VALE3 (#/teia/… e #/mapa continuam valendo).
+ * Com o filtro de setor do topo, entram todas as empresas do setor: o placar vira uma linha por empresa,
+ * a previsibilidade vira tabela e as linhas no tempo comparam a mediana do setor com a do mercado. */
 (function () {
   "use strict";
 
@@ -69,7 +71,10 @@
     var info = new Map();
     function ind(e) { if (!info.has(e)) info.set(e, X.indicadores(e)); return info.get(e); }
 
-    var escolhidas = lerEscolhidas(X);
+    var ativo = X.setorAtivo();  // filtro de setor: entram todas as empresas do setor, da maior para a menor
+    var escolhidas = ativo
+      ? X.visiveis().slice().sort(function (a, b) { return (b.valor_mercado || 0) - (a.valor_mercado || 0); }).map(function (e) { return e.ticker; })
+      : lerEscolhidas(X);
     if (!escolhidas.length) {
       // padrão: as três maiores não financeiras entre as líquidas
       escolhidas = liquidas.filter(function (e) { return !e.financeiro; })
@@ -80,42 +85,55 @@
     app.innerHTML =
       '<section class="teia-cab">' +
       '<span class="olho"><span class="capitulo">VS</span>' + esc(L("Comparar empresas", "Compare companies")) + "</span>" +
-      "<h1>" + esc(L("Até quatro empresas, lado a lado", "Up to four companies, side by side")) + "</h1>" +
-      '<p class="mudo">' + esc(L(
-        "Escolha até quatro empresas. O placar resume tudo numa tabela; os gráficos abaixo mostram cada empresa contra o mercado, sempre na mesma escala.",
-        "Pick up to four companies. The scorecard sums it all up in one table; the charts below place each company against the market, always on a common scale.")) + "</p>" +
-      "</section>" +
-      '<div class="teia-controles">' +
-      '<div class="teia-escolhidas" id="t-escolhidas"></div>' +
-      '<label class="teia-add"><span class="sr">' + esc(L("Adicionar empresa", "Add a company")) + "</span>" +
-      '<input id="t-busca" type="search" autocomplete="off" spellcheck="false">' +
-      '<ul id="t-sugestoes" class="sugestoes" role="listbox" hidden></ul></label>' +
-      "</div>" +
+      (ativo
+        ? "<h1>" + esc(ativo.nome + ": " + (ativo.n === 1 ? L("uma empresa", "one company") : L("as " + ativo.n + " empresas lado a lado", "all " + ativo.n + " companies side by side"))) + "</h1>" +
+          '<p class="mudo">' + esc(L(
+            "Com o filtro de setor, entram todas as empresas do setor. O placar tem uma linha por empresa; percentis e faixas continuam medidos contra todas as ações líquidas, e a mediana do setor aparece ao lado da do mercado.",
+            "With the sector filter on, every company in the sector is included. The scorecard has one row per company; percentiles and bands are still measured against all liquid stocks, and the sector median sits next to the market median.")) + "</p></section>" +
+          '<div class="teia-controles"><button type="button" class="filtro-setor-limpar" id="t-limpar">' +
+          esc(L("Limpar o filtro para escolher empresas uma a uma", "Clear the filter to pick companies one by one")) + "</button></div>"
+        : "<h1>" + esc(L("Até quatro empresas, lado a lado", "Up to four companies, side by side")) + "</h1>" +
+          '<p class="mudo">' + esc(L(
+            "Escolha até quatro empresas, ou um setor inteiro no filtro do topo. O placar resume tudo numa tabela; os gráficos abaixo mostram cada empresa contra o mercado, sempre na mesma escala.",
+            "Pick up to four companies, or a whole sector with the filter at the top. The scorecard sums it all up in one table; the charts below place each company against the market, always on a common scale.")) + "</p>" +
+          "</section>" +
+          '<div class="teia-controles">' +
+          '<div class="teia-escolhidas" id="t-escolhidas"></div>' +
+          '<label class="teia-add"><span class="sr">' + esc(L("Adicionar empresa", "Add a company")) + "</span>" +
+          '<input id="t-busca" type="search" autocomplete="off" spellcheck="false">' +
+          '<ul id="t-sugestoes" class="sugestoes" role="listbox" hidden></ul></label>' +
+          "</div>") +
       '<section class="cartao"><h2>' + esc(L("Placar", "Scorecard")) + '</h2><p class="mudo pequeno">' + esc(L(
         "Valor de cada indicador e posição entre as ações líquidas (p80 = melhor que 80% delas). Verde: acima da mediana; vermelho: abaixo. ↓ = menor é melhor.",
         "Each metric's value and rank among liquid stocks (p80 = better than 80% of them). Green: above the median; red: below. ↓ = lower is better.")) +
       '</p><div class="tabela-wrap teia-tabela" id="t-tabela"></div><p class="aviso" id="t-aviso"></p></section>' +
       '<section class="cartao bloco"><h2>' + esc(L("Onde cada uma está no mercado", "Where each one sits in the market")) + '</h2><p class="mudo pequeno">' + esc(L(
         "Valor real de cada indicador. A faixa clara é onde está a metade do meio das ações líquidas; o traço, a mediana; as pontas, os extremos (5% e 95%). ↓ = menor é melhor. Setas indicam valor fora da régua.",
-        "Actual value of each metric. The light band holds the middle half of liquid stocks; the tick is the median; the ends are the 5th and 95th percentiles. ↓ = lower is better. Arrows mark values off the ruler.")) + '</p><div id="t-regua" class="teia-regua"></div></section>' +
-      '<section class="cartao bloco"><h2>' + esc(L("Previsibilidade, componente a componente", "Predictability, component by component")) + '</h2><p class="mudo pequeno">' + esc(L(
-        "Notas de 0 a 100 nos últimos 10 exercícios; o traço é a mediana das ações líquidas. O índice total é a média ponderada dos cinco componentes.",
-        "Scores from 0 to 100 over the last 10 fiscal years; the tick is the median of liquid stocks. The total is the weighted average of the five components.")) + '</p><div id="t-prev"></div></section>' +
+        "Actual value of each metric. The light band holds the middle half of liquid stocks; the tick is the median; the ends are the 5th and 95th percentiles. ↓ = lower is better. Arrows mark values off the ruler.") +
+        (ativo ? L(" Cada ponto é uma empresa do setor; o traço laranja é a mediana do setor.", " Each dot is a company in the sector; the orange tick is the sector median.") : "")) +
+      '</p><div id="t-regua" class="teia-regua"></div></section>' +
+      '<section class="cartao bloco"><h2>' + esc(L("Previsibilidade, componente a componente", "Predictability, component by component")) + '</h2><p class="mudo pequeno">' + esc(ativo
+        ? L("Notas de 0 a 100 nos últimos 10 exercícios, da maior para a menor nota total. Verde: acima da mediana do mercado; vermelho: abaixo. O índice total é a média ponderada dos cinco componentes.",
+            "Scores from 0 to 100 over the last 10 fiscal years, from highest to lowest total. Green: above the market median; red: below. The total is the weighted average of the five components.")
+        : L("Notas de 0 a 100 nos últimos 10 exercícios; o traço é a mediana das ações líquidas. O índice total é a média ponderada dos cinco componentes.",
+            "Scores from 0 to 100 over the last 10 fiscal years; the tick is the median of liquid stocks. The total is the weighted average of the five components.")) + '</p><div id="t-prev"></div></section>' +
       '<div class="duas bloco">' +
       '<section class="cartao"><h2>' + esc(L("Qualidade × preço", "Quality vs. price")) + '</h2><div class="grafico" id="t-disp"></div><p class="aviso">' + esc(L(
         "ROE (rentabilidade) contra P/VP (quanto o mercado paga pelo patrimônio). Em geral, quem rende mais custa mais: abaixo e à direita da nuvem fica quem paga pouco pela rentabilidade. Pontos cinza: ações líquidas; passe o mouse para ver quem é.",
         "ROE (profitability) against P/B (what the market pays for book value). Higher returns usually cost more: below and to the right of the cloud are companies priced low for their returns. Grey dots: liquid stocks; hover to see which.")) + "</p></section>" +
       '<section class="cartao"><h2>' + esc(L("Crescimento da receita", "Revenue growth")) + '</h2><div class="grafico" id="t-cresc"></div><p class="aviso" id="t-cresc-nota"></p></section></div>' +
       '<div class="duas bloco">' +
-      '<section class="cartao"><h2>' + esc(L("Margem líquida ao longo do tempo", "Net margin over time")) + '</h2><div class="grafico" id="t-margem"></div><p class="aviso">' + esc(L(
-        "Lucro sobre receita, ano a ano: mostra quem sustenta a rentabilidade e quem oscila com o ciclo.",
-        "Net income over revenue, year by year: shows who sustains profitability and who swings with the cycle.")) + "</p></section>" +
+      '<section class="cartao"><h2>' + esc(L("Margem líquida ao longo do tempo", "Net margin over time")) + '</h2><div class="grafico" id="t-margem"></div><p class="aviso">' + esc(ativo
+        ? L("Mediana da margem líquida do setor contra a do mercado, ano a ano. A margem de cada empresa está no placar.",
+            "Median net margin of the sector against the market's, year by year. Each company's margin is in the scorecard.")
+        : L("Lucro sobre receita, ano a ano: mostra quem sustenta a rentabilidade e quem oscila com o ciclo.",
+            "Net income over revenue, year by year: shows who sustains profitability and who swings with the cycle.")) + "</p></section>" +
       '<section class="cartao"><h2>' + esc(L("Tamanho e liquidez", "Size and liquidity")) + '</h2><div id="t-tamanho"></div><p class="aviso">' + esc(L(
         "Barras na mesma escala dentro de cada indicador. Liquidez é o volume médio negociado por dia no último mês.",
         "Bars share a scale within each metric. Liquidity is the average daily traded volume over the last month.")) + "</p></section></div>";
 
     var dica = document.getElementById("dica");
-    var eixos, dados, medianas, ordem;
+    var eixos, dados, medianas, medSetor, ordem;
 
     // ------------------------------------------------------------ números
     function calcular() {
@@ -130,8 +148,9 @@
         var notas = brutos.map(function (v, k) { return v == null ? null : percentil(v, universos[k], eixos[k].sentido); });
         var validas = notas.filter(finito);
         var media = validas.length ? validas.reduce(function (s, v) { return s + v; }, 0) / validas.length : -1;
-        return { tk: tk, e: e, cor: CORES[j], brutos: brutos, notas: notas, media: media };
+        return { tk: tk, e: e, cor: ativo ? "var(--c1)" : CORES[j], brutos: brutos, notas: notas, media: media };
       });
+      medSetor = eixos.map(function (m, k) { return mediana(dados.map(function (d) { return d.brutos[k]; })); });
       ordem = dados.slice().sort(function (a, b) { return b.media - a.media; });
     }
 
@@ -144,29 +163,62 @@
     }
 
     // ------------------------------------------------------------ placar
+    /** célula do placar: valor real, percentil e cor pela posição no mercado; ▲ no melhor do grupo */
+    function celula(m, v, p, topo) {
+      if (v == null) return '<td class="num mudo">–</td>';
+      var fundo = "";
+      if (p != null) {
+        var forca = Math.round(Math.abs(p - 50) / 50 * 26);  // até 26% de cor nos extremos
+        fundo = ' style="background:color-mix(in srgb, var(' + (p >= 50 ? "--pos" : "--neg") + ") " + forca + '%, transparent)"';
+      }
+      var melhor = ordem.length > 1 && p === topo;
+      return '<td class="num' + (melhor ? " melhor" : "") + '"' + fundo + ">" + (melhor ? '<span class="coroa" title="' + esc(L("Melhor do grupo", "Best in group")) + '">▲</span>' : "") +
+        m.fmt(v) + (p != null ? '<small class="mudo"> p' + p + "</small>" : "") + "</td>";
+    }
+    function topoDe(k) { return Math.max.apply(null, ordem.map(function (d) { return finito(d.notas[k]) ? d.notas[k] : -1; })); }
+    function linkEmpresa(d) {
+      return '<a class="tk" href="#/' + d.tk + '"><b>' + esc(d.tk) + "</b><span>" + esc(X.nomeCurto(d.e.nome)) + "</span></a>";
+    }
+
     function tabela() {
+      if (ativo) return tabelaSetor();
       var cab = "<thead><tr><th>" + esc(L("Indicador", "Metric")) + "</th>" + ordem.map(function (d) {
         return '<th><span class="teia-th"><i style="--c:' + d.cor + '"></i>' + esc(d.tk) + "</span></th>";
       }).join("") + "<th>" + esc(L("Mediana", "Median")) + "</th></tr></thead>";
       var corpo = eixos.map(function (m, k) {
-        var topo = Math.max.apply(null, ordem.map(function (d) { return finito(d.notas[k]) ? d.notas[k] : -1; }));
+        var topo = topoDe(k);
         return "<tr><td>" + esc(m.rot) + (m.sentido < 0 ? ' <span class="mudo">↓</span>' : "") + "</td>" + ordem.map(function (d) {
-          var v = d.brutos[k];
-          if (v == null) return '<td class="num mudo">–</td>';
-          var p = d.notas[k], fundo = "";
-          if (p != null) {
-            var forca = Math.round(Math.abs(p - 50) / 50 * 26);  // até 26% de cor nos extremos
-            fundo = ' style="background:color-mix(in srgb, var(' + (p >= 50 ? "--pos" : "--neg") + ") " + forca + '%, transparent)"';
-          }
-          var melhor = ordem.length > 1 && p === topo;
-          return '<td class="num' + (melhor ? " melhor" : "") + '"' + fundo + ">" + (melhor ? '<span class="coroa" title="' + esc(L("Melhor do grupo", "Best in group")) + '">▲</span>' : "") +
-            m.fmt(v) + '<small class="mudo"> p' + p + "</small></td>";
+          return celula(m, d.brutos[k], d.notas[k], topo);
         }).join("") + '<td class="num mudo">' + (medianas[k] == null ? "–" : m.fmt(medianas[k])) + "</td></tr>";
       }).join("");
       app.querySelector("#t-tabela").innerHTML = "<table>" + cab + "<tbody>" + corpo + "</tbody></table>";
     }
 
+    /** setor inteiro: uma linha por empresa, da melhor para a pior; medianas do setor e do mercado no rodapé */
+    function tabelaSetor() {
+      var topos = eixos.map(function (m, k) { return topoDe(k); });
+      var cab = '<thead><tr><th class="esq">' + esc(L("Empresa", "Company")) + "</th>" + eixos.map(function (m) {
+        return '<th class="num">' + esc(m.rot) + (m.sentido < 0 ? " ↓" : "") + "</th>";
+      }).join("") + "</tr></thead>";
+      var corpo = ordem.map(function (d) {
+        return '<tr><td class="esq">' + linkEmpresa(d) + "</td>" +
+          eixos.map(function (m, k) { return celula(m, d.brutos[k], d.notas[k], topos[k]); }).join("") + "</tr>";
+      }).join("");
+      var rodape = [[L("Mediana do setor", "Sector median"), medSetor], [L("Mediana do mercado", "Market median"), medianas]].map(function (x) {
+        return '<tr><td class="esq">' + esc(x[0]) + "</td>" + eixos.map(function (m, k) {
+          return '<td class="num">' + (x[1][k] == null ? "–" : m.fmt(x[1][k])) + "</td>";
+        }).join("") + "</tr>";
+      }).join("");
+      app.querySelector("#t-tabela").innerHTML = '<table class="placar-setor">' + cab + "<tbody>" + corpo + "</tbody><tfoot>" + rodape + "</tfoot></table>";
+    }
+
     function aviso() {
+      if (ativo) {
+        app.querySelector("#t-aviso").textContent = L(
+          "Linhas da melhor para a pior empresa, pela média dos percentis; ▲ marca o melhor valor de cada coluna dentro do setor. Percentis entre as " + liquidas.length + " ações do Real Terms. Múltiplos, ROE, margem e dívida dos últimos 12 meses quando há ITR. Sem dado (P/L de quem teve prejuízo, dívida de bancos), a célula fica com traço.",
+          "Rows run from best to worst company by average percentile; ▲ marks the best value in each column within the sector. Percentiles among the " + liquidas.length + " stocks covered by Real Terms. Multiples, ROE, margin and debt are trailing 12 months when quarterly filings exist. With no value (P/E of a loss-maker, bank debt) the cell shows a dash.");
+        return;
+      }
       app.querySelector("#t-aviso").textContent = L(
         "Colunas da melhor para a pior empresa, pela média dos percentis; ▲ marca o melhor valor de cada linha. Percentis entre as " + liquidas.length + " ações do Real Terms, todas com volume relevante na B3. Múltiplos, ROE, margem e dívida dos últimos 12 meses quando há ITR. Sem dado (P/L de quem teve prejuízo, dívida de bancos), a célula fica com traço.",
         "Columns run from best to worst company by average percentile; ▲ marks the best value in each row. Percentiles among the " + liquidas.length + " stocks covered by Real Terms, all with meaningful B3 volume. Multiples, ROE, margin and debt are trailing 12 months when quarterly filings exist. With no value (P/E of a loss-maker, bank debt) the cell shows a dash.");
@@ -174,6 +226,7 @@
 
     // ------------------------------------------------------------ previsibilidade por componente
     function previsibilidade() {
+      if (ativo) return previsibilidadeSetor();
       var comps = [{ id: "total", nome: L("Índice total", "Total score") }].concat(X.componentes());
       var nota = function (e, id) { var s = X.score(e); return s ? (id === "total" ? s.total : s.componentes[id]) : null; };
       app.querySelector("#t-prev").innerHTML = comps.map(function (c) {
@@ -188,6 +241,37 @@
         }).join("") + "</div>";
       }).join("");
     }
+    /** setor inteiro: tabela empresa × componente, cor pela distância à mediana do mercado */
+    function previsibilidadeSetor() {
+      var comps = [{ id: "total", nome: L("Índice total", "Total score") }].concat(X.componentes());
+      var nota = function (e, id) { var s = X.score(e); return s ? (id === "total" ? s.total : s.componentes[id]) : null; };
+      var mdM = comps.map(function (c) { return mediana(liquidas.map(function (e) { return nota(e, c.id); })); });
+      var mdS = comps.map(function (c) { return mediana(dados.map(function (d) { return nota(d.e, c.id); })); });
+      var cab = '<thead><tr><th class="esq">' + esc(L("Empresa", "Company")) + "</th>" + comps.map(function (c) {
+        return '<th class="num">' + esc(c.nome) + "</th>";
+      }).join("") + "</tr></thead>";
+      var corpo = melhoresPrimeiro(dados, function (d) { return nota(d.e, "total"); }).map(function (d) {
+        return '<tr><td class="esq">' + linkEmpresa(d) + "</td>" + comps.map(function (c, k) {
+          var v = nota(d.e, c.id);
+          if (!finito(v)) return '<td class="num mudo">–</td>';
+          var fundo = "";
+          if (mdM[k] != null) {
+            var forca = Math.round(Math.min(1, Math.abs(v - mdM[k]) / 50) * 26);
+            fundo = ' style="background:color-mix(in srgb, var(' + (v >= mdM[k] ? "--pos" : "--neg") + ") " + forca + '%, transparent)"';
+          }
+          var txt = X.nf(0).format(v);
+          return '<td class="num"' + fundo + ">" + (c.id === "total" ? "<b>" + txt + "</b>" : txt) + "</td>";
+        }).join("") + "</tr>";
+      }).join("");
+      var rodape = [[L("Mediana do setor", "Sector median"), mdS], [L("Mediana do mercado", "Market median"), mdM]].map(function (x) {
+        return '<tr><td class="esq">' + esc(x[0]) + "</td>" + x[1].map(function (v) {
+          return '<td class="num">' + (v == null ? "–" : X.nf(0).format(v)) + "</td>";
+        }).join("") + "</tr>";
+      }).join("");
+      app.querySelector("#t-prev").innerHTML = '<div class="tabela-wrap teia-tabela"><table class="placar-setor">' + cab +
+        "<tbody>" + corpo + "</tbody><tfoot>" + rodape + "</tfoot></table></div>";
+    }
+
     // ------------------------------------------------------------ mais formas de comparar
     // O radar mostra o "formato" de cada empresa, mas ângulo e área são lidos com pouca precisão e o
     // percentil esconde o valor real. Os gráficos abaixo usam posição numa escala comum, a forma que o
@@ -242,15 +326,19 @@
         svg += '<rect class="regua-faixa" x="' + x(q1) + '" y="' + (y - 7) + '" width="' + Math.max(1, x(q3) - x(q1)) + '" height="14" rx="3"/>';
         svg += '<line class="regua-mediana" x1="' + x(md) + '" x2="' + x(md) + '" y1="' + (y - 10) + '" y2="' + (y + 10) + '"/>';
         svg += '<text class="eixo" x="' + x0 + '" y="' + (y + 21) + '">' + m.fmt(lo) + '</text><text class="eixo" x="' + x1 + '" y="' + (y + 21) + '" text-anchor="end">' + m.fmt(hi) + "</text>";
+        var mdSetor = ativo ? mediana(dados.map(function (d) { return m.val(d.e, ind(d.e)); })) : null;
         dados.forEach(function (d, j) {
           var v = m.val(d.e, ind(d.e));
           if (!finito(v)) return;
           var px = x(v), fora = v < lo || v > hi;
-          var dy = (j - (dados.length - 1) / 2) * 3;  // empresas com o mesmo valor não se escondem
-          svg += '<circle cx="' + px.toFixed(1) + '" cy="' + (y + dy).toFixed(1) + '" r="6" fill="' + d.cor + '" stroke="var(--surface)" stroke-width="1.5"/>';
+          // empresas com o mesmo valor não se escondem; com o setor inteiro, um deslocamento pequeno que se repete
+          var dy = ativo ? ((j % 3) - 1) * 4 : (j - (dados.length - 1) / 2) * 3;
+          svg += '<circle cx="' + px.toFixed(1) + '" cy="' + (y + dy).toFixed(1) + '" r="' + (ativo ? 5 : 6) + '" fill="' + d.cor + '"' +
+            (ativo ? ' fill-opacity=".72"' : "") + ' stroke="var(--surface)" stroke-width="1.5"/>';
           if (fora) svg += '<text class="eixo" x="' + (px + (v > hi ? -10 : 10)) + '" y="' + (y - 9) + '" text-anchor="' + (v > hi ? "end" : "start") + '">' + (v > hi ? "→" : "←") + "</text>";
-          alvos.push({ x: px, y: y + dy, d: d, m: m, v: v, md: md });
+          alvos.push({ x: px, y: y + dy, d: d, m: m, v: v, md: md, ms: mdSetor });
         });
+        if (mdSetor != null) svg += '<line class="regua-setor" x1="' + x(mdSetor) + '" x2="' + x(mdSetor) + '" y1="' + (y - 12) + '" y2="' + (y + 12) + '"/>';
       });
       alvo.innerHTML = svg + "</svg>";
       var s = alvo.querySelector("svg");
@@ -260,7 +348,8 @@
         alvos.forEach(function (a) { var dd = Math.hypot(a.x - px, a.y - py); if (dd < dmin) { dmin = dd; melhor = a; } });
         if (!melhor) { dica.hidden = true; return; }
         dicaEm(ev, "<b>" + esc(melhor.m.rot) + '</b><div><span><i style="--c:' + melhor.d.cor + '"></i>' + esc(melhor.d.tk) + '</span><span class="num">' + melhor.m.fmt(melhor.v) +
-          '</span></div><div><span class="mudo">' + esc(L("Mediana do mercado", "Market median")) + '</span><span class="num">' + melhor.m.fmt(melhor.md) + "</span></div>");
+          '</span></div>' + (melhor.ms != null ? '<div><span class="mudo">' + esc(L("Mediana do setor", "Sector median")) + '</span><span class="num">' + melhor.m.fmt(melhor.ms) + "</span></div>" : "") +
+          '<div><span class="mudo">' + esc(L("Mediana do mercado", "Market median")) + '</span><span class="num">' + melhor.m.fmt(melhor.md) + "</span></div>");
       };
       s.onpointerleave = function () { dica.hidden = true; };
     }
@@ -295,8 +384,8 @@
       dados.forEach(function (d) {
         var a = roe(d.e), b = pvp(d.e);
         if (!finito(a) || !finito(b)) return;
-        svg += '<circle cx="' + px(a).toFixed(1) + '" cy="' + py(b).toFixed(1) + '" r="7" fill="' + d.cor + '" stroke="var(--surface)" stroke-width="2"/>' +
-          '<text class="disp-rot" x="' + (px(a) + 10).toFixed(1) + '" y="' + (py(b) + 4).toFixed(1) + '" fill="' + d.cor + '">' + esc(d.tk) + "</text>";
+        svg += '<circle cx="' + px(a).toFixed(1) + '" cy="' + py(b).toFixed(1) + '" r="' + (ativo ? 6 : 7) + '" fill="' + d.cor + '" stroke="var(--surface)" stroke-width="2"/>' +
+          (dados.length <= 6 ? '<text class="disp-rot" x="' + (px(a) + 10).toFixed(1) + '" y="' + (py(b) + 4).toFixed(1) + '" fill="' + d.cor + '">' + esc(d.tk) + "</text>" : "");
       });
       alvo.innerHTML = svg + "</svg>";
       var s = alvo.querySelector("svg");
@@ -326,8 +415,43 @@
       return melhoresPrimeiro(series, fim);
     }
 
+    /** setor inteiro: mediana do setor contra a do mercado (uma linha por empresa viraria um novelo) */
+    function evolucaoSetor() {
+      var ultimo = Math.max.apply(null, dados.map(function (d) { return d.e.anos[d.e.anos.length - 1]; }));
+      var anos = [];
+      for (var a = ultimo - 9; a <= ultimo; a++) anos.push(a);
+      var porAno = function (e, chave) {
+        var s = serieMoeda(e, chave);
+        return anos.map(function (a) { var k = e.anos.indexOf(a); return k < 0 ? null : s[k]; });
+      };
+      var base100 = function (e) {
+        var r = porAno(e, "receita");
+        return r.map(function (v) { return r[0] > 0 && v > 0 ? v / r[0] * 100 : null; });
+      };
+      var margem = function (e) {
+        var r = porAno(e, "receita"), l = porAno(e, "lucro_liquido");
+        return r.map(function (v, k) { return v > 0 && l[k] != null ? l[k] / v : null; });
+      };
+      var medAno = function (lista, f) {
+        var vs = lista.map(f);
+        return anos.map(function (a, k) { return mediana(vs.map(function (v) { return v[k]; })); });
+      };
+      var doSetor = dados.map(function (d) { return d.e; });
+      var duas = function (f) {
+        return [{ nome: L("Mediana do setor", "Sector median"), cor: "var(--c1)", v: medAno(doSetor, f) },
+          { nome: L("Mediana do mercado", "Market median"), cor: "var(--muted)", v: medAno(liquidas, f) }];
+      };
+      X.linhas(app.querySelector("#t-cresc"), anos, duas(base100), function (v) { return v == null ? "–" : X.nf(0).format(v); },
+        { eixo: function (v) { return X.nf(0).format(v); }, limites: null });
+      app.querySelector("#t-cresc-nota").textContent =
+        L("Receita de " + anos[0] + " = 100; mediana das empresas com receita nesse ano", "Revenue in " + anos[0] + " = 100; median of companies with revenue that year") +
+        (X.estado.moeda === "usd" ? L(", em US$", ", in US$") : L(", em R$", ", in R$")) + ".";
+      X.linhas(app.querySelector("#t-margem"), anos, duas(margem), function (v) { return X.pct(v, 1); });
+    }
+
     /** 3 e 4. Receita em base 100 e margem líquida, nos últimos 10 anos em comum */
     function evolucao() {
+      if (ativo) return evolucaoSetor();
       var anos = [];
       var ultimo = Math.max.apply(null, dados.map(function (d) { return d.e.anos[d.e.anos.length - 1]; }));
       for (var a = ultimo - 9; a <= ultimo; a++) anos.push(a);
@@ -394,18 +518,22 @@
     }
 
     function atualizar() {
-      history.replaceState(null, "", "#/comparar/" + escolhidas.join(","));
-      calcular(); chips(); tabela(); aviso(); previsibilidade(); maisGraficos();
+      // com o filtro de setor, o endereço guarda a escolha manual de antes, que volta ao limpar o filtro
+      if (!ativo) history.replaceState(null, "", "#/comparar/" + escolhidas.join(","));
+      calcular();
+      if (!ativo) chips();
+      tabela(); aviso(); previsibilidade(); maisGraficos();
     }
 
-    app.querySelector("#t-escolhidas").addEventListener("click", function (ev) {
+    if (ativo) app.querySelector("#t-limpar").addEventListener("click", function () { X.definirSetor(""); });
+    if (!ativo) app.querySelector("#t-escolhidas").addEventListener("click", function (ev) {
       var b = ev.target.closest("[data-tirar]");
       if (!b) return;
       escolhidas = escolhidas.filter(function (tk) { return tk !== b.getAttribute("data-tirar"); });
       atualizar();
     });
 
-    (function busca() {
+    if (!ativo) (function busca() {
       var input = app.querySelector("#t-busca"), lista = app.querySelector("#t-sugestoes"), sel = -1;
       var norm = function (s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); };
       function mostrar() {

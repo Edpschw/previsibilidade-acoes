@@ -8,18 +8,20 @@
     document.title = X.t("titulo");
 
     // ---------------------------------------------------------------- números da base
-    var negociadas = X.EMPRESAS.filter(function (e) { return Object.keys(e.cotacao).length; });
+    // com o filtro de setor no topo, tudo aqui é calculado só sobre as empresas do setor
+    var base = X.visiveis(), ativo = X.setorAtivo();
+    var negociadas = base.filter(function (e) { return Object.keys(e.cotacao).length; });
     var info = negociadas.map(function (e) { return { e: e, i: X.indicadores(e) }; });
     var vmTotal = negociadas.reduce(function (s, e) { return s + (e.valor_mercado || 0); }, 0);
-    var adrs = X.EMPRESAS.filter(function (e) { return e.exterior.length; }).length;
-    var anoIni = Math.min.apply(null, X.EMPRESAS.map(function (e) { return e.anos[0]; }));
+    var adrs = base.filter(function (e) { return e.exterior.length; }).length;
+    var anoIni = Math.min.apply(null, base.map(function (e) { return e.anos[0]; }));
     var mediana = function (arr) {
       var v = arr.filter(function (x) { return x != null && isFinite(x); }).sort(function (a, b) { return a - b; });
       return v.length ? v[Math.floor(v.length / 2)] : null;
     };
     var plMed = mediana(info.map(function (x) { return x.i.pl; }));
     var dyMed = mediana(info.map(function (x) { return x.i.dy; }));
-    var comScore = X.EMPRESAS.filter(function (e) { return e.score.brl; });
+    var comScore = base.filter(function (e) { return e.score.brl; });
     var altas = comScore.filter(function (e) { return e.score.brl.total >= 75; }).length;
     var hoje = function (v) { return X.estado.moeda === "brl" ? v : v / D.ptax_atual.valor; };
 
@@ -34,6 +36,7 @@
     var pior = cambio.slice().sort(function (a, b) { return a.d - b.d; })[0];
     var anosPtax = Object.keys(D.ptax).map(Number).sort();
     var p0 = D.ptax[String(anosPtax[0])].media, p1 = D.ptax_atual.valor;
+    var onde = ativo ? L("Neste setor, ", "In this sector, ") : L("Entre as ações líquidas, ", "Among liquid stocks, ");
 
     // ---------------------------------------------------------------- capítulos
     var caps = [
@@ -59,10 +62,13 @@
       '<p class="i-lead">' + esc(L(
         "Balanços oficiais entregues à CVM desde " + anoIni + ", cotações da B3 e o câmbio do Banco Central, num só lugar. Sem opinião, sem recomendação: dados que você pode conferir na fonte.",
         "Official statements filed with the CVM since " + anoIni + ", B3 prices and the Central Bank exchange rate, in one place. No opinions, no recommendations: data you can check at the source.")) + "</p>" +
-      '<div class="i-ctas"><a class="botao" href="#/acoes">' + esc(L("Ver as " + X.EMPRESAS.length + " empresas", "Browse all " + X.EMPRESAS.length + " companies")) + "</a>" +
+      (ativo ? '<p class="aviso-setor">' + esc(L(
+        "Números do setor " + ativo.nome + " (" + ativo.n + (ativo.n === 1 ? " empresa" : " empresas") + "). Para ver o mercado inteiro, limpe o filtro de setor no topo.",
+        "Figures for the " + ativo.nome + " sector (" + ativo.n + (ativo.n === 1 ? " company" : " companies") + "). To see the whole market, clear the sector filter at the top.")) + "</p>" : "") +
+      '<div class="i-ctas"><a class="botao" href="#/acoes">' + esc(L("Ver as " + base.length + " empresas", "Browse all " + base.length + " companies")) + "</a>" +
       '<a class="botao sec" href="#/comparar">' + esc(L("Comparar empresas", "Compare companies")) + "</a></div>" +
       '<div class="i-stats">' +
-      stat(X.EMPRESAS.length, L("empresas com balanço na CVM", "companies with CVM filings")) +
+      stat(base.length, L("empresas com balanço na CVM", "companies with CVM filings")) +
       stat(negociadas.length, L("negociadas no último mês", "traded in the last month")) +
       stat(X.dinheiro(hoje(vmTotal)), L("de valor de mercado somado", "combined market cap")) +
       stat(adrs, L("também listadas no exterior (ADR)", "also listed abroad (ADRs)")) +
@@ -84,7 +90,7 @@
       '<p class="mudo">' + esc(L(altas + " de " + comScore.length + " empresas com histórico suficiente têm previsibilidade alta (75 ou mais).",
         altas + " of " + comScore.length + " companies with enough history score high (75 or more).")) + "</p>" +
       "</div><div>" +
-      "<h3>" + esc(L("As mais previsíveis entre as líquidas", "Most predictable among liquid stocks")) + "</h3>" +
+      "<h3>" + esc(ativo ? L("As mais previsíveis do setor", "Most predictable in the sector") : L("As mais previsíveis entre as líquidas", "Most predictable among liquid stocks")) + "</h3>" +
       '<p class="mudo pequeno">' + esc(L("Liquidez de pelo menos R$ 1 mi por dia.", "At least R$ 1 million traded per day.")) + "</p>" +
       '<div class="i-top">' + top.map(function (e) {
         var s = e.score[X.estado.moeda], nv = X.nivelScore(s.total);
@@ -100,8 +106,8 @@
         "Quem investe de fora recebe em reais e mede em dólares. Em " + anosPtax[0] + " um dólar valia R$ " + X.nf(2).format(p0) + "; hoje vale R$ " + X.nf(2).format(p1) + ". Uma empresa que cresce todo ano em reais pode encolher em dólar.",
         "International investors are paid in reais but measure in dollars. In " + anosPtax[0] + " one dollar bought R$ " + X.nf(2).format(p0) + "; today it buys R$ " + X.nf(2).format(p1) + ". A company that grows every year in reais can shrink in dollars.")) + "</p>" +
       "<p>" + esc(L(
-        "Por isso o Real Terms calcula o índice também em US$, com receita e lucro convertidos pela PTAX. Entre as ações líquidas, " + caem + " perdem 5 pontos ou mais quando medidas em dólar" + (pior ? "; a maior queda é a de " + pior.e.ticker + " (" + pior.e.score.brl.total + " → " + pior.e.score.usd.total + ")." : "."),
-        "That is why Real Terms also computes the score in US$, with revenue and earnings converted at the PTAX rate. Among liquid stocks, " + caem + " lose 5 points or more when measured in dollars" + (pior ? "; the largest drop is " + pior.e.ticker + " (" + pior.e.score.brl.total + " → " + pior.e.score.usd.total + ")." : "."))) + "</p>" +
+        "Por isso o Real Terms calcula o índice também em US$, com receita e lucro convertidos pela PTAX. " + onde + caem + " perdem 5 pontos ou mais quando medidas em dólar" + (pior ? "; a maior queda é a de " + pior.e.ticker + " (" + pior.e.score.brl.total + " → " + pior.e.score.usd.total + ")." : "."),
+        "That is why Real Terms also computes the score in US$, with revenue and earnings converted at the PTAX rate. " + onde + caem + " lose 5 points or more when measured in dollars" + (pior ? "; the largest drop is " + pior.e.ticker + " (" + pior.e.score.brl.total + " → " + pior.e.score.usd.total + ")." : "."))) + "</p>" +
       '<p class="mudo pequeno">' + esc(L("Use o seletor R$ | US$ no topo: todas as páginas mudam junto.", "Use the R$ | US$ switch at the top: every page follows.")) + "</p>" +
       '</div><div><div class="grafico" id="g-ptax"></div><p class="aviso">' +
       esc(L("Reais por dólar, PTAX média de cada ano (Banco Central).", "Reais per dollar, yearly average PTAX rate (Central Bank of Brazil).")) + "</p></div></div></section>";
@@ -122,9 +128,12 @@
       '<dl class="i-glossario">' + glossario.map(function (g) { return "<div><dt>" + esc(g[0]) + "</dt><dd>" + esc(g[1]) + "</dd></div>"; }).join("") + "</dl></section>";
 
     var passos = [
-      [L("Filtre", "Filter"), L("No ranking, escolha setor, segmento e controle, e ordene por previsibilidade, P/L ou dividendos.", "In the ranking, pick sector, segment and ownership, and sort by predictability, P/E or yield."), "#/acoes", L("Abrir ranking", "Open ranking")],
+      [L("Filtre", "Filter"), L("Escolha um setor na faixa do topo e todas as abas mostram só as empresas dele. No ranking, ordene por previsibilidade, P/L ou dividendos.", "Pick a sector in the bar at the top and every tab shows only its companies. In the ranking, sort by predictability, P/E or yield."), "#/acoes", L("Abrir ranking", "Open ranking")],
       [L("Aprofunde", "Dig in"), L("Na página da empresa: resumo automático, múltiplos de 12 meses, histórico de 17 anos e como o índice foi calculado.", "On a company page: automatic summary, trailing multiples, 17 years of history and how the score was built."), "#/" + (top[0] ? top[0].ticker : "PETR4"), L("Ver um exemplo", "See an example")],
-      [L("Compare", "Compare"), L("Em Comparar, até quatro empresas lado a lado: placar, régua do mercado, qualidade × preço e crescimento.", "In Compare, up to four companies side by side: scorecard, market ruler, quality vs. price and growth."), "#/comparar", L("Comparar empresas", "Compare companies")],
+      [L("Compare", "Compare"), ativo
+        ? L("Em Comparar, as " + ativo.n + " empresas do setor lado a lado: placar, régua do mercado, previsibilidade e tamanho.", "In Compare, all " + ativo.n + " companies in the sector side by side: scorecard, market ruler, predictability and size.")
+        : L("Em Comparar, até quatro empresas lado a lado, ou o setor inteiro com o filtro do topo: placar, régua do mercado, qualidade × preço e crescimento.", "In Compare, up to four companies side by side, or a whole sector with the filter at the top: scorecard, market ruler, quality vs. price and growth."),
+        "#/comparar", L("Comparar empresas", "Compare companies")],
     ];
     var c5 =
       '<section class="secao i-cap i-passos-sec" id="s-i5">' +
