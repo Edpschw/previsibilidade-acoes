@@ -1,16 +1,14 @@
-/* Real Terms — teia (#/teia): até quatro empresas lado a lado num gráfico de radar, em SVG.
- * Dois conjuntos de eixos:
- *  - Fundamentos: oito indicadores, cada um como percentil entre as ações líquidas (≥ R$ 1 mi/dia).
- *    Mais para fora é sempre o lado favorável a quem investe (P/L, P/VP e dívida contam ao contrário).
- *  - Previsibilidade: os cinco componentes do índice, nas notas de 0 a 100 da própria empresa.
- * A linha tracejada é a mediana do mercado. As empresas escolhidas ficam no endereço: #/teia/PETR4,VALE3 */
+/* Real Terms — comparar (#/comparar): até quatro empresas lado a lado. O antigo radar ("teia") saiu:
+ * ângulo e área são lidos com pouca precisão. Tudo aqui usa posição ou comprimento numa escala comum.
+ *  - Placar: indicadores × empresas, com o valor real e a cor da posição entre as ações líquidas.
+ *  - Régua do mercado, previsibilidade por componente, qualidade × preço, crescimento, margem e tamanho.
+ * As empresas escolhidas ficam no endereço: #/comparar/PETR4,VALE3 (#/teia/… e #/mapa continuam valendo). */
 (function () {
   "use strict";
 
   var LIQUIDEZ_MIN = 1e6, MAX = 4;
   var CORES = ["var(--c1)", "var(--c3)", "var(--c4)", "var(--c5)"];
-  var conjunto = "fund";  // "fund" | "prev"; sobrevive à troca de moeda e idioma
-  var atual = null;       // tela em execução; parar() a desmonta ao trocar de rota
+  var atual = null;  // tela em execução; parar() a desmonta ao trocar de rota
 
   function parar() {
     if (!atual) return;
@@ -28,14 +26,8 @@
       { id: "roe", rot: L("ROE", "ROE"), sentido: 1, val: function (e, i) { return i.d12 ? i.roe12 : i.roe; }, fmt: function (v) { return X.pct(v, 1); } },
       { id: "mliq", rot: L("Margem líquida", "Net margin"), sentido: 1, val: function (e, i) { return i.d12 ? i.mLiq12 : i.mLiq; }, fmt: function (v) { return X.pct(v, 1); } },
       { id: "divida", rot: L("Dív. líq./EBITDA", "Net debt/EBITDA"), sentido: -1, val: function (e, i) { return i.d12 ? i.dlEbitda12 : i.dlEbitda; }, fmt: function (v) { return X.nf(1).format(v) + "x"; } },
-      { id: "cagr", rot: L("Crescimento da receita", "Revenue growth"), sentido: 1, val: function (e, i) { return i.cagrRec; }, fmt: function (v) { return X.pct(v, 1); } },
+      { id: "cagr", rot: L("Crescimento da receita (5 anos)", "Revenue growth (5y)"), sentido: 1, val: function (e, i) { return i.cagrRec; }, fmt: function (v) { return X.pct(v, 1); } },
     ];
-  }
-
-  function previsibilidade(X) {
-    return X.componentes().map(function (c) {
-      return { id: c.id, rot: c.nome, sentido: 1, val: function (e) { var s = X.score(e); return s ? s.componentes[c.id] : null; }, fmt: function (v) { return X.nf(0).format(v); } };
-    });
   }
 
   function finito(v) { return v != null && isFinite(v); }
@@ -56,20 +48,8 @@
     return Math.round((atras + empate / 2) / universo.length * 100);
   }
 
-  /** quebra rótulos longos em duas linhas, no espaço (ou depois da barra) mais perto do meio */
-  function linhasRotulo(txt, estreito) {
-    if (!estreito || txt.length <= 10) return [txt];
-    var meio = txt.length / 2, melhor = -1;
-    for (var k = 1; k < txt.length - 1; k++) {
-      var corte = txt[k] === " " ? k : txt[k] === "/" ? k + 1 : -1;
-      if (corte > 0 && (melhor < 0 || Math.abs(corte - meio) < Math.abs(melhor - meio))) melhor = corte;
-    }
-    if (melhor < 0) return [txt];
-    return [txt.slice(0, melhor).trim(), txt.slice(melhor).trim()];
-  }
-
   function lerEscolhidas(X) {
-    var m = location.hash.match(/^#\/(?:teia|mapa)\/([A-Za-z0-9,]+)/);
+    var m = location.hash.match(/^#\/(?:comparar|teia|mapa)\/([A-Za-z0-9,]+)/);
     var lista = m ? m[1].toUpperCase().split(",") : [];
     var vistos = {};
     return lista.filter(function (tk) {
@@ -102,27 +82,25 @@
       '<span class="olho"><span class="capitulo">VS</span>' + esc(L("Comparar empresas", "Compare companies")) + "</span>" +
       "<h1>" + esc(L("Até quatro empresas, lado a lado", "Up to four companies, side by side")) + "</h1>" +
       '<p class="mudo">' + esc(L(
-        "Cada ponta da teia é um indicador. Quanto mais para fora, mais favorável para quem investe; a linha tracejada é a mediana das ações líquidas da B3. Passe o mouse ou toque num eixo para ver os números.",
-        "Each spoke is a metric. The further out, the better for the investor; the dashed line is the median of liquid B3 stocks. Hover or tap a spoke to see the numbers.")) + "</p>" +
+        "Escolha até quatro empresas. O placar resume tudo numa tabela; os gráficos abaixo mostram cada empresa contra o mercado, sempre na mesma escala.",
+        "Pick up to four companies. The scorecard sums it all up in one table; the charts below place each company against the market, always on a common scale.")) + "</p>" +
       "</section>" +
       '<div class="teia-controles">' +
       '<div class="teia-escolhidas" id="t-escolhidas"></div>' +
       '<label class="teia-add"><span class="sr">' + esc(L("Adicionar empresa", "Add a company")) + "</span>" +
       '<input id="t-busca" type="search" autocomplete="off" spellcheck="false">' +
       '<ul id="t-sugestoes" class="sugestoes" role="listbox" hidden></ul></label>' +
-      '<div class="seg" role="group" aria-label="' + esc(L("Eixos", "Axes")) + '">' +
-      '<button data-conjunto="fund">' + esc(L("Fundamentos", "Fundamentals")) + "</button>" +
-      '<button data-conjunto="prev">' + esc(L("Previsibilidade", "Predictability")) + "</button></div>" +
       "</div>" +
-      '<section class="cartao teia-palco"><div class="teia-grafico" id="t-grafico"></div><div id="t-legenda"></div></section>' +
-      '<p class="aviso" id="t-aviso"></p>' +
-      '<div class="tabela-wrap bloco teia-tabela" id="t-tabela"></div>' +
-      '<section class="bloco teia-mais"><h2>' + esc(L("Mais formas de comparar", "More ways to compare")) + '</h2><p class="mudo">' + esc(L(
-        "A teia mostra o formato de cada empresa, mas o olho compara mal ângulos e áreas, e o percentil esconde o valor real. Os gráficos abaixo põem as empresas numa mesma escala, a forma mais precisa de comparar, e cada um responde a uma pergunta.",
-        "The radar shows each company's shape, but eyes compare angles and areas poorly, and percentiles hide the actual value. The charts below put the companies on a common scale, the most accurate way to compare, and each answers one question.")) + "</p></section>" +
+      '<section class="cartao"><h2>' + esc(L("Placar", "Scorecard")) + '</h2><p class="mudo pequeno">' + esc(L(
+        "Valor de cada indicador e posição entre as ações líquidas (p80 = melhor que 80% delas). Verde: acima da mediana; vermelho: abaixo. ↓ = menor é melhor.",
+        "Each metric's value and rank among liquid stocks (p80 = better than 80% of them). Green: above the median; red: below. ↓ = lower is better.")) +
+      '</p><div class="tabela-wrap teia-tabela" id="t-tabela"></div><p class="aviso" id="t-aviso"></p></section>' +
       '<section class="cartao bloco"><h2>' + esc(L("Onde cada uma está no mercado", "Where each one sits in the market")) + '</h2><p class="mudo pequeno">' + esc(L(
         "Valor real de cada indicador. A faixa clara é onde está a metade do meio das ações líquidas; o traço, a mediana; as pontas, os extremos (5% e 95%). ↓ = menor é melhor. Setas indicam valor fora da régua.",
         "Actual value of each metric. The light band holds the middle half of liquid stocks; the tick is the median; the ends are the 5th and 95th percentiles. ↓ = lower is better. Arrows mark values off the ruler.")) + '</p><div id="t-regua" class="teia-regua"></div></section>' +
+      '<section class="cartao bloco"><h2>' + esc(L("Previsibilidade, componente a componente", "Predictability, component by component")) + '</h2><p class="mudo pequeno">' + esc(L(
+        "Notas de 0 a 100 nos últimos 10 exercícios; o traço é a mediana das ações líquidas. O índice total é a média ponderada dos cinco componentes.",
+        "Scores from 0 to 100 over the last 10 fiscal years; the tick is the median of liquid stocks. The total is the weighted average of the five components.")) + '</p><div id="t-prev"></div></section>' +
       '<div class="duas bloco">' +
       '<section class="cartao"><h2>' + esc(L("Qualidade × preço", "Quality vs. price")) + '</h2><div class="grafico" id="t-disp"></div><p class="aviso">' + esc(L(
         "ROE (rentabilidade) contra P/VP (quanto o mercado paga pelo patrimônio). Em geral, quem rende mais custa mais: abaixo e à direita da nuvem fica quem paga pouco pela rentabilidade. Pontos cinza: ações líquidas; passe o mouse para ver quem é.",
@@ -136,13 +114,12 @@
         "Barras na mesma escala dentro de cada indicador. Liquidez é o volume médio negociado por dia no último mês.",
         "Bars share a scale within each metric. Liquidity is the average daily traded volume over the last month.")) + "</p></section></div>";
 
-    var el = app.querySelector("#t-grafico");
     var dica = document.getElementById("dica");
-    var eixos, dados, medianas, ativo = -1, geo = null;
+    var eixos, dados, medianas;
 
     // ------------------------------------------------------------ números
     function calcular() {
-      eixos = conjunto === "fund" ? fundamentos(X) : previsibilidade(X);
+      eixos = fundamentos(X);
       var universos = eixos.map(function (m) {
         return liquidas.map(function (e) { return m.val(e, ind(e)); }).filter(finito);
       });
@@ -150,120 +127,12 @@
       dados = escolhidas.map(function (tk, j) {
         var e = X.POR_TICKER[tk];
         var brutos = eixos.map(function (m) { var v = m.val(e, ind(e)); return finito(v) ? v : null; });
-        var notas = brutos.map(function (v, k) {
-          if (v == null) return null;
-          return conjunto === "fund" ? percentil(v, universos[k], eixos[k].sentido) : Math.max(0, Math.min(100, v));
-        });
+        var notas = brutos.map(function (v, k) { return v == null ? null : percentil(v, universos[k], eixos[k].sentido); });
         return { tk: tk, e: e, cor: CORES[j], brutos: brutos, notas: notas };
       });
     }
 
-    // ------------------------------------------------------------ gráfico
-    function desenhar() {
-      var w = Math.max(280, el.clientWidth);
-      var estreito = w < 560;
-      var margemX = estreito ? 62 : 120, margemY = estreito ? 40 : 46;
-      var r = Math.max(70, Math.min((w - 2 * margemX) / 2, 220));
-      var h = Math.round(2 * r + 2 * margemY), cx = w / 2, cy = h / 2, n = eixos.length;
-      var ang = function (k) { return -Math.PI / 2 + 2 * Math.PI * k / n; };
-      var ponto = function (k, nota) { return [cx + r * nota / 100 * Math.cos(ang(k)), cy + r * nota / 100 * Math.sin(ang(k))]; };
-      var poligono = function (notas) { return notas.map(function (v, k) { var p = ponto(k, v || 0); return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" "); };
-      geo = { cx: cx, cy: cy, r: r, n: n, w: w, h: h };
-
-      var svg = '<svg viewBox="0 0 ' + w + " " + h + '" height="' + h + '" role="img" aria-label="' +
-        esc(L("Gráfico de teia comparando ", "Radar chart comparing ") + escolhidas.join(", ")) + '">';
-      [25, 50, 75, 100].forEach(function (a) {
-        svg += '<polygon class="anel' + (a === 100 ? " externo" : "") + '" points="' + poligono(eixos.map(function () { return a; })) + '"/>';
-      });
-      eixos.forEach(function (m, k) {
-        var p = ponto(k, 100);
-        svg += '<line class="raio" data-k="' + k + '" x1="' + cx + '" y1="' + cy + '" x2="' + p[0].toFixed(1) + '" y2="' + p[1].toFixed(1) + '"/>';
-      });
-      // escala do anel, ao longo do primeiro eixo
-      [50, 100].forEach(function (a) {
-        var p = ponto(0, a);
-        svg += '<text class="marca-anel" x="' + (p[0] + 5) + '" y="' + (p[1] + 11) + '">' + a + "</text>";
-      });
-      // mediana do mercado
-      var notasMed = conjunto === "fund" ? eixos.map(function () { return 50; }) : medianas;
-      svg += '<polygon class="mediana" points="' + poligono(notasMed) + '"/>';
-      // empresas
-      dados.forEach(function (d) {
-        svg += '<polygon class="serie" points="' + poligono(d.notas) + '" fill="' + d.cor + '" stroke="' + d.cor + '"/>';
-      });
-      dados.forEach(function (d) {
-        d.notas.forEach(function (v, k) {
-          var p = ponto(k, v || 0);
-          svg += v == null ? "" : '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.4" fill="' + d.cor + '"/>';
-        });
-      });
-      // rótulos dos eixos
-      eixos.forEach(function (m, k) {
-        var a = ang(k), c = Math.cos(a), s = Math.sin(a);
-        var x = cx + (r + 12) * c, y = cy + (r + 12) * s;
-        var ancora = c > 0.3 ? "start" : c < -0.3 ? "end" : "middle";
-        var linhas = linhasRotulo(m.rot, estreito);
-        var alt = 15;
-        var y0 = s < -0.3 ? y - (linhas.length - 1) * alt - 2 : s > 0.3 ? y + 11 : y + 4 - (linhas.length - 1) * alt / 2;
-        svg += '<text class="rot" data-k="' + k + '" text-anchor="' + ancora + '" x="' + x.toFixed(1) + '" y="' + y0.toFixed(1) + '">' +
-          linhas.map(function (l, j) { return '<tspan x="' + x.toFixed(1) + '" dy="' + (j ? alt : 0) + '">' + esc(l) + "</tspan>"; }).join("") + "</text>";
-      });
-      svg += "</svg>";
-      el.innerHTML = svg;
-      marcarAtivo();
-    }
-
-    function marcarAtivo() {
-      Array.prototype.forEach.call(el.querySelectorAll("[data-k]"), function (n) {
-        n.classList.toggle("ativo", +n.getAttribute("data-k") === ativo);
-      });
-    }
-
-    function eixoEm(ev) {
-      var svg = el.querySelector("svg");
-      if (!svg || !geo) return -1;
-      var rect = svg.getBoundingClientRect(), k = geo.w / rect.width;
-      var x = (ev.clientX - rect.left) * k - geo.cx, y = (ev.clientY - rect.top) * k - geo.cy;
-      if (Math.hypot(x, y) < geo.r * 0.12) return -1;
-      var a = Math.atan2(y, x) + Math.PI / 2;
-      return ((Math.round(a / (2 * Math.PI / geo.n)) % geo.n) + geo.n) % geo.n;
-    }
-
-    function mostrarDica(k, ev) {
-      if (k < 0) { dica.hidden = true; return; }
-      var m = eixos[k];
-      var html = "<b>" + esc(m.rot) + "</b>" + dados.map(function (d) {
-        var v = d.brutos[k];
-        var txt = v == null ? "–" : m.fmt(v) + (conjunto === "fund" ? " · p" + d.notas[k] : "");
-        return '<div><span><i style="--c:' + d.cor + '"></i>' + esc(d.tk) + '</span><span class="num">' + txt + "</span></div>";
-      }).join("");
-      if (medianas[k] != null) html += '<div><span class="mudo">' + esc(L("Mediana do mercado", "Market median")) + '</span><span class="num">' + m.fmt(medianas[k]) + "</span></div>";
-      if (m.sentido < 0) html += '<div class="mudo">' + esc(L("Menor é melhor: fica mais para fora", "Lower is better: plotted further out")) + "</div>";
-      dica.innerHTML = html;
-      dica.hidden = false;
-      var dx = ev.clientX + 14;
-      if (dx + dica.offsetWidth > window.innerWidth - 8) dx = ev.clientX - dica.offsetWidth - 14;
-      dica.style.left = Math.max(8, dx) + "px";
-      dica.style.top = Math.max(8, ev.clientY - dica.offsetHeight - 12) + "px";
-    }
-
-    function aoMover(ev) {
-      var k = eixoEm(ev);
-      if (k !== ativo) { ativo = k; marcarAtivo(); }
-      mostrarDica(k, ev);
-    }
-    function aoSair() { ativo = -1; marcarAtivo(); dica.hidden = true; }
-    el.addEventListener("pointermove", aoMover);
-    el.addEventListener("pointerdown", aoMover);
-    el.addEventListener("pointerleave", function (ev) { if (ev.pointerType === "mouse") aoSair(); });
-
-    // ------------------------------------------------------------ legenda, tabela e aviso
-    function legenda() {
-      app.querySelector("#t-legenda").innerHTML = '<div class="legenda">' + dados.map(function (d) {
-        return '<span><i style="--c:' + d.cor + '"></i>' + esc(d.tk) + " · " + esc(X.nomeCurto(d.e.nome)) + "</span>";
-      }).join("") + '<span><i class="tracejada"></i>' + esc(L("Mediana das ações líquidas", "Median of liquid stocks")) + "</span></div>";
-    }
-
+    // ------------------------------------------------------------ placar
     function tabela() {
       var cab = "<thead><tr><th>" + esc(L("Indicador", "Metric")) + "</th>" + dados.map(function (d) {
         return '<th><span class="teia-th"><i style="--c:' + d.cor + '"></i>' + esc(d.tk) + "</span></th>";
@@ -277,22 +146,33 @@
             var forca = Math.round(Math.abs(p - 50) / 50 * 26);  // até 26% de cor nos extremos
             fundo = ' style="background:color-mix(in srgb, var(' + (p >= 50 ? "--pos" : "--neg") + ") " + forca + '%, transparent)"';
           }
-          return '<td class="num"' + fundo + ">" + m.fmt(v) + (conjunto === "fund" ? '<small class="mudo"> p' + p + "</small>" : "") + "</td>";
+          return '<td class="num"' + fundo + ">" + m.fmt(v) + '<small class="mudo"> p' + p + "</small></td>";
         }).join("") + '<td class="num mudo">' + (medianas[k] == null ? "–" : m.fmt(medianas[k])) + "</td></tr>";
       }).join("");
       app.querySelector("#t-tabela").innerHTML = "<table>" + cab + "<tbody>" + corpo + "</tbody></table>";
     }
 
     function aviso() {
-      var txt = conjunto === "fund"
-        ? L("Fundamentos em percentil entre as " + liquidas.length + " ações com liquidez de pelo menos R$ 1 mi/dia: p80 quer dizer melhor que 80% delas. Múltiplos, ROE, margem e dívida dos últimos 12 meses quando há ITR; crescimento da receita em 5 anos. ↓ = menor é melhor. Sem dado num eixo (P/L de quem teve prejuízo, dívida de bancos), o ponto vai ao centro.",
-            "Fundamentals as percentiles among the " + liquidas.length + " stocks trading at least R$ 1M/day: p80 means better than 80% of them. Multiples, ROE, margin and debt are trailing 12 months when quarterly filings exist; revenue growth over 5 years. ↓ = lower is better. With no value on a spoke (P/E of a loss-maker, bank debt) the point sits at the centre.")
-        : L("Os cinco componentes do índice de previsibilidade, de 0 a 100, sobre os últimos 10 exercícios. Empresas com menos de 5 anos de balanço não têm nota.",
-            "The five components of the predictability score, 0 to 100, over the last 10 fiscal years. Companies with fewer than 5 years of filings have no score.");
-      app.querySelector("#t-aviso").textContent = txt;
+      app.querySelector("#t-aviso").textContent = L(
+        "Percentis entre as " + liquidas.length + " ações com liquidez de pelo menos R$ 1 mi/dia. Múltiplos, ROE, margem e dívida dos últimos 12 meses quando há ITR. Sem dado (P/L de quem teve prejuízo, dívida de bancos), a célula fica com traço.",
+        "Percentiles among the " + liquidas.length + " stocks trading at least R$ 1M/day. Multiples, ROE, margin and debt are trailing 12 months when quarterly filings exist. With no value (P/E of a loss-maker, bank debt) the cell shows a dash.");
     }
 
-
+    // ------------------------------------------------------------ previsibilidade por componente
+    function previsibilidade() {
+      var comps = [{ id: "total", nome: L("Índice total", "Total score") }].concat(X.componentes());
+      var nota = function (e, id) { var s = X.score(e); return s ? (id === "total" ? s.total : s.componentes[id]) : null; };
+      app.querySelector("#t-prev").innerHTML = comps.map(function (c) {
+        var md = mediana(liquidas.map(function (e) { return nota(e, c.id); }));
+        return '<div class="prev-bloco' + (c.id === "total" ? " total" : "") + '"><h3>' + esc(c.nome) + "</h3>" + dados.map(function (d) {
+          var v = nota(d.e, c.id);
+          return '<div class="tam-linha"><span class="tam-tk">' + esc(d.tk) + '</span><span class="tam-trilho prev-trilho">' +
+            (finito(v) ? '<i style="width:' + Math.max(1, v) + "%;background:" + d.cor + '"></i>' : "") +
+            (md != null ? '<b class="prev-mediana" style="left:' + md + '%" title="' + esc(L("Mediana", "Median")) + '"></b>' : "") +
+            '</span><span class="num tam-v">' + (finito(v) ? X.nf(0).format(v) : "–") + "</span></div>";
+        }).join("") + "</div>";
+      }).join("");
+    }
     // ------------------------------------------------------------ mais formas de comparar
     // O radar mostra o "formato" de cada empresa, mas ângulo e área são lidos com pouca precisão e o
     // percentil esconde o valor real. Os gráficos abaixo usam posição numa escala comum, a forma que o
@@ -479,6 +359,7 @@
       regua(); dispersao(); evolucao(); tamanho();
     }
 
+
     // ------------------------------------------------------------ escolha das empresas
     function chips() {
       app.querySelector("#t-escolhidas").innerHTML = dados.map(function (d) {
@@ -488,12 +369,11 @@
       var input = app.querySelector("#t-busca"), cheio = escolhidas.length >= MAX;
       input.disabled = cheio;
       input.placeholder = cheio ? L("Máximo de " + MAX, "Up to " + MAX) : L("+ Adicionar (ex.: WEGE3)", "+ Add (e.g. WEGE3)");
-      app.querySelectorAll("[data-conjunto]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-conjunto") === conjunto)); });
     }
 
     function atualizar() {
-      history.replaceState(null, "", "#/teia/" + escolhidas.join(","));
-      calcular(); chips(); desenhar(); legenda(); tabela(); aviso(); maisGraficos();
+      history.replaceState(null, "", "#/comparar/" + escolhidas.join(","));
+      calcular(); chips(); tabela(); aviso(); previsibilidade(); maisGraficos();
     }
 
     app.querySelector("#t-escolhidas").addEventListener("click", function (ev) {
@@ -501,9 +381,6 @@
       if (!b) return;
       escolhidas = escolhidas.filter(function (tk) { return tk !== b.getAttribute("data-tirar"); });
       atualizar();
-    });
-    app.querySelectorAll("[data-conjunto]").forEach(function (b) {
-      b.addEventListener("click", function () { conjunto = b.getAttribute("data-conjunto"); ativo = -1; atualizar(); });
     });
 
     (function busca() {
@@ -550,20 +427,21 @@
       input.addEventListener("blur", function () { setTimeout(function () { lista.hidden = true; }, 100); });
     })();
 
+
     // ------------------------------------------------------------ tamanho
-    var largura = 0;
+    var palco = app.querySelector("#t-regua"), largura = 0;
     var obs = new ResizeObserver(function () {
-      if (el.clientWidth && el.clientWidth !== largura) { largura = el.clientWidth; desenhar(); maisGraficos(); }
+      if (palco.clientWidth && palco.clientWidth !== largura) { largura = palco.clientWidth; maisGraficos(); }
     });
-    obs.observe(el);
+    obs.observe(palco);
 
     atualizar();
-    largura = el.clientWidth;
+    largura = palco.clientWidth;
 
     atual = { parar: function () { obs.disconnect(); dica.hidden = true; } };
   }
 
   window.RealTermsTeia = { render: render, parar: parar };
-  // app.js roda primeiro; se a página aberta é a teia, desenha agora
+  // app.js roda primeiro; se a página aberta é a de comparar, desenha agora
   if (document.body.getAttribute("data-pagina") === "teia") render(document.getElementById("app"));
 })();

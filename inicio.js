@@ -60,7 +60,7 @@
         "Balanços oficiais entregues à CVM desde " + anoIni + ", cotações da B3 e o câmbio do Banco Central, num só lugar. Sem opinião, sem recomendação: dados que você pode conferir na fonte.",
         "Official statements filed with the CVM since " + anoIni + ", B3 prices and the Central Bank exchange rate, in one place. No opinions, no recommendations: data you can check at the source.")) + "</p>" +
       '<div class="i-ctas"><a class="botao" href="#/acoes">' + esc(L("Ver as " + X.EMPRESAS.length + " empresas", "Browse all " + X.EMPRESAS.length + " companies")) + "</a>" +
-      '<a class="botao sec" href="#/teia">' + esc(L("Comparar empresas", "Compare companies")) + "</a></div>" +
+      '<a class="botao sec" href="#/comparar">' + esc(L("Comparar empresas", "Compare companies")) + "</a></div>" +
       '<div class="i-stats">' +
       stat(X.EMPRESAS.length, L("empresas com balanço na CVM", "companies with CVM filings")) +
       stat(negociadas.length, L("negociadas no último mês", "traded in the last month")) +
@@ -124,7 +124,7 @@
     var passos = [
       [L("Filtre", "Filter"), L("No ranking, escolha setor, segmento e controle, e ordene por previsibilidade, P/L ou dividendos.", "In the ranking, pick sector, segment and ownership, and sort by predictability, P/E or yield."), "#/acoes", L("Abrir ranking", "Open ranking")],
       [L("Aprofunde", "Dig in"), L("Na página da empresa: resumo automático, múltiplos de 12 meses, histórico de 17 anos e como o índice foi calculado.", "On a company page: automatic summary, trailing multiples, 17 years of history and how the score was built."), "#/" + (top[0] ? top[0].ticker : "PETR4"), L("Ver um exemplo", "See an example")],
-      [L("Compare", "Compare"), L("Na teia, até quatro empresas lado a lado em oito indicadores, contra a mediana do mercado.", "On the radar, up to four companies side by side on eight metrics, against the market median."), "#/teia", L("Abrir a teia", "Open the radar")],
+      [L("Compare", "Compare"), L("Em Comparar, até quatro empresas lado a lado: placar, régua do mercado, qualidade × preço e crescimento.", "In Compare, up to four companies side by side: scorecard, market ruler, quality vs. price and growth."), "#/comparar", L("Comparar empresas", "Compare companies")],
     ];
     var c5 =
       '<section class="secao i-cap i-passos-sec" id="s-i5">' +

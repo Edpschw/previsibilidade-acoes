@@ -4,7 +4,7 @@
 window.I18N = {
   pt: {
     titulo: "Real Terms · Ações brasileiras em termos reais",
-    nav_inicio: "Início", nav_acoes: "Ações", nav_teia: "Teia", nav_agenda: "Agenda", nav_principal: "Navegação principal",
+    nav_inicio: "Início", nav_acoes: "Ações", nav_teia: "Comparar", nav_agenda: "Agenda", nav_principal: "Navegação principal",
     buscar: "Buscar ticker ou empresa",
     nada_encontrado: "Nada encontrado",
     moeda: "Moeda", idioma: "Idioma", tema: "Alternar tema claro/escuro",
@@ -93,7 +93,7 @@ window.I18N = {
   },
   en: {
     titulo: "Real Terms · Brazilian stocks, in real terms",
-    nav_inicio: "Home", nav_acoes: "Stocks", nav_teia: "Radar", nav_agenda: "Dividends", nav_principal: "Main navigation",
+    nav_inicio: "Home", nav_acoes: "Stocks", nav_teia: "Compare", nav_agenda: "Dividends", nav_principal: "Main navigation",
     buscar: "Search ticker or company",
     nada_encontrado: "No results",
     moeda: "Currency", idioma: "Language", tema: "Toggle light/dark theme",

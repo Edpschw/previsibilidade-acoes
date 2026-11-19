@@ -182,7 +182,7 @@ def cabeca(titulo, descricao, url, extra=""):
 <body>
 <header class="topo"><div class="topo-in">
   <a class="marca" href="{{raiz}}" aria-label="Real Terms"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="18" width="6" height="10" rx="1.5"/><rect x="13" y="11" width="6" height="17" rx="1.5"/><rect x="22" y="4" width="6" height="24" rx="1.5"/></svg><span class="marca-nome"><b>Real</b> Terms</span></a>
-  <nav class="nav-principal" aria-label="Main navigation"><a href="{{raiz}}">Home</a><a href="{{raiz}}acao/">Companies</a><a href="{{raiz}}#/teia">Radar</a></nav>
+  <nav class="nav-principal" aria-label="Main navigation"><a href="{{raiz}}">Home</a><a href="{{raiz}}acao/">Companies</a><a href="{{raiz}}#/comparar">Compare</a></nav>
 </div></header>
 <main class="conteudo">
 """

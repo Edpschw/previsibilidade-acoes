@@ -863,14 +863,14 @@
 
   // ---------------------------------------------------------------- roteamento e controles
 
-  /** "#/" início · "#/acoes" ranking · "#/teia/PETR4,VALE3" teia (o antigo "#/mapa" cai nela) · "#/PETR4" empresa */
+  /** "#/" início · "#/acoes" ranking · "#/comparar/PETR4,VALE3" comparar (#/teia e #/mapa antigos caem nela) · "#/PETR4" empresa */
   function rota() {
     var m = location.hash.match(/^#\/([A-Za-z0-9]+)/);
     var alvo = m ? m[1] : "";
     $("#dica").hidden = true;
     if (observador) { observador.disconnect(); observador = null; }
     if (window.RealTermsTeia) window.RealTermsTeia.parar();
-    var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "teia" || alvo === "mapa" ? "teia" :
+    var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "comparar" || alvo === "teia" || alvo === "mapa" ? "teia" :
       alvo === "agenda" ? "agenda" : "empresa";
     $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
     document.body.setAttribute("data-pagina", pagina);
