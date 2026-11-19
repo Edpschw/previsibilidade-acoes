@@ -486,19 +486,22 @@ tbody tr:last-child td { border-bottom: 0; }
 @media (min-width: 900px) {
   .inicio-layout, .pagina-lateral { display: grid; grid-template-columns: 172px minmax(0, 1fr); gap: 32px; align-items: start; }
   .pagina-lateral { margin-top: 16px; }
+  /* só texto: número discreto, trilho fino à esquerda e um traço na cor de destaque marcando o capítulo atual */
   .secoes.lateral { position: sticky; top: calc(var(--topo-h, 60px) + 28px); right: auto; transform: none; z-index: 5;
-    margin: 0; padding: 4px 0 4px 18px; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; border: 0; }
-  .secoes.lateral ol { flex-direction: column; gap: 4px; overflow: visible; }
-  .secoes.lateral a { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 7px 8px; border: 0; border-radius: 8px; font-size: 13.5px; white-space: normal; }
-  .secoes.lateral a:hover { background: var(--surface-2); }
-  .secoes.lateral a.ativa { background: var(--accent-soft); color: var(--text); }
-  .secoes.lateral .r { opacity: 1; transform: none; pointer-events: auto; }
-  .secoes.lateral .n { width: 24px; height: 24px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--border);
-    background: var(--surface); color: var(--muted); opacity: 1; font-size: 10.5px; }
-  .secoes.lateral a.ativa .n { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-  /* linha de progresso vertical, à esquerda dos números */
-  .secoes.lateral .secoes-trilho { left: 4px; right: auto; top: 8px; bottom: 8px; width: 2px; height: auto; background: var(--grid); border-radius: 1px; }
-  .secoes.lateral .secoes-trilho i { width: 100%; height: calc(var(--progresso, 0) * 100%); opacity: 1; border-radius: 1px; }
+    margin: 0; padding: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; border: 0; }
+  .secoes.lateral ol { flex-direction: column; gap: 0; overflow: visible; border-left: 1px solid var(--border); }
+  .secoes.lateral a { position: relative; flex-direction: row; justify-content: flex-start; align-items: baseline; gap: 10px;
+    padding: 6px 0 6px 14px; margin-left: -1px; border: 0; border-left: 1px solid transparent; border-radius: 0;
+    font-size: 13px; font-weight: 450; white-space: nowrap; color: var(--muted); transition: color .15s, border-color .15s; }
+  .secoes.lateral a:hover { background: none; color: var(--text); }
+  .secoes.lateral a.ativa { background: none; color: var(--text); font-weight: 600; border-left-color: var(--accent); }
+  .secoes.lateral .r { opacity: 1; transform: none; pointer-events: auto; overflow: hidden; text-overflow: ellipsis; }
+  .secoes.lateral .n { width: auto; height: auto; display: inline; border: 0; border-radius: 0; background: none;
+    color: var(--muted); opacity: .6; font: 500 10.5px/1 var(--mono); letter-spacing: .02em; }
+  .secoes.lateral a.ativa .n { background: none; color: var(--accent); opacity: 1; }
+  /* progresso de leitura: trilho fino que se preenche ao rolar, sob o traço do capítulo */
+  .secoes.lateral .secoes-trilho { left: 0; right: auto; top: 0; bottom: 0; width: 1px; height: auto; background: none; border-radius: 0; }
+  .secoes.lateral .secoes-trilho i { width: 100%; height: calc(var(--progresso, 0) * 100%); background: var(--accent); opacity: .3; border-radius: 0; }
   .inicio-layout .secao, .pagina-lateral .secao { scroll-margin-top: calc(var(--topo-h, 60px) + 20px); }
 }
 
