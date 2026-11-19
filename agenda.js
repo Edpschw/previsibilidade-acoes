@@ -13,7 +13,7 @@
 
     // todos os pagamentos por vir, um item por ticker × evento
     var todos = [];
-    X.EMPRESAS.forEach(function (e) {
+    X.visiveis().forEach(function (e) {  // com o filtro de setor, só as empresas do setor
       ((window.AGENDA && window.AGENDA.empresas[e.cnpj]) || []).forEach(function (x) {
         if (!x.pag || x.pag < hoje) return;
         var preco = (e.cotacao[x.t] || {}).preco;
