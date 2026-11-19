@@ -413,3 +413,27 @@ tbody tr:last-child td { border-bottom: 0; }
 }
 .agenda-resumo { margin: 0 0 16px; max-width: none; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 640px) { .agenda-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* comparações: régua, dispersão e tamanho ---------------------------- */
+.teia-mais { margin-top: 28px; }
+.teia-mais h2 { font-size: 20px; margin-bottom: 6px; }
+.teia-mais p { margin: 0; max-width: 760px; line-height: 1.6; }
+.teia-regua svg { display: block; width: 100%; overflow: visible; }
+.teia-regua .eixo { font-size: 11px; fill: var(--muted); }
+.teia-regua .regua-rot { font-size: 13px; fill: var(--text); font-weight: 600; }
+.teia-regua .grade { stroke: var(--grid); stroke-width: 2; }
+.regua-faixa { fill: color-mix(in srgb, var(--accent) 16%, transparent); }
+.regua-mediana { stroke: var(--muted); stroke-width: 2; }
+.disp-fundo { fill: var(--muted); opacity: .28; }
+.disp-rot { font: 700 11.5px var(--mono); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+#t-disp svg { display: block; width: 100%; }
+#t-disp .eixo { font-size: 11px; fill: var(--muted); }
+#t-disp .grade { stroke: var(--grid); }
+#t-disp .zero { stroke: var(--muted); opacity: .5; }
+.tam-bloco + .tam-bloco { margin-top: 14px; }
+.tam-bloco h3 { font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+.tam-linha { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: center; padding: 3px 0; }
+.tam-tk { font: 600 12.5px var(--mono); }
+.tam-trilho { height: 10px; border-radius: 5px; background: var(--grid); overflow: hidden; }
+.tam-trilho i { display: block; height: 100%; border-radius: 5px; }
+.tam-v { font-size: 13px; min-width: 84px; text-align: right; }
