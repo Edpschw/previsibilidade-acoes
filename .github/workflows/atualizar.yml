@@ -6,7 +6,8 @@ name: Atualizar base
 
 on:
   schedule:
-    - cron: "30 23 * * 1-5"   # 20h30 em Brasília
+    # minuto "quebrado": nos horários cheios (:00, :30) o GitHub atrasa ou descarta agendamentos
+    - cron: "17 23 * * 1-5"   # 20h17 em Brasília
   workflow_dispatch:
 
 permissions:

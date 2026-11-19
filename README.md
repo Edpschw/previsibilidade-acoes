@@ -44,7 +44,7 @@ Depois de editar `app.js` ou `style.css`, rode `python3 scripts/versionar.py` (o
 
 ## Automação
 
-O GitHub Actions roda `.github/workflows/atualizar.yml` em todo dia útil, às 20h30 de Brasília (e sob demanda pela aba Actions):
+O GitHub Actions roda `.github/workflows/atualizar.yml` em todo dia útil, às 20h17 de Brasília (e sob demanda pela aba Actions):
 
 1. `processar.py` baixa só o que falta ou venceu: pregões novos todo dia; fichas e lista da B3, DFP e ITR recentes a cada 7 dias. As fontes ficam no cache do Actions.
 2. `gerar_paginas.py` reescreve as páginas indexáveis (`acao/`) e o sitemap.
