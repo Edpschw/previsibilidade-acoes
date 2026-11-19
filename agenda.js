@@ -1,9 +1,10 @@
 /* Real Terms — agenda de proventos (#/agenda): pagamentos de dividendos e JCP já aprovados.
- * Dados das fichas da B3 (data/agenda.js, gravado por scripts/processar.py); API window.RealTerms do app.js. */
+ * Dados das fichas da B3 (data/agenda.js, gravado por scripts/processar.py); API window.RealTerms do app.js.
+ * Por padrão a lista é um ranking pelo maior yield; "Data de pagamento" agrupa por mês. */
 (function () {
   "use strict";
 
-  var filtro = { tipo: "", janela: 90, busca: "", liquidas: true };
+  var filtro = { tipo: "", janela: 90, busca: "", liquidas: true, ordem: "yield" };
 
   function render(app) {
     var X = window.RealTerms, D = X.D, L = X.L, esc = X.esc;
@@ -38,6 +39,13 @@
       var d = new Date(iso + "T12:00:00Z");
       return { n: d.getUTCDate(), sem: d.toLocaleDateString(X.locale(), { weekday: "short", timeZone: "UTC" }) };
     };
+    var limiteDe = function (janela) { return janela ? new Date(Date.now() + janela * 864e5).toISOString().slice(0, 10) : "9999"; };
+
+    var pilulas = function (grupo, opcoes) {
+      return '<div class="pilulas" role="group" data-grupo="' + grupo + '">' + opcoes.map(function (o) {
+        return '<button type="button" data-valor="' + o[0] + '">' + esc(o[1]) + (o[2] != null ? ' <span class="conta" data-conta="' + o[0] + '"></span>' : "") + "</button>";
+      }).join("") + "</div>";
+    };
 
     app.innerHTML =
       '<section class="mapa-cab"><span class="olho"><span class="capitulo">R$</span>' + esc(L("Agenda de proventos", "Dividend calendar")) + "</span>" +
@@ -45,41 +53,89 @@
       '<p class="mudo">' + esc(L(
         "Dividendos e juros sobre capital próprio (JCP) já aprovados e ainda por pagar, segundo a B3. Recebe quem tinha a ação na data-com, que nesta lista já passou: a B3 publica o provento depois dela. O yield de cada evento usa a cotação de hoje.",
         "Dividends and interest on equity (JCP) already approved and not yet paid, according to B3. Shareholders of record on the record date get paid, and for these events that date has passed: B3 publishes each payment after it. Each event's yield uses today's price.")) + "</p></section>" +
-      '<div class="mapa-controles">' +
-      '<label><span>' + esc(L("Tipo", "Type")) + '</span><select id="a-tipo"><option value="">' + esc(L("Todos", "All")) + '</option><option value="dividendo">' + esc(nomeTipo("dividendo")) + '</option><option value="jcp">' + esc(nomeTipo("jcp")) + "</option></select></label>" +
-      '<label><span>' + esc(L("Pagamento em até", "Paid within")) + '</span><select id="a-janela"><option value="30">30 ' + esc(L("dias", "days")) + '</option><option value="90">90 ' + esc(L("dias", "days")) + '</option><option value="365">' + esc(L("12 meses", "12 months")) + '</option><option value="0">' + esc(L("Qualquer data", "Any date")) + "</option></select></label>" +
-      '<label><span>' + esc(L("Buscar", "Search")) + '</span><input id="a-busca" type="search" placeholder="ITUB4" autocomplete="off" spellcheck="false"></label>' +
-      '<label class="check"><input type="checkbox" id="a-liq"> ' + esc(L("Só líquidas (≥ R$ 1 mi/dia)", "Liquid only (≥ R$ 1M/day)")) + "</label>" +
-      '</div><div id="a-resumo" class="i-stats agenda-resumo"></div><div id="a-lista"></div>' +
+      '<section class="cartao filtros-card">' +
+      '<div class="filtros-linha">' +
+      '<label class="busca-local"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>' +
+      '<input id="a-busca" type="search" placeholder="' + esc(L("Buscar empresa ou ticker", "Search company or ticker")) + '" autocomplete="off" spellcheck="false" aria-label="' + esc(L("Buscar", "Search")) + '"></label>' +
+      '<div class="filtro-grupo"><span class="filtro-rot">' + esc(L("Ordenar", "Sort")) + "</span>" +
+      pilulas("ordem", [["yield", L("Maior yield", "Highest yield")], ["data", L("Data de pagamento", "Payment date")]]) + "</div>" +
+      "</div>" +
+      '<div class="filtros-linha">' +
+      '<div class="filtro-grupo"><span class="filtro-rot">' + esc(L("Tipo", "Type")) + "</span>" +
+      pilulas("tipo", [["", L("Todos", "All"), 1], ["dividendo", L("Dividendos", "Dividends"), 1], ["jcp", L("JCP", "Interest on equity"), 1]]) + "</div>" +
+      '<div class="filtro-grupo"><span class="filtro-rot">' + esc(L("Pagamento em", "Paid within")) + "</span>" +
+      pilulas("janela", [["30", L("30 dias", "30 days")], ["90", L("90 dias", "90 days")], ["365", L("12 meses", "12 months")], ["0", L("Tudo", "Any")]]) + "</div>" +
+      '<label class="chave"><input type="checkbox" id="a-liq"><span class="chave-trilho" aria-hidden="true"></span>' +
+      esc(L("Só líquidas", "Liquid only")) + ' <span class="mudo">(≥ R$ 1 mi/' + esc(L("dia", "day")) + ")</span></label>" +
+      "</div></section>" +
+      '<div id="a-resumo" class="i-stats agenda-resumo"></div><div id="a-lista"></div>' +
       '<p class="aviso">' + esc(L(
         "O imposto retido na fonte varia com o tipo de provento e a residência do investidor (o JCP sempre tem retenção); confirme com seu custodiante. Datas e valores como publicados pela B3; a empresa pode alterá-los.",
         "Withholding tax depends on the payment type and the investor's residence (interest on equity is always subject to it); check with your custodian. Dates and amounts as published by B3; companies may change them.")) + "</p>";
 
-    $("#a-tipo").value = filtro.tipo;
-    $("#a-janela").value = String(filtro.janela);
+    // ------------------------------------------------------------ controles
+    function marcar() {
+      Array.prototype.forEach.call(app.querySelectorAll(".pilulas"), function (g) {
+        var atual = String(filtro[g.getAttribute("data-grupo")]);
+        Array.prototype.forEach.call(g.querySelectorAll("button"), function (b) {
+          b.setAttribute("aria-pressed", String(b.getAttribute("data-valor") === atual));
+        });
+      });
+    }
+    app.querySelector(".filtros-card").addEventListener("click", function (ev) {
+      var b = ev.target.closest(".pilulas button");
+      if (!b) return;
+      var grupo = b.parentNode.getAttribute("data-grupo"), v = b.getAttribute("data-valor");
+      filtro[grupo] = grupo === "janela" ? +v : v;
+      marcar(); lista();
+    });
     $("#a-busca").value = filtro.busca;
     $("#a-liq").checked = filtro.liquidas;
-    $("#a-tipo").addEventListener("change", function (ev) { filtro.tipo = ev.target.value; lista(); });
-    $("#a-janela").addEventListener("change", function (ev) { filtro.janela = +ev.target.value; lista(); });
     $("#a-busca").addEventListener("input", function (ev) { filtro.busca = ev.target.value.trim().toUpperCase(); lista(); });
     $("#a-liq").addEventListener("change", function (ev) { filtro.liquidas = ev.target.checked; lista(); });
     $("#a-lista").addEventListener("click", function (ev) {
       var a = ev.target.closest("[data-t]");
       if (a) location.hash = "#/" + a.getAttribute("data-t");
     });
+    marcar();
+
+    // ------------------------------------------------------------ lista
+    function passa(it, semTipo) {
+      return (semTipo || !filtro.tipo || it.x.tipo === filtro.tipo) && it.x.pag <= limiteDe(filtro.janela) &&
+        (!filtro.liquidas || it.e.liquidez >= 1e6) &&
+        (!filtro.busca || it.x.t.indexOf(filtro.busca) === 0 || X.nomeCurto(it.e.nome).toUpperCase().indexOf(filtro.busca) >= 0);
+    }
+
+    function item(it, lead, comData) {
+      return '<a class="agenda-item' + (comData ? " com-data" : "") + '" href="#/' + it.x.t + '" data-t="' + it.x.t + '">' + lead +
+        '<span class="agenda-quem"><b>' + it.x.t + "</b><small>" + esc(X.nomeCurto(it.e.nome)) + "</small></span>" +
+        '<span class="selo-h ' + (it.x.tipo === "jcp" ? "" : "forte") + '">' + esc(nomeTipo(it.x.tipo)) + "</span>" +
+        '<span class="agenda-num destaque"><b class="num">' + (it.yield != null ? X.pct(it.yield, 2) : "–") + "</b><small>yield</small></span>" +
+        '<span class="agenda-num a-valor"><b class="num">' + moeda(it.x.valor) + "</b><small>" + esc(L("por ação", "per share")) + "</small></span>" +
+        (comData ? '<span class="agenda-num a-pag"><b class="num">' + esc(X.data(it.x.pag)) + "</b><small>" + esc(L("pagamento", "payment")) + "</small></span>" : "") +
+        '<span class="agenda-num a-com mudo"><b class="num">' + esc(X.data(it.x.com)) + "</b><small>" + esc(L("data-com", "record date")) + "</small></span>" +
+        "</a>";
+    }
 
     function lista() {
-      var limite = filtro.janela ? new Date(Date.now() + filtro.janela * 864e5).toISOString().slice(0, 10) : "9999";
-      var itens = todos.filter(function (it) {
-        return (!filtro.tipo || it.x.tipo === filtro.tipo) && it.x.pag <= limite &&
-          (!filtro.liquidas || it.e.liquidez >= 1e6) &&
-          (!filtro.busca || it.x.t.indexOf(filtro.busca) === 0 || X.nomeCurto(it.e.nome).toUpperCase().indexOf(filtro.busca) >= 0);
-      }).sort(function (a, b) { return a.x.pag < b.x.pag ? -1 : a.x.pag > b.x.pag ? 1 : (b.yield || 0) - (a.yield || 0); });
+      // contagem por tipo com os demais filtros aplicados
+      ["", "dividendo", "jcp"].forEach(function (t) {
+        var n = todos.filter(function (it) { return passa(it, true) && (!t || it.x.tipo === t); }).length;
+        var alvo = app.querySelector('[data-conta="' + t + '"]');
+        if (alvo) alvo.textContent = n;
+      });
+
+      var itens = todos.filter(function (it) { return passa(it); });
+      if (filtro.ordem === "yield") {
+        itens.sort(function (a, b) { return (b.yield == null ? -1 : b.yield) - (a.yield == null ? -1 : a.yield) || (a.x.pag < b.x.pag ? -1 : 1); });
+      } else {
+        itens.sort(function (a, b) { return a.x.pag < b.x.pag ? -1 : a.x.pag > b.x.pag ? 1 : (b.yield || 0) - (a.yield || 0); });
+      }
 
       var empresas = {};
       itens.forEach(function (it) { empresas[it.e.cnpj] = 1; });
       var maior = itens.filter(function (it) { return it.yield != null; }).sort(function (a, b) { return b.yield - a.yield; })[0];
-      var prox = itens[0];
+      var prox = itens.slice().sort(function (a, b) { return a.x.pag < b.x.pag ? -1 : 1; })[0];
       var st = function (v, r) { return '<div class="i-stat"><b class="num">' + v + "</b><span>" + esc(r) + "</span></div>"; };
       $("#a-resumo").innerHTML =
         st(itens.length, L("pagamentos no período", "payments in the period")) +
@@ -91,6 +147,11 @@
         $("#a-lista").innerHTML = '<div class="cartao vazio">' + esc(L("Nenhum pagamento com esses filtros.", "No payments match these filters.")) + "</div>";
         return;
       }
+      if (filtro.ordem === "yield") {
+        $("#a-lista").innerHTML = '<section class="cartao agenda-mes"><h2>' + esc(L("Ranking por yield", "Ranked by yield")) + '</h2><div class="agenda-itens">' +
+          itens.map(function (it, k) { return item(it, '<span class="agenda-dia rank"><b>' + (k + 1) + "</b></span>", true); }).join("") + "</div></section>";
+        return;
+      }
       var html = "", mesAtual = "";
       itens.forEach(function (it) {
         var mes = it.x.pag.slice(0, 7);
@@ -100,14 +161,7 @@
           mesAtual = mes;
         }
         var d = dia(it.x.pag);
-        html += '<a class="agenda-item" href="#/' + it.x.t + '" data-t="' + it.x.t + '">' +
-          '<span class="agenda-dia"><b>' + d.n + "</b><small>" + esc(d.sem) + "</small></span>" +
-          '<span class="agenda-quem"><b>' + it.x.t + "</b><small>" + esc(X.nomeCurto(it.e.nome)) + "</small></span>" +
-          '<span class="selo-h ' + (it.x.tipo === "jcp" ? "" : "forte") + '">' + esc(nomeTipo(it.x.tipo)) + "</span>" +
-          '<span class="agenda-num"><b class="num">' + moeda(it.x.valor) + "</b><small>" + esc(L("por ação", "per share")) + "</small></span>" +
-          '<span class="agenda-num"><b class="num">' + (it.yield != null ? X.pct(it.yield, 2) : "–") + "</b><small>yield</small></span>" +
-          '<span class="agenda-num mudo"><b class="num">' + esc(X.data(it.x.com)) + "</b><small>" + esc(L("data-com", "record date")) + "</small></span>" +
-          "</a>";
+        html += item(it, '<span class="agenda-dia"><b>' + d.n + "</b><small>" + esc(d.sem) + "</small></span>", false);
       });
       $("#a-lista").innerHTML = html + "</div></section>";
     }

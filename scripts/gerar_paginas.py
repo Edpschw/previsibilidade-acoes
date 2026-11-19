@@ -265,12 +265,14 @@ def pagina_indice(empresas, d):
     blocos = []
     for st in sorted(por_setor):
         itens = "".join(
-            f'<li><a href="{e["ticker"]}/"><b>{e["ticker"]}</b> {esc(nome_curto(e["nome"]))}</a></li>'
-            for e in sorted(por_setor[st], key=lambda x: x["ticker"]))
+            f'<li><a href="{e["ticker"]}/"><b>{e["ticker"]}</b> {esc(nome_curto(e["nome"]))}'
+            f'<span class="mudo"> · {(e["score"].get("brl") or {}).get("total", "–")}</span></a></li>'
+            # dentro do setor, da mais para a menos previsível; sem índice no fim
+            for e in sorted(por_setor[st], key=lambda x: (-((x["score"].get("brl") or {}).get("total") or -1), x["ticker"])))
         blocos.append(f'<section class="cartao" style="margin-top:12px"><h2>{esc(st)} <span class="mudo">({len(por_setor[st])})</span></h2><ul class="lista-acoes">{itens}</ul></section>')
     titulo = "All Brazilian listed companies by sector · Real Terms"
     descricao = f"{len(empresas)} companies listed on B3 with fundamentals, valuation and a predictability score from official CVM filings."
-    corpo = (f'<section class="intro"><h1>Brazilian listed companies</h1><p>{esc(descricao)} '
+    corpo = (f'<section class="intro"><h1>Brazilian listed companies</h1><p>{esc(descricao)} Within each sector, companies are listed from most to least predictable (score after the name). '
              f'<a href="../#/acoes">Open the interactive ranking →</a></p></section>' + "".join(blocos))
     estilo = "<style>.lista-acoes{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px 16px}.lista-acoes b{font-family:var(--mono);margin-right:6px}</style>"
     return (cabeca(titulo, descricao, url, estilo) + corpo + RODAPE).replace("{raiz}", "../").replace("{data}", esc(d["gerado_em"][:10]))

@@ -115,7 +115,7 @@
         "Bars share a scale within each metric. Liquidity is the average daily traded volume over the last month.")) + "</p></section></div>";
 
     var dica = document.getElementById("dica");
-    var eixos, dados, medianas;
+    var eixos, dados, medianas, ordem;
 
     // ------------------------------------------------------------ números
     function calcular() {
@@ -128,17 +128,29 @@
         var e = X.POR_TICKER[tk];
         var brutos = eixos.map(function (m) { var v = m.val(e, ind(e)); return finito(v) ? v : null; });
         var notas = brutos.map(function (v, k) { return v == null ? null : percentil(v, universos[k], eixos[k].sentido); });
-        return { tk: tk, e: e, cor: CORES[j], brutos: brutos, notas: notas };
+        var validas = notas.filter(finito);
+        var media = validas.length ? validas.reduce(function (s, v) { return s + v; }, 0) / validas.length : -1;
+        return { tk: tk, e: e, cor: CORES[j], brutos: brutos, notas: notas, media: media };
+      });
+      ordem = dados.slice().sort(function (a, b) { return b.media - a.media; });
+    }
+
+    /** cópia de `lista` do maior para o menor valor de `val`; sem valor vai para o fim */
+    function melhoresPrimeiro(lista, val) {
+      return lista.slice().sort(function (a, b) {
+        var va = val(a), vb = val(b);
+        return (finito(vb) ? vb : -Infinity) - (finito(va) ? va : -Infinity);
       });
     }
 
     // ------------------------------------------------------------ placar
     function tabela() {
-      var cab = "<thead><tr><th>" + esc(L("Indicador", "Metric")) + "</th>" + dados.map(function (d) {
+      var cab = "<thead><tr><th>" + esc(L("Indicador", "Metric")) + "</th>" + ordem.map(function (d) {
         return '<th><span class="teia-th"><i style="--c:' + d.cor + '"></i>' + esc(d.tk) + "</span></th>";
       }).join("") + "<th>" + esc(L("Mediana", "Median")) + "</th></tr></thead>";
       var corpo = eixos.map(function (m, k) {
-        return "<tr><td>" + esc(m.rot) + (m.sentido < 0 ? ' <span class="mudo">↓</span>' : "") + "</td>" + dados.map(function (d) {
+        var topo = Math.max.apply(null, ordem.map(function (d) { return finito(d.notas[k]) ? d.notas[k] : -1; }));
+        return "<tr><td>" + esc(m.rot) + (m.sentido < 0 ? ' <span class="mudo">↓</span>' : "") + "</td>" + ordem.map(function (d) {
           var v = d.brutos[k];
           if (v == null) return '<td class="num mudo">–</td>';
           var p = d.notas[k], fundo = "";
@@ -146,7 +158,9 @@
             var forca = Math.round(Math.abs(p - 50) / 50 * 26);  // até 26% de cor nos extremos
             fundo = ' style="background:color-mix(in srgb, var(' + (p >= 50 ? "--pos" : "--neg") + ") " + forca + '%, transparent)"';
           }
-          return '<td class="num"' + fundo + ">" + m.fmt(v) + '<small class="mudo"> p' + p + "</small></td>";
+          var melhor = ordem.length > 1 && p === topo;
+          return '<td class="num' + (melhor ? " melhor" : "") + '"' + fundo + ">" + (melhor ? '<span class="coroa" title="' + esc(L("Melhor do grupo", "Best in group")) + '">▲</span>' : "") +
+            m.fmt(v) + '<small class="mudo"> p' + p + "</small></td>";
         }).join("") + '<td class="num mudo">' + (medianas[k] == null ? "–" : m.fmt(medianas[k])) + "</td></tr>";
       }).join("");
       app.querySelector("#t-tabela").innerHTML = "<table>" + cab + "<tbody>" + corpo + "</tbody></table>";
@@ -154,8 +168,8 @@
 
     function aviso() {
       app.querySelector("#t-aviso").textContent = L(
-        "Percentis entre as " + liquidas.length + " ações com liquidez de pelo menos R$ 1 mi/dia. Múltiplos, ROE, margem e dívida dos últimos 12 meses quando há ITR. Sem dado (P/L de quem teve prejuízo, dívida de bancos), a célula fica com traço.",
-        "Percentiles among the " + liquidas.length + " stocks trading at least R$ 1M/day. Multiples, ROE, margin and debt are trailing 12 months when quarterly filings exist. With no value (P/E of a loss-maker, bank debt) the cell shows a dash.");
+        "Colunas da melhor para a pior empresa, pela média dos percentis; ▲ marca o melhor valor de cada linha. Percentis entre as " + liquidas.length + " ações com liquidez de pelo menos R$ 1 mi/dia. Múltiplos, ROE, margem e dívida dos últimos 12 meses quando há ITR. Sem dado (P/L de quem teve prejuízo, dívida de bancos), a célula fica com traço.",
+        "Columns run from best to worst company by average percentile; ▲ marks the best value in each row. Percentiles among the " + liquidas.length + " stocks trading at least R$ 1M/day. Multiples, ROE, margin and debt are trailing 12 months when quarterly filings exist. With no value (P/E of a loss-maker, bank debt) the cell shows a dash.");
     }
 
     // ------------------------------------------------------------ previsibilidade por componente
@@ -164,7 +178,8 @@
       var nota = function (e, id) { var s = X.score(e); return s ? (id === "total" ? s.total : s.componentes[id]) : null; };
       app.querySelector("#t-prev").innerHTML = comps.map(function (c) {
         var md = mediana(liquidas.map(function (e) { return nota(e, c.id); }));
-        return '<div class="prev-bloco' + (c.id === "total" ? " total" : "") + '"><h3>' + esc(c.nome) + "</h3>" + dados.map(function (d) {
+        var lista = melhoresPrimeiro(dados, function (d) { return nota(d.e, c.id); });
+        return '<div class="prev-bloco' + (c.id === "total" ? " total" : "") + '"><h3>' + esc(c.nome) + "</h3>" + lista.map(function (d) {
           var v = nota(d.e, c.id);
           return '<div class="tam-linha"><span class="tam-tk">' + esc(d.tk) + '</span><span class="tam-trilho prev-trilho">' +
             (finito(v) ? '<i style="width:' + Math.max(1, v) + "%;background:" + d.cor + '"></i>' : "") +
@@ -305,6 +320,12 @@
       });
     }
 
+    /** séries do maior para o menor último valor (ordem da legenda e da dica) */
+    function porUltimo(series) {
+      var fim = function (s) { for (var k = s.v.length - 1; k >= 0; k--) if (finito(s.v[k])) return s.v[k]; return null; };
+      return melhoresPrimeiro(series, fim);
+    }
+
     /** 3 e 4. Receita em base 100 e margem líquida, nos últimos 10 anos em comum */
     function evolucao() {
       var anos = [];
@@ -324,16 +345,16 @@
       if (base < 0) {
         cresc.innerHTML = '<p class="mudo">' + esc(L("Sem um ano com receita de todas as empresas.", "No year with revenue for every company.")) + "</p>";
       } else {
-        X.linhas(cresc, anos.slice(base), dados.map(function (d, j) {
+        X.linhas(cresc, anos.slice(base), porUltimo(dados.map(function (d, j) {
           return { nome: d.tk, cor: d.cor, v: recs[j].slice(base).map(function (v) { return v > 0 ? v / recs[j][base] * 100 : null; }) };
-        }), function (v) { return v == null ? "–" : X.nf(0).format(v); }, { eixo: function (v) { return X.nf(0).format(v); }, limites: null });
+        })), function (v) { return v == null ? "–" : X.nf(0).format(v); }, { eixo: function (v) { return X.nf(0).format(v); }, limites: null });
         app.querySelector("#t-cresc-nota").textContent = L("Receita de " + anos[base] + " = 100", "Revenue in " + anos[base] + " = 100") +
           (X.estado.moeda === "usd" ? L(", em US$", ", in US$") : L(", em R$", ", in R$")) + ".";
       }
-      X.linhas(app.querySelector("#t-margem"), anos, dados.map(function (d) {
+      X.linhas(app.querySelector("#t-margem"), anos, porUltimo(dados.map(function (d) {
         var r = porAno(d, "receita"), l = porAno(d, "lucro_liquido");
         return { nome: d.tk, cor: d.cor, v: r.map(function (v, k) { return v > 0 && l[k] != null ? l[k] / v : null; }) };
-      }), function (v) { return X.pct(v, 1); });
+      })), function (v) { return X.pct(v, 1); });
     }
 
     /** 5. Tamanho e liquidez: barras na mesma escala dentro de cada indicador */
@@ -344,9 +365,10 @@
         { rot: L("Volume negociado por dia", "Daily traded volume"), val: function (e) { return e.liquidez == null ? null : hojeR(e.liquidez / 1000); } },
       ];
       app.querySelector("#t-tamanho").innerHTML = ms.map(function (m) {
-        var vs = dados.map(function (d) { return m.val(d.e); });
+        var lista = melhoresPrimeiro(dados, function (d) { return m.val(d.e); });
+        var vs = lista.map(function (d) { return m.val(d.e); });
         var max = Math.max.apply(null, vs.filter(finito).concat([1]));
-        return '<div class="tam-bloco"><h3>' + esc(m.rot) + "</h3>" + dados.map(function (d, j) {
+        return '<div class="tam-bloco"><h3>' + esc(m.rot) + "</h3>" + lista.map(function (d, j) {
           var v = vs[j];
           return '<div class="tam-linha"><span class="tam-tk">' + esc(d.tk) + '</span><span class="tam-trilho"><i style="width:' +
             (finito(v) && v > 0 ? Math.max(1, v / max * 100) : 0) + "%;background:" + d.cor + '"></i></span><span class="num tam-v">' + (finito(v) ? X.dinheiro(v) : "–") + "</span></div>";
