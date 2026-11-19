@@ -390,3 +390,26 @@ tbody tr:last-child td { border-bottom: 0; }
 /* logotipo: "Real" na cor de destaque */
 .marca-nome { font-weight: 650; letter-spacing: -.02em; white-space: nowrap; }
 .marca-nome b { color: var(--accent); font-weight: 800; }
+
+/* agenda de proventos ------------------------------------------------- */
+.agenda-mes { margin-top: 14px; padding: 18px 20px; }
+.agenda-mes h2 { margin-bottom: 10px; }
+.agenda-itens { display: grid; }
+.agenda-item { display: grid; grid-template-columns: 54px minmax(160px, 1.4fr) auto repeat(3, minmax(90px, 1fr)); gap: 14px; align-items: center;
+  padding: 10px 6px; border-top: 1px solid var(--border); color: var(--text); text-decoration: none; }
+.agenda-item:first-child { border-top: 0; }
+.agenda-item:hover { background: var(--surface-2); text-decoration: none; }
+.agenda-item small { display: block; font-size: 12px; color: var(--muted); }
+.agenda-dia { text-align: center; }
+.agenda-dia b { display: block; font-size: 22px; line-height: 1; }
+.agenda-quem b { font-family: var(--mono); font-size: 14px; }
+.agenda-num { text-align: right; }
+.agenda-num b { font-size: 15px; }
+@media (max-width: 760px) {
+  .agenda-item { grid-template-columns: 44px 1fr auto; row-gap: 6px; }
+  .agenda-item .selo-h { justify-self: end; }
+  .agenda-num { grid-column: span 1; text-align: left; }
+  .agenda-num:nth-of-type(1) { grid-column: 2; }
+}
+.agenda-resumo { margin: 0 0 16px; max-width: none; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 640px) { .agenda-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -374,6 +374,22 @@
     return out.join("");
   }
 
+  /** Pagamentos aprovados e ainda por fazer (fichas da B3), dentro da seção de valuation. */
+  function pagamentosEmpresa(e) {
+    var hoje = new Date().toISOString().slice(0, 10);
+    var itens = ((window.AGENDA && window.AGENDA.empresas[e.cnpj]) || []).filter(function (x) { return x.pag && x.pag >= hoje; }).slice(0, 6);
+    if (!itens.length) return "";
+    var moeda = function (v) { return (estado.moeda === "usd" ? "US$ " : "R$ ") + nf(4).format(estado.moeda === "usd" ? v / D.ptax_atual.valor : v); };
+    return '<h3 style="margin:18px 0 8px">' + L("Pagamentos a receber", "Upcoming payments") + ' <a class="mini" href="#/agenda">' + L("agenda completa →", "full calendar →") + "</a></h3>" +
+      '<div class="tabela-wrap"><table><thead><tr><th>Ticker</th><th class="esq">' + L("Tipo", "Type") + "</th><th>" +
+      L("Por ação", "Per share") + "</th><th>Yield</th><th>" + L("Data-com", "Record date") + "</th><th>" + L("Pagamento", "Payment") + "</th></tr></thead><tbody>" +
+      itens.map(function (x) {
+        var p = (e.cotacao[x.t] || {}).preco;
+        return "<tr><td>" + x.t + '</td><td class="esq">' + (x.tipo === "jcp" ? L("JCP", "Interest on equity") : x.tipo === "dividendo" ? L("Dividendo", "Dividend") : esc(x.tipo)) +
+          '</td><td class="num">' + moeda(x.valor) + '</td><td class="num">' + (p ? pct(x.valor / p, 2) : "–") + "</td><td>" + data(x.com) + "</td><td>" + data(x.pag) + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+
   /** Caixa operacional inflado por capital de giro (Sanepar 2025): o fluxo de caixa livre não é recorrente. */
   function avisoCaixa(e, i) {
     var s = e.series, k = e.anos.length - 1;
@@ -506,7 +522,7 @@
     var blocos =
       '<section class="cartao secao" id="s-valuation">' + titulo("s-valuation", "sec_valuation") +
       '<span class="mudo sub">' + esc(tf("valuation_sub", data(cot && cot.data), i.d12 ? tf("sobre_12m", data(i.d12.ate)) : tf("sobre_balanco", i.ano))) + "</span></div>" +
-      cartoes(valuation) + "</section>" +
+      cartoes(valuation) + pagamentosEmpresa(e) + "</section>" +
       (doze12 ? '<section class="cartao secao" id="s-12m">' + titulo("s-12m", "sec_12m") +
         '<span class="mudo sub">' + L("Até ", "To ") + data(i.d12.ate) + " · DFP + ITR</span></div>" + cartoes(doze12) + "</section>" : "") +
       '<section class="cartao secao" id="s-fund">' + titulo("s-fund", "", tf("fund_titulo", i.ano)) +
@@ -854,12 +870,14 @@
     $("#dica").hidden = true;
     if (observador) { observador.disconnect(); observador = null; }
     if (window.RealTermsTeia) window.RealTermsTeia.parar();
-    var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "teia" || alvo === "mapa" ? "teia" : "empresa";
+    var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "teia" || alvo === "mapa" ? "teia" :
+      alvo === "agenda" ? "agenda" : "empresa";
     $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
     document.body.setAttribute("data-pagina", pagina);
     if (pagina === "inicio" && window.RealTermsInicio) window.RealTermsInicio.render($("#app"));
     else if (pagina === "inicio" || pagina === "acoes") telaRanking();
     else if (pagina === "teia") { if (window.RealTermsTeia) window.RealTermsTeia.render($("#app")); }
+    else if (pagina === "agenda") { if (window.RealTermsAgenda) window.RealTermsAgenda.render($("#app")); }
     else telaEmpresa(alvo.toUpperCase());
   }
 

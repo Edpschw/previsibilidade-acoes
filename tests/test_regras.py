@@ -200,6 +200,16 @@ class Proventos(unittest.TestCase):
         self.assertAlmostEqual(r["SAPR4"], 0.11)
         self.assertAlmostEqual(r["SAPR11"], 0.55)
 
+    def test_agenda_so_eventos_por_vir(self):
+        sup = {"cashDividends": [
+            {"isinCode": "BRPETRACNPR6", "label": "DIVIDENDO", "rate": "0,47", "lastDatePrior": "21/08/2026", "paymentDate": "21/12/2026"},
+            {"isinCode": "BRPETRACNOR9", "label": "JRS CAP PROPRIO", "rate": "0,67", "lastDatePrior": "01/12/2026", "paymentDate": "20/01/2027"},
+            {"isinCode": "BRPETRACNOR9", "label": "DIVIDENDO", "rate": "1,00", "lastDatePrior": "01/03/2026", "paymentDate": "01/05/2026"},
+        ]}
+        ag = P.proventos_agenda(sup, ["PETR3", "PETR4"], hoje=date(2026, 11, 18))
+        self.assertEqual([(x["t"], x["tipo"]) for x in ag], [("PETR4", "dividendo"), ("PETR3", "jcp")])
+        self.assertEqual(ag[0]["pag"], "2026-12-21")
+
     def test_numeros_brasileiros(self):
         self.assertEqual(P.num_br("12.888.732.761"), 12888732761)
         self.assertEqual(P.data_br("17/11/2026"), date(2026, 11, 17))

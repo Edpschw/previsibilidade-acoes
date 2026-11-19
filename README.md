@@ -35,6 +35,9 @@ A CVM regera os ZIPs dos últimos anos quando há reapresentação. Use `python3
 | `index.html`, `app.js`, `style.css` | Rotas: entrada (`#/`), ranking (`#/acoes`), teia (`#/teia/PETR4,VALE3`; o antigo `#/mapa` cai nela) e página da empresa (`#/PETR4`), com cabeçalho-resumo, selos e navegação por seções. Gráficos em SVG próprio. `app.js` expõe `window.RealTerms` (dados, formatos, textos) para os módulos abaixo. |
 | `inicio.js` | Página de entrada em cinco capítulos (o mercado em números, previsibilidade, real × dólar, glossário, três passos), calculada da base. |
 | `teia.js` | Gráfico de teia (radar) em SVG: até quatro empresas lado a lado contra a mediana das ações líquidas. Dois conjuntos de eixos: fundamentos (oito indicadores em percentil, com P/L, P/VP e dívida invertidos para que mais para fora seja sempre melhor) e os cinco componentes do índice de previsibilidade. As empresas escolhidas ficam no endereço. |
+| `agenda.js` | Agenda de proventos (`#/agenda`): dividendos e JCP aprovados e ainda por pagar, das fichas da B3 (`e.agenda`, gravado pelo processamento). A página da empresa mostra os pagamentos dela. |
+| `scripts/gerar_paginas.py` | Páginas estáticas indexáveis por empresa (`acao/PETR4/`), índice por setor (`acao/`), `sitemap.xml` e `robots.txt`, em inglês, com título, descrição, Open Graph e schema.org. Roda todo dia no Actions. O endereço público fica em `SITE_URL`. |
+| `scripts/gerar_imagens.swift` | Gera `og.png` (imagem de compartilhamento 1200×630) e os ícones `icon-180.png`/`icon-512.png` com AppKit: `swift scripts/gerar_imagens.swift`. `favicon.svg` e `manifest.webmanifest` são escritos à mão. |
 | `i18n.js` | Textos da interface em português e inglês (seletor PT/EN no topo; o padrão segue o idioma do navegador). Setor em inglês vem da B3; controle, segmento e país têm tradução em `I18N_MAPAS`. |
 
 Depois de editar `app.js` ou `style.css`, rode `python3 scripts/versionar.py` (o processamento já faz isso).
@@ -44,12 +47,13 @@ Depois de editar `app.js` ou `style.css`, rode `python3 scripts/versionar.py` (o
 O GitHub Actions roda `.github/workflows/atualizar.yml` em todo dia útil, às 20h30 de Brasília (e sob demanda pela aba Actions):
 
 1. `processar.py` baixa só o que falta ou venceu: pregões novos todo dia; fichas e lista da B3, DFP e ITR recentes a cada 7 dias. As fontes ficam no cache do Actions.
-2. Testes de regressão.
-3. `auditar.py --externo --trava`: se a cobertura cair abaixo de 97%, a base encolher mais de 5% ou surgirem mais de 5 ocorrências graves novas, o job falha e nada é publicado.
-4. `mudancas.py` resume o que mudou desde o último commit.
-5. Commit de `data/empresas.js`, `index.html` e da auditoria; o GitHub Pages publica o commit.
-6. Um issue avisa quando há mudanças relevantes ou quando a atualização falha (o GitHub manda por e-mail).
-7. Se o segredo `DATABASE_URL` existir, `carregar_base.py` grava a mesma base no Postgres. Se a carga falhar, o site já foi publicado e um issue próprio avisa; nada fica gravado pela metade.
+2. `gerar_paginas.py` reescreve as páginas indexáveis (`acao/`) e o sitemap.
+3. Testes de regressão.
+4. `auditar.py --externo --trava`: se a cobertura cair abaixo de 97%, a base encolher mais de 5% ou surgirem mais de 5 ocorrências graves novas, o job falha e nada é publicado.
+5. `mudancas.py` resume o que mudou desde o último commit.
+6. Commit de `data/empresas.js`, `index.html`, das páginas indexáveis e da auditoria; o GitHub Pages publica o commit.
+7. Um issue avisa quando há mudanças relevantes ou quando a atualização falha (o GitHub manda por e-mail).
+8. Se o segredo `DATABASE_URL` existir, `carregar_base.py` grava a mesma base no Postgres. Se a carga falhar, o site já foi publicado e um issue próprio avisa; nada fica gravado pela metade.
 
 Os dados trimestrais (ITR) entram nos indicadores de 12 meses: último exercício + acumulado do ano − acumulado do mesmo período do ano anterior.
 

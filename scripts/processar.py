@@ -41,6 +41,8 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 FONTES = RAIZ / "scripts" / "sources"
 SAIDA = RAIZ / "data" / "empresas.js"
+# agenda de proventos à parte: empresas.js tem a forma que scripts/carregar_base.py confere campo a campo
+SAIDA_AGENDA = RAIZ / "data" / "agenda.js"
 
 URL_ITR = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/ITR/DADOS/itr_cia_aberta_{ano}.zip"
 URL_DFP = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS/dfp_cia_aberta_{ano}.zip"
@@ -201,6 +203,37 @@ def proventos_12m(sup, tickers, hoje=None):
                 total += num_br(p.get("rate"))
         por_ticker[t] = total
     return por_ticker
+
+
+TIPOS_PROVENTO = {"DIVIDENDO": "dividendo", "JRS CAP PROPRIO": "jcp", "RENDIMENTO": "rendimento",
+                  "REST CAP DIN": "restituicao"}
+
+
+def proventos_agenda(sup, tickers, hoje=None):
+    """Proventos em dinheiro ainda por vir: data-com à frente (ainda dá para comprar e receber) ou
+    pagamento a fazer. Um item por ticker × evento, ordenado pela data de pagamento."""
+    hoje = hoje or date.today()
+    especie_de = {}
+    for t in tickers:
+        m = re.match(r"\d+", t[4:])
+        esp = ISIN_ESPECIE.get(m.group(0) if m else "")
+        if esp:
+            especie_de[t] = esp
+    itens = []
+    for p in sup.get("cashDividends") or []:
+        com, pag = data_br(p.get("lastDatePrior")), data_br(p.get("paymentDate"))
+        if not com or not ((pag and pag >= hoje) or com >= hoje):
+            continue
+        isin = p.get("isinCode") or p.get("assetIssued") or ""
+        for t, esp in especie_de.items():
+            if isin[2:6] == t[:4] and isin[6:].startswith(esp):
+                itens.append({
+                    "t": t, "tipo": TIPOS_PROVENTO.get(p.get("label"), (p.get("label") or "").lower()),
+                    "valor": round(num_br(p.get("rate")), 8),
+                    "com": com.isoformat(), "pag": pag.isoformat() if pag and pag.year < 9999 else None,
+                    "ref": p.get("relatedTo") or "",
+                })
+    return sorted(itens, key=lambda x: (x["pag"] or "9999", x["t"]))
 
 
 def carregar_cadastro(forcar: bool, negociados=frozenset(), b3=()):
@@ -986,6 +1019,7 @@ def main():
 
 
     empresas = []
+    agenda = {}
     for cnpj, info in cad.items():
         if cnpj not in base:
             continue
@@ -1024,6 +1058,10 @@ def main():
         vm_atual = valor_mercado(precos_hoje, tk, units, acoes_b3["on"], acoes_b3["pn"],
                                  acoes_b3["on"] + acoes_b3["pn"]) if acoes_b3 else vm_dfp
         prov = proventos_12m(sup, tk) if sup else {}
+        if sup:
+            itens = proventos_agenda(sup, tk)
+            if itens:
+                agenda[cnpj] = itens
         prov_total = None
         if acoes_b3 and prov:
             r_on = max((v for t, v in prov.items() if t[4:].startswith("3")), default=0)
@@ -1066,6 +1104,8 @@ def main():
         (FONTES / "empresas_anterior.js").write_bytes(SAIDA.read_bytes())
     js = json.dumps(dados, ensure_ascii=False, separators=(",", ":"))
     SAIDA.write_text(f"// Gerado por scripts/processar.py — não edite à mão.\nwindow.DADOS = {js};\n", encoding="utf-8")
+    ag = json.dumps({"gerado_em": dados["gerado_em"], "empresas": agenda}, ensure_ascii=False, separators=(",", ":"))
+    SAIDA_AGENDA.write_text(f"// Gerado por scripts/processar.py — não edite à mão.\nwindow.AGENDA = {ag};\n", encoding="utf-8")
     print(f"{len(empresas)} empresas → {SAIDA.relative_to(RAIZ)} ({SAIDA.stat().st_size / 1e6:.1f} MB)")
     from versionar import versionar
     versionar()  # ?v= dos assets no index.html acompanha o conteúdo
