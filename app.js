@@ -467,7 +467,7 @@
       "</section>";
 
     // --- navegação por seções
-    var nav = '<nav class="secoes" aria-label="' + esc(t("secoes")) + '"><div class="secoes-trilho"><i></i></div><ol>' +
+    var nav = '<nav class="secoes lateral" aria-label="' + esc(t("secoes")) + '"><div class="secoes-trilho"><i></i></div><ol>' +
       secs.map(function (x, k) {
         return '<li><a href="#" data-ir="' + x[0] + '"><span class="n">' + (k < 9 ? "0" : "") + (k + 1) + '</span><span class="r">' + t(x[1]) + "</span></a></li>";
       }).join("") + "</ol></nav>";
@@ -558,13 +558,14 @@
       '<div class="duas bloco">' +
       '<section class="cartao"><h2>' + t("g_dividendos") + '</h2><div class="grafico" id="g-dividendos"></div></section>' + comp + "</div>";
 
-    app.innerHTML = cab + nav +
+    // capítulos numa coluna lateral que acompanha a rolagem (no celular, barra no topo)
+    app.innerHTML = cab + '<div class="pagina-lateral">' + nav +
       '<div class="corpo-empresa">' + blocos +
       '<div class="cab-secao bloco secao" id="s-hist" style="margin-top:28px"><h2>' + capitulo(secs, "s-hist") + t("sec_hist") + "</h2>" + periodo + "</div>" + graficos +
       '<section class="cartao bloco secao" id="s-dem"><h2>' + capitulo(secs, "s-dem") + t("dem_titulo") + '</h2><div class="tabela-wrap" id="t-dem"></div></section>' +
       '<section class="cartao bloco metodo secao" id="s-metodo"><details><summary>' + capitulo(secs, "s-metodo") + t("metodo_titulo") + "</summary><ul>" +
       window.I18N_METODO[estado.lingua].map(function (li) { return "<li>" + esc(li) + "</li>"; }).join("") +
-      "</ul></details></section></div>";
+      "</ul></details></section></div></div>";
 
     $$("[data-periodo]", app).forEach(function (b) {
       b.addEventListener("click", function () {
@@ -589,37 +590,43 @@
 
   // ---------------------------------------------------------------- navegação por seções
 
-  var observador = null, marcarSecao = null;
+  // seção ativa = a última cujo topo já passou de um terço da tela. Por posição, não por interseção:
+  // títulos curtos (Histórico) e a última seção (que não chega ao alto da tela) também são marcados.
+  var espiao = null;
   function observarSecoes() {
-    if (observador) observador.disconnect();
+    espiao = null;
     var nav = $(".secoes");
-    if (!nav || !("IntersectionObserver" in window)) return;
-    var links = $$("a[data-ir]", nav);
+    if (!nav) return;
+    var links = $$("a[data-ir]", nav), atual = null;
+    var alvos = links.map(function (a) { return document.getElementById(a.getAttribute("data-ir")); });
     var marcar = function (id) {
+      if (id === atual) return;
+      atual = id;
       links.forEach(function (a) { a.classList.toggle("ativa", a.getAttribute("data-ir") === id); });
       var ativo = $("a.ativa", nav), ol = $("ol", nav);
       if (ativo && ol.scrollWidth > ol.clientWidth) {  // barra horizontal: mantém o item ativo visível
         ol.scrollTo({ left: Math.max(0, ativo.parentNode.offsetLeft - ol.offsetLeft - 24), behavior: "smooth" });
       }
     };
-    observador = new IntersectionObserver(function (entradas) {
-      var visiveis = entradas.filter(function (x) { return x.isIntersecting; });
-      if (visiveis.length) marcar(visiveis[0].target.id);
-    }, { rootMargin: "-30% 0px -60% 0px" });
-    $$(".secao[id]").forEach(function (s) { observador.observe(s); });
-    marcarSecao = function () { if (links.length) marcar(links[links.length - 1].getAttribute("data-ir")); };
-    marcar(links.length ? links[0].getAttribute("data-ir") : "");
+    espiao = function () {
+      var linha = window.innerHeight / 3, escolhido = links.length ? links[0].getAttribute("data-ir") : null;
+      alvos.forEach(function (el, k) {
+        if (el && el.getBoundingClientRect().top <= linha) escolhido = links[k].getAttribute("data-ir");
+      });
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      if (h > 0 && window.scrollY >= h - 2 && links.length) escolhido = links[links.length - 1].getAttribute("data-ir");
+      marcar(escolhido);
+    };
     progresso();
   }
 
-  /** fração da página já rolada, para o trilho de progresso da navegação */
+  /** fração da página já rolada (trilho de progresso) e seção ativa */
   function progresso() {
     var nav = $(".secoes");
     if (!nav) return;
     var h = document.documentElement.scrollHeight - window.innerHeight;
     nav.style.setProperty("--progresso", h > 0 ? Math.min(1, window.scrollY / h) : 0);
-    // a última seção raramente chega à faixa observada: no fim da página, ela é a ativa
-    if (h > 0 && window.scrollY >= h - 2 && marcarSecao) marcarSecao();
+    if (espiao) espiao();
   }
 
   function recorte(e) {
@@ -868,7 +875,7 @@
     var m = location.hash.match(/^#\/([A-Za-z0-9]+)/);
     var alvo = m ? m[1] : "";
     $("#dica").hidden = true;
-    if (observador) { observador.disconnect(); observador = null; }
+    espiao = null;
     if (window.RealTermsTeia) window.RealTermsTeia.parar();
     var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "comparar" || alvo === "teia" || alvo === "mapa" ? "teia" :
       alvo === "agenda" ? "agenda" : "empresa";

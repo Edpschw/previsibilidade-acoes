@@ -482,9 +482,10 @@ tbody tr:last-child td { border-bottom: 0; }
 .teia-tabela td.melhor { font-weight: 700; }
 .teia-tabela .coroa { color: var(--pos); font-size: 10px; margin-right: 5px; vertical-align: 1px; }
 
-/* página inicial: capítulos numa coluna lateral fixa, ao longo da página -- */
+/* página inicial e da empresa: capítulos numa coluna lateral fixa, ao longo da página -- */
 @media (min-width: 900px) {
-  .inicio-layout { display: grid; grid-template-columns: 172px minmax(0, 1fr); gap: 32px; align-items: start; }
+  .inicio-layout, .pagina-lateral { display: grid; grid-template-columns: 172px minmax(0, 1fr); gap: 32px; align-items: start; }
+  .pagina-lateral { margin-top: 16px; }
   .secoes.lateral { position: sticky; top: calc(var(--topo-h, 60px) + 28px); right: auto; transform: none; z-index: 5;
     margin: 0; padding: 4px 0 4px 18px; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; border: 0; }
   .secoes.lateral ol { flex-direction: column; gap: 4px; overflow: visible; }
@@ -498,5 +499,5 @@ tbody tr:last-child td { border-bottom: 0; }
   /* linha de progresso vertical, à esquerda dos números */
   .secoes.lateral .secoes-trilho { left: 4px; right: auto; top: 8px; bottom: 8px; width: 2px; height: auto; background: var(--grid); border-radius: 1px; }
   .secoes.lateral .secoes-trilho i { width: 100%; height: calc(var(--progresso, 0) * 100%); opacity: 1; border-radius: 1px; }
-  .inicio-layout .secao { scroll-margin-top: calc(var(--topo-h, 60px) + 20px); }
+  .inicio-layout .secao, .pagina-lateral .secao { scroll-margin-top: calc(var(--topo-h, 60px) + 20px); }
 }
