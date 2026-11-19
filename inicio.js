@@ -45,7 +45,7 @@
     ];
     var num = function (k) { return (k < 9 ? "0" : "") + (k + 1); };
     var cap = function (k) { return '<span class="capitulo">' + num(k) + "</span>"; };
-    var nav = '<nav class="secoes" aria-label="' + esc(X.t("secoes")) + '"><div class="secoes-trilho"><i></i></div><ol>' +
+    var nav = '<nav class="secoes lateral" aria-label="' + esc(X.t("secoes")) + '"><div class="secoes-trilho"><i></i></div><ol>' +
       caps.map(function (c, k) {
         return '<li><a href="#" data-ir="' + c[0] + '"><span class="n">' + num(k) + '</span><span class="r">' + esc(c[1]) + "</span></a></li>";
       }).join("") + "</ol></nav>";
@@ -134,7 +134,8 @@
       }).join("") + "</div>" +
       '<p class="aviso">' + esc(X.t("rodape_aviso")) + "</p></section>";
 
-    app.innerHTML = nav + '<div class="inicio">' + c1 + c2 + c3 + c4 + c5 + "</div>";
+    // navegação de capítulos numa coluna lateral que acompanha a rolagem (no celular, barra no topo)
+    app.innerHTML = '<div class="inicio-layout">' + nav + '<div class="inicio">' + c1 + c2 + c3 + c4 + c5 + "</div></div>";
 
     // gráfico da PTAX
     X.linhas(document.getElementById("g-ptax"), anosPtax,
