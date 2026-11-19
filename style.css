@@ -501,3 +501,23 @@ tbody tr:last-child td { border-bottom: 0; }
   .secoes.lateral .secoes-trilho i { width: 100%; height: calc(var(--progresso, 0) * 100%); opacity: 1; border-radius: 1px; }
   .inicio-layout .secao, .pagina-lateral .secao { scroll-margin-top: calc(var(--topo-h, 60px) + 20px); }
 }
+
+/* termos: dica ao passar o mouse (termos.js) ------------------------- */
+[data-termo] { text-decoration: underline dotted; text-decoration-color: color-mix(in srgb, var(--muted) 70%, transparent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+[data-termo]:not(th) { cursor: help; }
+[data-termo]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+abbr[data-termo] { text-decoration: underline dotted; }
+.termo-dica { position: fixed; z-index: 60; max-width: min(360px, calc(100vw - 16px)); background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.22); padding: 12px 14px; font-size: 13px; line-height: 1.45; pointer-events: none; text-align: left; font-weight: 400; white-space: normal; }
+.termo-dica > b { display: block; font-size: 14px; margin-bottom: 4px; }
+.termo-dica p { margin: 0 0 8px; }
+.termo-dica i { font-style: normal; font-weight: 600; }
+.termo-dica .td-ler i { color: var(--muted); }
+.termo-dica .td-faixas { display: grid; gap: 6px; margin: 0 0 8px; }
+.termo-dica .td-faixas > div { border-left: 3px solid; padding: 2px 0 2px 8px; }
+.termo-dica .td-faixas i { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.termo-dica .td-bom { border-color: var(--pos); }
+.termo-dica .td-bom i { color: var(--pos); }
+.termo-dica .td-ruim { border-color: var(--neg); }
+.termo-dica .td-ruim i { color: var(--neg); }
+.termo-dica .td-ref { font-size: 12.5px; }
+.termo-dica .td-aviso { color: var(--muted); font-size: 11.5px; margin: 0; }
