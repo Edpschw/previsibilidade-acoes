@@ -35,13 +35,6 @@
   "msg": "2025: 2,179,430 × EBITDA 551,870; explicado por capital de giro (1,628,059)"
  },
  {
-  "ticker": "ALPA4",
-  "nome": "ALPARGATAS S.A.",
-  "sev": "info",
-  "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 15.1% × pagos em 2025 (DFP) 3.8%"
- },
- {
   "ticker": "AMER3",
   "nome": "AMERICANAS S.A. - em Recuperação Judicial",
   "sev": "baixa",
@@ -621,6 +614,13 @@
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 4.2% × pagos em 2025 (DFP) 21.1%"
+ },
+ {
+  "ticker": "EZTC3",
+  "nome": "EZ TEC EMPREEND. E PARTICIPACOES S.A.",
+  "sev": "info",
+  "regra": "DY 12m × DY do exercício",
+  "msg": "proventos 12m (B3) 2.9% × pagos em 2025 (DFP) 13.3%"
  },
  {
   "ticker": "FESA4",
@@ -1489,6 +1489,41 @@
   "sev": "info",
   "regra": "só demonstração individual",
   "msg": "a empresa não publica consolidado"
+ },
+ {
+  "ticker": "TPIS3",
+  "nome": "TPI - TRIUNFO PARTICIP. E INVEST. S.A.",
+  "sev": "baixa",
+  "regra": "LPA divergente",
+  "msg": "2023: calculado R$ -0.05 × declarado R$ -0.18 (razão 0.25)"
+ },
+ {
+  "ticker": "TPIS3",
+  "nome": "TPI - TRIUNFO PARTICIP. E INVEST. S.A.",
+  "sev": "baixa",
+  "regra": "LPA divergente",
+  "msg": "2024: calculado R$ 0.21 × declarado R$ 0.82 (razão 0.25)"
+ },
+ {
+  "ticker": "TPIS3",
+  "nome": "TPI - TRIUNFO PARTICIP. E INVEST. S.A.",
+  "sev": "baixa",
+  "regra": "salto de ações",
+  "msg": "2024→2025: ×0.25 (desdobramento, grupamento, emissão ou escala)"
+ },
+ {
+  "ticker": "TPIS3",
+  "nome": "TPI - TRIUNFO PARTICIP. E INVEST. S.A.",
+  "sev": "info",
+  "regra": "DY 12m × DY do exercício",
+  "msg": "proventos 12m (B3) 4.6% × pagos em 2025 (DFP) 0.0%"
+ },
+ {
+  "ticker": "TPIS3",
+  "nome": "TPI - TRIUNFO PARTICIP. E INVEST. S.A.",
+  "sev": "baixa",
+  "regra": "ITR atrasado",
+  "msg": "último ITR é de 2026-03-31"
  },
  {
   "ticker": "TUPY3",

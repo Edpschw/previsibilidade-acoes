@@ -1,18 +1,18 @@
 # Auditoria da base
 
-Gerada em 18/11/2026 sobre `data/empresas.js` de 2026-11-18 23:21 (balanços até 2025, cotações até 2026-11-18). Refaça com `python3 scripts/auditar.py --externo`.
+Gerada em 19/11/2026 sobre `data/empresas.js` de 2026-11-19 02:42 (balanços até 2025, cotações até 2026-11-18). Refaça com `python3 scripts/auditar.py --externo`.
 
 ## 1. Cobertura
 
 | Etapa | Quantidade |
 |---|---|
-| Emissores com ação ON/PN/unit negociada na B3 nos últimos 21 pregões (raiz do ticker) | 303 |
-| Tickers de ação negociados nesse período | 390 |
+| Emissores com ação ON/PN/unit negociada na B3 nos últimos 21 pregões (raiz do ticker) | 302 |
+| Tickers de ação negociados nesse período | 388 |
 | Emissores de ações na lista oficial da B3 (tipo 1) | 566 |
 | Companhias ativas na CVM com ação na B3 (FCA + lista da B3) | 345 |
-| Empresas na base | 188 |
-| … das quais negociaram no período | 188 |
-| Emissores negociados na B3 que estão na base | 188 de 303 (62%) |
+| Empresas na base | 189 |
+| … das quais negociaram no período | 189 |
+| Emissores negociados na B3 que estão na base | 189 de 302 (63%) |
 
 Referências externas:
 
@@ -46,19 +46,19 @@ nenhuma
 | média | P/L extremo | 1 |
 | média | P/VP extremo | 1 |
 | média | buraco no histórico | 1 |
-| baixa | salto de ações | 49 |
-| baixa | LPA divergente | 23 |
+| baixa | salto de ações | 50 |
+| baixa | LPA divergente | 25 |
 | baixa | receita salta | 16 |
 | baixa | LPA com sinal trocado na DRE | 9 |
 | baixa | controladora × consolidado | 9 |
 | baixa | preço mudou de escala | 6 |
 | baixa | sem últimos 12 meses | 4 |
+| baixa | ITR atrasado | 3 |
 | baixa | fluxo de caixa não fecha | 3 |
 | baixa | LPA declarado por lote de mil | 3 |
-| baixa | ITR atrasado | 2 |
 | baixa | dividendos > 3× lucro | 2 |
 | baixa | unit sem composição | 1 |
-| info | DY 12m × DY do exercício | 43 |
+| info | DY 12m × DY do exercício | 44 |
 | info | caixa operacional > 2× EBITDA | 8 |
 | info | só demonstração individual | 5 |
 | info | PL negativo | 4 |
@@ -106,3 +106,14 @@ nenhuma
 | OBTC3 | ORANJEBTC | média | receita não positiva | receita 0 em 2025 |
 
 As de severidade baixa e informativas ficam em `auditoria.json`.
+
+## 3. Conferência externa (brapi.dev)
+
+| Ticker | Cotação base | Cotação brapi | Valor de mercado base | brapi | Diferença |
+|---|---|---|---|---|---|
+| PETR4 | 43.17 | 43.17 | 602.0 bi | 607.4 bi | -0.9% |
+| VALE3 | 59.0 | 59 | 246.0 bi | 240.5 bi | +2.3% |
+| ITUB4 | 40.19 | 40.19 | 465.9 bi | 473.4 bi | -1.6% |
+| MGLU3 | 8.32 | 8.32 | 6.4 bi | 5.6 bi | +15.0% |
+
+A base usa a quantidade de ações atual informada pela B3, menos as ações em tesouraria do último balanço (mesmo critério do LPA). Fontes de mercado variam: algumas usam o total emitido, outras uma contagem defasada. A cotação é o teste mais direto, e deve bater exatamente.

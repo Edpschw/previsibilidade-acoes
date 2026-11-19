@@ -1,8 +1,8 @@
 {
- "gerado_em": "2026-11-18 23:21",
- "empresas": 188,
+ "gerado_em": "2026-11-19 02:42",
+ "empresas": 189,
  "cobertura": 1.0,
- "emissores_negociados": 303,
+ "emissores_negociados": 302,
  "cotacoes_em": "2026-11-18",
  "graves": [
   "AZUL3|LPA divergente",
@@ -11,8 +11,8 @@
   "TFCO4|LPA divergente"
  ],
  "por_severidade": {
-  "info": 60,
-  "baixa": 127,
+  "info": 61,
+  "baixa": 131,
   "média": 33,
   "alta": 4
  }
