@@ -227,6 +227,21 @@ class EventosDeAcoes(unittest.TestCase):
         self.assertEqual(ev[0]["ano"], 2019)
 
 
+class CorteDeLiquidez(unittest.TestCase):
+    def test_entra_com_um_milhao(self):
+        self.assertTrue(P.no_corte(1_000_000, False))
+        self.assertFalse(P.no_corte(999_999, False))
+
+    def test_folga_para_quem_ja_estava(self):
+        self.assertTrue(P.no_corte(600_000, True))
+        self.assertFalse(P.no_corte(400_000, True))
+
+    def test_soma_as_classes(self):
+        cad = {"a": {"tickers": ["XPTO3", "XPTO4"]}, "b": {"tickers": ["YYYY3"]}}
+        fica = P.aplicar_corte(cad, {"XPTO3": 600_000, "XPTO4": 500_000, "YYYY3": 900_000}, set())
+        self.assertEqual(set(fica), {"a"})
+
+
 class Trava(unittest.TestCase):
     def setUp(self):
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))

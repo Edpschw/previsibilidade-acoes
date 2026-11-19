@@ -6,7 +6,7 @@
 (function () {
   "use strict";
 
-  var LIQUIDEZ_MIN = 1e6, MAX = 4;
+  var MAX = 4;
   var CORES = ["var(--c1)", "var(--c3)", "var(--c4)", "var(--c5)"];
   var atual = null;  // tela em execução; parar() a desmonta ao trocar de rota
 
@@ -65,7 +65,7 @@
     var X = window.RealTerms, L = X.L, esc = X.esc;
 
     var negociadas = X.EMPRESAS.filter(function (e) { return Object.keys(e.cotacao).length; });
-    var liquidas = negociadas.filter(function (e) { return e.liquidez >= LIQUIDEZ_MIN; });
+    var liquidas = negociadas;  // a base já é só de ações líquidas (corte de liquidez em processar.py)
     var info = new Map();
     function ind(e) { if (!info.has(e)) info.set(e, X.indicadores(e)); return info.get(e); }
 
@@ -168,8 +168,8 @@
 
     function aviso() {
       app.querySelector("#t-aviso").textContent = L(
-        "Colunas da melhor para a pior empresa, pela média dos percentis; ▲ marca o melhor valor de cada linha. Percentis entre as " + liquidas.length + " ações com liquidez de pelo menos R$ 1 mi/dia. Múltiplos, ROE, margem e dívida dos últimos 12 meses quando há ITR. Sem dado (P/L de quem teve prejuízo, dívida de bancos), a célula fica com traço.",
-        "Columns run from best to worst company by average percentile; ▲ marks the best value in each row. Percentiles among the " + liquidas.length + " stocks trading at least R$ 1M/day. Multiples, ROE, margin and debt are trailing 12 months when quarterly filings exist. With no value (P/E of a loss-maker, bank debt) the cell shows a dash.");
+        "Colunas da melhor para a pior empresa, pela média dos percentis; ▲ marca o melhor valor de cada linha. Percentis entre as " + liquidas.length + " ações do Real Terms, todas com volume relevante na B3. Múltiplos, ROE, margem e dívida dos últimos 12 meses quando há ITR. Sem dado (P/L de quem teve prejuízo, dívida de bancos), a célula fica com traço.",
+        "Columns run from best to worst company by average percentile; ▲ marks the best value in each row. Percentiles among the " + liquidas.length + " stocks covered by Real Terms, all with meaningful B3 volume. Multiples, ROE, margin and debt are trailing 12 months when quarterly filings exist. With no value (P/E of a loss-maker, bank debt) the cell shows a dash.");
     }
 
     // ------------------------------------------------------------ previsibilidade por componente

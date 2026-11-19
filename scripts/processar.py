@@ -60,6 +60,13 @@ URL_PTAX = ("https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados?formato=json"
 ANO_INICIAL = 2010
 ANO_FINAL = date.today().year - 1  # a DFP do ano corrente só sai no ano seguinte
 ANOS_SCORE = 10                    # janela do índice de previsibilidade
+# Corte de liquidez: só entram empresas com volume médio diário (todas as classes, últimos 21 pregões)
+# de R$ 1 mi ou mais. Em nov/2026 ficaram 188 de 345 empresas, com 99,95% do volume e 96,9% do valor
+# de mercado da base. Quem já está na base só sai abaixo de R$ 500 mil, para não entrar e sair a cada
+# mês por oscilação de volume. Abaixo do corte a empresa fica fora de tudo: processamento, site,
+# páginas, auditoria e Postgres (scripts/carregar_base.py expurga o histórico dela).
+LIQUIDEZ_MIN = 1_000_000
+LIQUIDEZ_SAIDA = 500_000
 MIN_ANOS_SCORE = 5
 
 SETORES_FINANCEIROS = ("banco", "segurad", "intermedia", "arrendamento", "previd")
@@ -1076,6 +1083,31 @@ def indice_previsibilidade(anos, s, ptax=None):
 
 # ---------------------------------------------------------------- principal
 
+def cnpjs_publicados():
+    """CNPJs da base publicada (data/empresas.js): quem já está nela só sai abaixo de LIQUIDEZ_SAIDA."""
+    if not SAIDA.exists():
+        return set()
+    try:
+        texto = SAIDA.read_text(encoding="utf-8")
+        return {e["cnpj"] for e in json.loads(texto.split("=", 1)[1].rstrip().rstrip(";"))["empresas"]}
+    except (ValueError, KeyError, IndexError):
+        return set()
+
+
+def no_corte(volume_dia, ja_publicada):
+    """Fica na base: volume médio diário ≥ LIQUIDEZ_MIN, ou ≥ LIQUIDEZ_SAIDA para quem já estava."""
+    return volume_dia >= (LIQUIDEZ_SAIDA if ja_publicada else LIQUIDEZ_MIN)
+
+
+def aplicar_corte(cad, vol_medio, publicadas):
+    """Tira do cadastro as empresas abaixo do corte de liquidez, antes de qualquer outro passo."""
+    fora = {c for c, info in cad.items()
+            if not no_corte(sum(vol_medio.get(t, 0) for t in info["tickers"]), c in publicadas)}
+    print(f"  corte de liquidez (R$ {LIQUIDEZ_MIN / 1e6:.1f} mi/dia; R$ {LIQUIDEZ_SAIDA / 1e6:.1f} mi para quem já estava): "
+          f"{len(cad) - len(fora)} ficam, {len(fora)} saem")
+    return {c: i for c, i in cad.items() if c not in fora}
+
+
 def main():
     forcar = "--rebaixar" in sys.argv
     print("Cotações (B3)…")
@@ -1085,6 +1117,8 @@ def main():
 
     print("Cadastro (FCA + lista de emissores da B3)…")
     cad = carregar_cadastro(forcar, negociados, carregar_empresas_b3(forcar))
+    # --corte-estrito: ignora a folga de quem já estava (usado na primeira aplicação do corte)
+    cad = aplicar_corte(cad, vol_medio, set() if "--corte-estrito" in sys.argv else cnpjs_publicados())
     cnpjs = set(cad)
 
     print("Fichas dos emissores (B3)…")

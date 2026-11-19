@@ -183,11 +183,34 @@ def ids(cur, sql_insert, linhas, sql_select):
     return dict(cur.fetchall())
 
 
+# tabelas ligadas a empresa e a papel, na ordem em que podem ser apagadas (filhas antes das mães)
+POR_PAPEL = ("retrato_papel", "preco_fim_exercicio", "listagem")
+POR_EMPRESA = ("indice", "retrato_empresa", "fundamento_anual", "fundamento_12m", "ajuste", "cadastro")
+
+
+def expurgar(cur, cd_cvms) -> int:
+    """Apaga da base, com todo o histórico, as empresas que não estão no JSON: as que caíram abaixo
+    do corte de liquidez de processar.py (ou deixaram a bolsa) ficam fora de todo o escopo.
+    Devolve quantas empresas saíram."""
+    cur.execute("select id from empresa where not (cd_cvm = any(%s))", [list(cd_cvms)])
+    fora = [r[0] for r in cur.fetchall()]
+    if not fora:
+        return 0
+    for t in POR_PAPEL:
+        cur.execute(f"delete from {t} where papel_id in (select id from papel where empresa_id = any(%s))", [fora])
+    for t in POR_EMPRESA:
+        cur.execute(f"delete from {t} where empresa_id = any(%s)", [fora])
+    cur.execute("delete from papel where empresa_id = any(%s)", [fora])
+    cur.execute("delete from empresa where id = any(%s)", [fora])
+    return len(fora)
+
+
 def carregar(cur, dados: dict) -> tuple:
     """Grava `dados` como uma nova carga na transação de `cur`. Devolve (id da carga, resumo)."""
     conferir_forma(dados)
     aplicar_esquema(cur)
     E = dados["empresas"]
+    expurgadas = expurgar(cur, {e["cd_cvm"] for e in E})
     pa = dados["ptax_atual"] or {}
     cur.execute("insert into carga (gerado_em, ano_final, cotacoes_em, ptax_atual_data, ptax_atual_valor) "
                 "values (%s, %s, %s, %s, %s) returning id",
@@ -233,6 +256,7 @@ def carregar(cur, dados: dict) -> tuple:
 
     resumo = {
         "empresas": len(E),
+        "expurgadas": expurgadas,
         "cadastro": sincronizar(cur, "cadastro", ["empresa_id"],
                                 ["nome", "setor", "segmento", "controle", "site", "setor_b3", "exterior", "units"], cadastro, carga),
         "listagem": sincronizar(cur, "listagem", ["papel_id"], ["ordem"], listagem, carga),
@@ -418,10 +442,12 @@ def main():
         except Divergencia as erro:
             sys.exit(f"carga desfeita: {erro}")
     print(f"carga {carga} publicada em {time.time() - inicio:.1f}s · {resumo['empresas']} empresas · conferida com o JSON")
+    if resumo["expurgadas"]:
+        print(f"  {resumo['expurgadas']} empresas fora do escopo apagadas da base, com o histórico")
     for tabela, r in resumo.items():
         if isinstance(r, dict):
             print(f"  {tabela:20} {r['novas']:>7} novas  {r['encerradas']:>6} encerradas")
-        elif tabela != "empresas":
+        elif tabela not in ("empresas", "expurgadas"):
             print(f"  {tabela:20} {r:>7} linhas")
 
 

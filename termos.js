@@ -477,7 +477,7 @@
     if (!X || !t[4]) return null;
     var chave = id + "|" + X.estado.moeda;
     if (chave in cacheMed) return cacheMed[chave];
-    var vs = X.EMPRESAS.filter(function (e) { return Object.keys(e.cotacao).length && e.liquidez >= 1e6; })
+    var vs = X.EMPRESAS.filter(function (e) { return Object.keys(e.cotacao).length; })  // a base já é só de ações líquidas (corte em processar.py)
       .map(function (e) { return t[4][0](e, X.indicadores(e)); })
       .filter(function (v) { return v != null && isFinite(v); }).sort(function (a, b) { return a - b; });
     var m = vs.length ? (vs.length % 2 ? vs[(vs.length - 1) / 2] : (vs[vs.length / 2 - 1] + vs[vs.length / 2]) / 2) : null;

@@ -15,7 +15,7 @@
     moeda: ler("moeda") || "brl",
     lingua: ler("lingua") || (/^pt/i.test(navigator.language || "") ? "pt" : "en"),
     ord: { col: "score", dir: -1 },
-    filtros: { setor: "", controle: "", segmento: "", exterior: false, semFin: false, ativas: true },
+    filtros: { setor: "", controle: "", segmento: "", exterior: false, semFin: false },
     periodo: 10,
   };
 
@@ -306,7 +306,6 @@
       '<select id="f-controle" aria-label="' + t("rot_controle") + '">' + opcoes("controle", t("qualquer_controle")) + "</select>" +
       '<label class="check"><input type="checkbox" id="f-exterior"> ' + t("f_exterior") + "</label>" +
       '<label class="check"><input type="checkbox" id="f-semfin"> ' + t("f_semfin") + "</label>" +
-      '<label class="check" title="' + esc(t("f_ativas_dica")) + '"><input type="checkbox" id="f-ativas"> ' + t("f_ativas") + "</label>" +
       '<span class="contagem" id="contagem"></span></div>' +
       '<div class="tabela-wrap"><table id="ranking"><thead><tr>' +
       cols.map(function (c) { return '<th data-ord="' + c.id + '"' + (c.esq ? ' class="esq"' : "") + ">" + c.rot + "</th>"; }).join("") +
@@ -315,13 +314,12 @@
     var f = estado.filtros;
     $("#f-setor").value = f.setor; $("#f-segmento").value = f.segmento; $("#f-controle").value = f.controle;
     if ($("#f-setor").value !== f.setor) f.setor = "";  // setor do outro idioma
-    $("#f-exterior").checked = f.exterior; $("#f-semfin").checked = f.semFin; $("#f-ativas").checked = f.ativas;
+    $("#f-exterior").checked = f.exterior; $("#f-semfin").checked = f.semFin;
     ["setor", "segmento", "controle"].forEach(function (k) {
       $("#f-" + k).addEventListener("change", function (ev) { f[k] = ev.target.value; corpoRanking(); });
     });
     $("#f-exterior").addEventListener("change", function (ev) { f.exterior = ev.target.checked; corpoRanking(); });
     $("#f-semfin").addEventListener("change", function (ev) { f.semFin = ev.target.checked; corpoRanking(); });
-    $("#f-ativas").addEventListener("change", function (ev) { f.ativas = ev.target.checked; corpoRanking(); });
     $$("#ranking th[data-ord]").forEach(function (th) {
       th.addEventListener("click", function () {
         var col = th.getAttribute("data-ord");
@@ -340,8 +338,7 @@
     var f = estado.filtros, cols = colunas();
     var linhas = EMPRESAS.filter(function (e) {
       return (!f.setor || setor(e) === f.setor) && (!f.segmento || e.segmento === f.segmento) &&
-        (!f.controle || e.controle === f.controle) && (!f.exterior || e.exterior.length) && (!f.semFin || !e.financeiro) &&
-        (!f.ativas || Object.keys(e.cotacao).length);
+        (!f.controle || e.controle === f.controle) && (!f.exterior || e.exterior.length) && (!f.semFin || !e.financeiro);
     }).map(function (e) { return { e: e, i: indicadores(e) }; });
 
     var col = cols.filter(function (c) { return c.id === estado.ord.col; })[0];

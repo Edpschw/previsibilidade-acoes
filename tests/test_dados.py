@@ -7,9 +7,11 @@ sem a base gerada, são pulados.
 """
 
 import json
+import sys
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 ARQ = Path(__file__).resolve().parent.parent / "data" / "empresas.js"
 
 
@@ -34,7 +36,15 @@ class Base(unittest.TestCase):
 
     # ---- cobertura
     def test_tamanho_da_base(self):
-        self.assertGreaterEqual(len(self.d["empresas"]), 320)
+        # corte de liquidez de R$ 1 mi/dia: 188 empresas em nov/2026
+        self.assertGreaterEqual(len(self.d["empresas"]), 150)
+
+    def test_corte_de_liquidez(self):
+        import processar as P
+        for e in self.d["empresas"]:
+            self.assertGreaterEqual(e["liquidez"], P.LIQUIDEZ_SAIDA, e["ticker"])
+        for t in ("MRSA3B", "REDE3", "CASN3"):  # grandes, mas quase sem negócio: fora do escopo
+            self.assertNotIn(t, self.por_ticker)
 
     def test_casos_que_ja_faltaram(self):
         for t in ("SAPR11", "B3SA3", "BPAC11", "CSNA3", "MBRF3", "CEAB3", "TUPY3", "TIMS3", "PETR4", "VALE3", "ITUB4"):
@@ -68,9 +78,7 @@ class Base(unittest.TestCase):
         self.assertGreater(self.no_ano(e, "acoes", 2023), 6e9)
         self.assertLess(self.no_ano(e, "acoes", 2024), 1e9)
 
-    def test_riosulense_intacta(self):
-        e = self.e("RSUL4")
-        self.assertEqual(self.no_ano(e, "acoes", 2021), 5_830_000)
+    # RSUL4 (escala de ações intacta) saiu no corte de liquidez; a regra segue em test_regras.EscalaDasAcoes
 
     def test_tim_ativo(self):
         self.assertGreater(self.e("TIMS3")["series"]["ativo_total"][-1], 0)

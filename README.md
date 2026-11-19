@@ -65,7 +65,7 @@ Primeiro passo da Fase 1 de [`docs/arquitetura-comercial.md`](docs/arquitetura-c
 - **Histórico por carga.** Cada atualização é uma carga. Cadastro, tickers, fundamentos, ajustes, preços de fim de exercício e PTAX têm `carga_de`/`carga_ate`: só ganha linha nova o que mudou (uma reapresentação, por exemplo), e qualquer carga passada pode ser remontada. Cotação, valor de mercado e índice ficam em retratos por carga (`retrato_empresa`, `retrato_papel`, `indice`), o que guarda o histórico diário desde a primeira carga.
 - **Correções como dado.** Ações estimadas pelo LPA e ações com escala corrigida viram linhas da tabela `ajuste`.
 - **Reais, não R$ mil.** Valores monetários são gravados em reais. O catálogo `metrica` diz unidade, natureza (fluxo ou saldo, que decide a PTAX) e nome em português e inglês.
-- **Conferência.** Antes de confirmar, o script remonta o JSON a partir do banco e compara campo a campo (345 empresas, ~133 mil valores). Qualquer diferença desfaz a transação.
+- **Conferência.** Antes de confirmar, o script remonta o JSON a partir do banco e compara campo a campo (188 empresas depois do corte de liquidez). Qualquer diferença desfaz a transação.
 
 Para ligar em produção:
 
@@ -92,6 +92,12 @@ select * from fundamento_anual where carga_ate is not null order by carga_ate de
 ```
 
 O esquema é idempotente (`create … if not exists`) e roda a cada carga. Mudança em tabela que já existe pede um `alter table` à mão até a base ganhar uma ferramenta de migração.
+
+## Escopo: corte de liquidez
+
+Só entram empresas com volume médio diário (todas as classes, últimos 21 pregões) de **R$ 1 mi ou mais**. Quem já está na base só sai abaixo de **R$ 500 mil**, para não entrar e sair a cada mês por oscilação de volume. Em nov/2026 o corte deixou 188 de 345 empresas, com 99,95% do volume negociado e 96,9% do valor de mercado; abaixo dele ficam papéis que quase não negociam (em geral, ações de controladas e estatais com free float mínimo, como MRSA3B e REDE3), em que preço e múltiplos não são confiáveis e que um investidor estrangeiro não consegue comprar nem vender.
+
+Abaixo do corte, a empresa fica fora de tudo: `processar.py` aplica o corte logo depois do cadastro (`aplicar_corte`, antes de fichas da B3, DFP e ITR), o site e as páginas de `acao/` não a mostram, `auditar.py` mede a cobertura só contra os emissores acima do corte e `carregar_base.py` apaga do Postgres, com o histórico, toda empresa que não está no JSON (`expurgar`). Para aplicar o corte sem a folga (como na primeira vez): `python3 scripts/processar.py --corte-estrito`.
 
 ## Fontes
 

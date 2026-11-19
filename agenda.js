@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  var filtro = { tipo: "", janela: 90, busca: "", liquidas: true, ordem: "yield" };
+  var filtro = { tipo: "", janela: 90, busca: "", ordem: "yield" };
 
   function render(app) {
     var X = window.RealTerms, D = X.D, L = X.L, esc = X.esc;
@@ -65,8 +65,6 @@
       pilulas("tipo", [["", L("Todos", "All"), 1], ["dividendo", L("Dividendos", "Dividends"), 1], ["jcp", L("JCP", "Interest on equity"), 1]]) + "</div>" +
       '<div class="filtro-grupo"><span class="filtro-rot">' + esc(L("Pagamento em", "Paid within")) + "</span>" +
       pilulas("janela", [["30", L("30 dias", "30 days")], ["90", L("90 dias", "90 days")], ["365", L("12 meses", "12 months")], ["0", L("Tudo", "Any")]]) + "</div>" +
-      '<label class="chave"><input type="checkbox" id="a-liq"><span class="chave-trilho" aria-hidden="true"></span>' +
-      esc(L("Só líquidas", "Liquid only")) + ' <span class="mudo">(≥ R$ 1 mi/' + esc(L("dia", "day")) + ")</span></label>" +
       "</div></section>" +
       '<div id="a-resumo" class="i-stats agenda-resumo"></div><div id="a-lista"></div>' +
       '<p class="aviso">' + esc(L(
@@ -90,9 +88,7 @@
       marcar(); lista();
     });
     $("#a-busca").value = filtro.busca;
-    $("#a-liq").checked = filtro.liquidas;
     $("#a-busca").addEventListener("input", function (ev) { filtro.busca = ev.target.value.trim().toUpperCase(); lista(); });
-    $("#a-liq").addEventListener("change", function (ev) { filtro.liquidas = ev.target.checked; lista(); });
     $("#a-lista").addEventListener("click", function (ev) {
       var a = ev.target.closest("[data-t]");
       if (a) location.hash = "#/" + a.getAttribute("data-t");
@@ -102,7 +98,6 @@
     // ------------------------------------------------------------ lista
     function passa(it, semTipo) {
       return (semTipo || !filtro.tipo || it.x.tipo === filtro.tipo) && it.x.pag <= limiteDe(filtro.janela) &&
-        (!filtro.liquidas || it.e.liquidez >= 1e6) &&
         (!filtro.busca || it.x.t.indexOf(filtro.busca) === 0 || X.nomeCurto(it.e.nome).toUpperCase().indexOf(filtro.busca) >= 0);
     }
 

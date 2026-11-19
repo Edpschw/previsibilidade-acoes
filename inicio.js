@@ -23,11 +23,11 @@
     var altas = comScore.filter(function (e) { return e.score.brl.total >= 75; }).length;
     var hoje = function (v) { return X.estado.moeda === "brl" ? v : v / D.ptax_atual.valor; };
 
-    var top = negociadas.filter(function (e) { return e.score[X.estado.moeda] && e.liquidez >= 1e6; })
+    var top = negociadas.filter(function (e) { return e.score[X.estado.moeda]; })
       .sort(function (a, b) { return b.score[X.estado.moeda].total - a.score[X.estado.moeda].total; }).slice(0, 6);
 
     // efeito do câmbio: quanto o índice cai quando receita e lucro são medidos em dólar
-    var cambio = comScore.filter(function (e) { return e.score.usd && e.liquidez >= 1e6; }).map(function (e) {
+    var cambio = comScore.filter(function (e) { return e.score.usd; }).map(function (e) {
       return { e: e, d: e.score.usd.total - e.score.brl.total };
     });
     var caem = cambio.filter(function (x) { return x.d <= -5; }).length;

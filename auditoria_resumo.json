@@ -1,24 +1,19 @@
 {
- "gerado_em": "2026-11-18 23:05",
- "empresas": 345,
- "cobertura": 0.9967,
+ "gerado_em": "2026-11-18 23:21",
+ "empresas": 188,
+ "cobertura": 1.0,
  "emissores_negociados": 303,
  "cotacoes_em": "2026-11-18",
  "graves": [
   "AZUL3|LPA divergente",
-  "COCE5|LPA divergente",
-  "CTKA4|LPA divergente",
   "ENEV3|LPA divergente",
   "HBRE3|LPA divergente",
-  "MAPT4|LPA divergente",
-  "NEXP3|LPA divergente",
-  "PDGR3|LPA divergente",
   "TFCO4|LPA divergente"
  ],
  "por_severidade": {
-  "info": 200,
-  "baixa": 321,
-  "média": 108,
-  "alta": 9
+  "info": 60,
+  "baixa": 127,
+  "média": 33,
+  "alta": 4
  }
 }

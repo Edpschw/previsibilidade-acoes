@@ -70,6 +70,20 @@ class BasePostgres(unittest.TestCase):
         self.assertEqual(resumo["empresas"], len(self.dados["empresas"]))
         self.assertEqual(cb.comparar(self.dados, self.exportar(carga)), [])
 
+    def test_empresa_que_sai_do_json_e_apagada_com_o_historico(self):
+        d = self.amostra(10)
+        cb.publicar(self.conn, d)
+        saiu = d["empresas"][-1]
+        menor = copy.deepcopy(d)
+        menor["empresas"] = d["empresas"][:-1]
+        carga, resumo = cb.publicar(self.conn, menor)
+        self.assertEqual(resumo["expurgadas"], 1)
+        self.assertEqual(self.contar(f"select count(*) from empresa where cd_cvm = '{saiu['cd_cvm']}'"), 0)
+        self.assertEqual(self.contar("select count(*) from empresa"), 9)
+        for t in cb.POR_EMPRESA:
+            self.assertEqual(self.contar(f"select count(*) from {t} where empresa_id not in (select id from empresa)"), 0, t)
+        self.assertEqual(cb.comparar(menor, self.exportar(carga)), [])
+
     def test_mesma_base_de_novo_nao_duplica_linhas(self):
         d = self.amostra()
         cb.publicar(self.conn, d)

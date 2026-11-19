@@ -294,12 +294,17 @@ def main():
     print("Lendo pregões recentes da B3…")
     b3, n_pregoes = negociados_b3()
     raizes_b3 = {t[:4] for t in b3}
+    # escopo do site: emissores com volume acima do corte de liquidez (processar.LIQUIDEZ_MIN)
+    vol_raiz = Counter()
+    for t, r in b3.items():
+        vol_raiz[t[:4]] += r["volume"]
+    raizes_liq = {r for r, v in vol_raiz.items() if v >= P.LIQUIDEZ_MIN}
 
     # B3 → base
     fora = []
     for t, r in sorted(b3.items(), key=lambda kv: -kv[1]["volume"]):
-        if t in na_base:
-            continue
+        if t in na_base or t[:4] not in raizes_liq:
+            continue  # na base, ou emissor abaixo do corte de liquidez (fora do escopo)
         cnpj = cnpj_por_ticker.get(t)
         if cnpj:
             motivo = motivo_ausencia(cnpj, cad[cnpj], base_dfp)
@@ -329,7 +334,8 @@ def main():
     resumo = {
         "gerado_em": d["gerado_em"],
         "empresas": len(empresas),
-        "cobertura": round(len(raizes_base) / max(len(raizes_b3), 1), 4),
+        # dos emissores acima do corte de liquidez, quantos estão na base
+        "cobertura": round(len(raizes_base & raizes_liq) / max(len(raizes_liq), 1), 4),
         "emissores_negociados": len(raizes_b3),
         "cotacoes_em": d["cotacoes_em"],
         "graves": sorted(f"{a['ticker']}|{a['regra']}" for a in achados if a["sev"] == "alta"),
