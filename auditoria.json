@@ -182,6 +182,13 @@
   "msg": "2025: 2,179,430 × EBITDA 551,870; explicado por capital de giro (1,628,059)"
  },
  {
+  "ticker": "ALPA4",
+  "nome": "ALPARGATAS S.A.",
+  "sev": "info",
+  "regra": "DY 12m × DY do exercício",
+  "msg": "proventos 12m (B3) 15.1% × pagos em 2025 (DFP) 3.8%"
+ },
+ {
   "ticker": "ALPK3",
   "nome": "ALLPARK EMPREENDIMENTOS, PARTICIPAÇÕES E SERVIÇOS S.A.",
   "sev": "baixa",
@@ -242,7 +249,7 @@
   "nome": "AMBIPAR PARTICIP. E EMPREEND. S.A. - EM RECUPERAÇÃO JUDICIAL",
   "sev": "baixa",
   "regra": "preço mudou de escala",
-  "msg": "AMBP3: 134.96 no fim de 2024 → 0.11 hoje (evento societário ou movimento forte)"
+  "msg": "AMBP3: 130.00 no fim de 2024 → 0.11 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "AMBP3",
@@ -576,9 +583,16 @@
  {
   "ticker": "B1003",
   "nome": "B100 S.A.",
-  "sev": "info",
-  "regra": "sem cotação",
-  "msg": "nenhum negócio nos últimos pregões"
+  "sev": "média",
+  "regra": "cotação parada",
+  "msg": "último negócio de B1003 há mais de 14 dias"
+ },
+ {
+  "ticker": "B1003",
+  "nome": "B100 S.A.",
+  "sev": "média",
+  "regra": "ações B3 × DFP",
+  "msg": "valor de mercado com ações da B3 hoje é 5.05× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3"
  },
  {
   "ticker": "B3SA3",
@@ -943,6 +957,13 @@
   "sev": "baixa",
   "regra": "salto de ações",
   "msg": "2020→2021: ×10.00 (desdobramento, grupamento, emissão ou escala)"
+ },
+ {
+  "ticker": "BSLI3",
+  "nome": "BRB BANCO DE BRASILIA S.A.",
+  "sev": "baixa",
+  "regra": "preço mudou de escala",
+  "msg": "BSLI3: 7.98 no fim de 2024 → 1.94 hoje (evento societário ou movimento forte)"
  },
  {
   "ticker": "BSLI3",
@@ -1699,13 +1720,6 @@
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 4.2% × pagos em 2025 (DFP) 21.1%"
- },
- {
-  "ticker": "EZTC3",
-  "nome": "EZ TEC EMPREEND. E PARTICIPACOES S.A.",
-  "sev": "info",
-  "regra": "DY 12m × DY do exercício",
-  "msg": "proventos 12m (B3) 2.9% × pagos em 2025 (DFP) 13.3%"
  },
  {
   "ticker": "FASA3",

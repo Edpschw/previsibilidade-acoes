@@ -43,6 +43,14 @@ def esc(s):
 
 # ---------------------------------------------------------------- formatos (inglês)
 
+def acoes_txt(c):
+    """ações em circulação (ON + PN − tesouraria), com a abertura por classe"""
+    circ = c["on"] + c["pn"] - c["tesouraria_on"] - c["tesouraria_pn"]
+    partes = [f'{c["on"]:,} common'] + ([f'{c["pn"]:,} preferred'] if c["pn"] else []) + \
+        ([f'{c["tesouraria_on"] + c["tesouraria_pn"]:,} in treasury'] if c["tesouraria_on"] + c["tesouraria_pn"] else [])
+    return f"{circ:,} ({', '.join(partes)})"
+
+
 def num(v, casas=1):
     return f"{v:,.{casas}f}"
 
@@ -239,6 +247,7 @@ def pagina_empresa(e, d):
 {f'<p class="resumo">{esc(frase)}</p>' if frase else ''}
 <div class="selos"><span class="selo-h forte">{esc(setor(e))}</span>{''.join(f'<span class="selo-h">ADR · {esc(", ".join(PAISES.get(x, x) for x in e["exterior"]))}</span>' for _ in e["exterior"][:1])}{'<span class="selo-h aviso">State-owned</span>' if e["controle"].startswith("Estatal") else ''}</div>
 <div class="stats">{stat("Market cap", dinheiro(e.get("valor_mercado")))}{stat("P/E " + rot12, vezes(i["pl"]))}{stat("Dividend yield", pct(i["dy"]))}{stat("ROE " + rot12, pct(i["roe"]))}</div>
+{f'<p class="mudo" style="margin-top:12px">Shares outstanding: {acoes_txt(e["acoes_cvm"])} (CVM filing of {e["acoes_cvm"]["data"]})</p>' if e.get("acoes_cvm") else ''}
 <p style="margin-top:18px"><a class="botao" href="../../#/{tk}">Open the interactive page →</a></p>
 </div>
 <div class="score-box"><div><div class="rot">Predictability</div><div class="nivel" style="color:{cor};font-size:34px">{sc if sc is not None else "–"}<span class="mudo" style="font-size:15px">/100</span></div><div class="mudo janela">{niv}</div></div></div>

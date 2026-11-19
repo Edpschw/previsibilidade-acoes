@@ -120,6 +120,18 @@ class Base(unittest.TestCase):
                  if e["series"]["ativo_total"][-1] is not None and e["series"]["ativo_total"][-1] <= 0]
         self.assertEqual(ruins, [])
 
+    def test_acoes_da_cvm(self):
+        E = self.d["empresas"]
+        com = [e for e in E if e.get("acoes_cvm")]
+        self.assertGreater(len(com) / len(E), 0.95)
+        pet = self.e("PETR4")["acoes_cvm"]
+        self.assertGreater(pet["on"] + pet["pn"], 12e9)
+        # a contagem da CVM bate com a da B3 na grande maioria (diferença = evento societário recente)
+        par = [e for e in com if e.get("acoes_b3")]
+        perto = [e for e in par if 0.95 < (e["acoes_cvm"]["on"] + e["acoes_cvm"]["pn"] - e["acoes_cvm"]["tesouraria_on"]
+                                           - e["acoes_cvm"]["tesouraria_pn"]) / (e["acoes_b3"]["on"] + e["acoes_b3"]["pn"]) < 1.05]
+        self.assertGreater(len(perto) / len(par), 0.9)
+
     def test_ptax_e_datas(self):
         self.assertTrue(self.d["ptax_atual"]["valor"] > 1)
         self.assertTrue(self.d["cotacoes_em"])

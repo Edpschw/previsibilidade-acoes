@@ -40,6 +40,8 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 FONTES = RAIZ / "scripts" / "sources"
+# composição do capital de cada formulário (DFP e ITR): COMPOSICAO[cnpj][data] = (on, pn, tes_on, tes_pn, fonte)
+COMPOSICAO = {}
 SAIDA = RAIZ / "data" / "empresas.js"
 # agenda de proventos à parte: empresas.js tem a forma que scripts/carregar_base.py confere campo a campo
 SAIDA_AGENDA = RAIZ / "data" / "agenda.js"
@@ -517,8 +519,22 @@ def extrair_ano(zf, ano, cnpjs, base, itr=False):
                     and "não controlador" not in ds and "minorit" not in ds:
                 gravar(cnpj, a, u, "dividendos_pagos", abs(v), somar=True)
 
-    # Ações em circulação (só DFP; a quantidade atual vem da B3) ------------
+    # Ações em circulação (séries anuais só da DFP; a quantidade atual vem da B3) ------------
     nome = nomes.get("composicao_capital")
+    if nome:
+        # o formulário mais recente de cada empresa (DFP ou ITR), na última versão entregue
+        versao = {}
+        for l in ler_csv_zip(zf, nome):
+            if l["CNPJ_CIA"] not in cnpjs or int(float(l["QT_ACAO_TOTAL_CAP_INTEGR"] or 0)) <= 0:
+                continue
+            chave, v = (l["CNPJ_CIA"], l["DT_REFER"]), int(l.get("VERSAO") or 0)
+            if v < versao.get(chave, -1):
+                continue
+            versao[chave] = v
+            q = lambda c: int(float(l[c] or 0))  # noqa: E731
+            COMPOSICAO.setdefault(l["CNPJ_CIA"], {})[l["DT_REFER"]] = (
+                q("QT_ACAO_ORDIN_CAP_INTEGR"), q("QT_ACAO_PREF_CAP_INTEGR"),
+                q("QT_ACAO_ORDIN_TESOURO"), q("QT_ACAO_PREF_TESOURO"), "ITR" if itr else "DFP")
     if nome and not itr:
         for l in ler_csv_zip(zf, nome):
             if l["CNPJ_CIA"] in cnpjs:
@@ -689,6 +705,7 @@ def montar_series(anos_dados):
         tesouraria = [round(d.get("tesouraria_on", 0) * fator), round(d.get("tesouraria_pn", 0) * fator)]
     estimar_acoes_antigas(anos, anos_dados, s)
     s["_tesouraria"] = tesouraria  # do último exercício; descontada da contagem atual da B3
+    s["_fator_acoes"] = fator      # correção de escala do último exercício (vale também para o ITR)
     return anos, s
 
 
@@ -713,6 +730,34 @@ def estimar_acoes_antigas(anos, anos_dados, s):
                 estimada *= 1000
         s["acoes"][i] = round(estimada)
         s["acoes_estimadas"][i] = True
+
+
+def acoes_cvm(comp, s, fator, b3=None):
+    """Ações do formulário mais recente entregue à CVM (DFP ou ITR): emitidas ON e PN e em tesouraria.
+    A composição do capital não informa escala; usa a correção do último exercício e, se o ITR vier
+    em outra escala (milhares), acerta pela ordem de grandeza da série anual."""
+    if not comp:
+        return None
+    data = max(comp)
+    on, pn, t_on, t_pn, fonte = comp[data]
+    circ, alvo = on + pn - t_on - t_pn, next((x for x in reversed(s["acoes"]) if x), None)
+    if circ <= 0:
+        return None
+    f = fator or 1
+    if alvo:
+        while circ * f / alvo > 300:
+            f /= 1000
+        while circ * f / alvo < 1 / 300:
+            f *= 1000
+        # DFP e B3 concordam e o ITR difere por potência exata de 10: escala trocada no formulário
+        # (BGIP4 e FIEI3 em 2026). Grupamento e desdobramento mudariam também a B3, então ficam.
+        if b3 and 0.9 < alvo / b3 < 1.1:
+            razao = circ * f / b3
+            k = round(math.log10(razao))
+            if k != 0 and abs(razao / 10 ** k - 1) < 0.01:
+                f /= 10 ** k
+    r = lambda x: round(x * f)  # noqa: E731
+    return {"data": data, "fonte": fonte, "on": r(on), "pn": r(pn), "tesouraria_on": r(t_on), "tesouraria_pn": r(t_pn)}
 
 
 # ---------------------------------------------------------------- cotações (B3)
@@ -1049,12 +1094,14 @@ def main():
         sup = next((sups[r] for r in dict.fromkeys(t[:4] for t in tk) if r in sups), None)
         acoes_b3 = None
         tes_on, tes_pn = s.pop("_tesouraria", [0, 0])
+        fator_acoes = s.pop("_fator_acoes", 1)
         if sup and num_br(sup.get("totalNumberShares")) > 0:
             on, pn = num_br(sup.get("numberCommonShares")), num_br(sup.get("numberPreferredShares"))
             # a B3 informa o total emitido; tira a tesouraria do último balanço (mesmo critério do LPA)
             acoes_b3 = {"on": round(on - tes_on if on > tes_on else on),
                         "pn": round(pn - tes_pn if pn > tes_pn else pn),
                         "tesouraria": tes_on + tes_pn}
+        cvm = acoes_cvm(COMPOSICAO.get(cnpj), s, fator_acoes, acoes_b3 and acoes_b3["on"] + acoes_b3["pn"])
         vm_atual = valor_mercado(precos_hoje, tk, units, acoes_b3["on"], acoes_b3["pn"],
                                  acoes_b3["on"] + acoes_b3["pn"]) if acoes_b3 else vm_dfp
         prov = proventos_12m(sup, tk) if sup else {}
@@ -1077,6 +1124,7 @@ def main():
             "ttm": ultimos_12m(anos, s, itr.get(cnpj, {})),
             "valor_mercado_dfp": vm_dfp,
             "acoes_b3": acoes_b3,
+            "acoes_cvm": cvm,
             "proventos_12m": prov_total,
             "dy12m": {t: round(v / precos_hoje[t], 4) for t, v in prov.items() if precos_hoje.get(t)},
             "liquidez": round(sum(c["volume"] for c in cotacao.values())),

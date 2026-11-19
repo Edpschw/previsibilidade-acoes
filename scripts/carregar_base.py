@@ -74,7 +74,7 @@ ORDEM_12M = ("receita", "lucro_liquido", "lucro_controladora", "ebit", "ebitda",
              "ativo_total", "pl", "pl_controladora", "divida_bruta", "caixa", "divida_liquida")
 CHAVES_EMPRESA = ("cnpj", "cd_cvm", "nome", "tickers", "ticker", "setor", "segmento", "controle", "site", "exterior",
                   "units", "setor_b3", "financeiro", "individual", "cotacao", "valor_mercado", "ttm",
-                  "valor_mercado_dfp", "acoes_b3", "proventos_12m", "dy12m", "liquidez", "precos_ano", "anos",
+                  "valor_mercado_dfp", "acoes_b3", "acoes_cvm", "proventos_12m", "dy12m", "liquidez", "precos_ano", "anos",
                   "series", "score")
 CHAVES_TOPO = ("gerado_em", "ano_final", "unidade", "ptax", "ptax_atual", "cotacoes_em", "empresas")
 
@@ -222,6 +222,7 @@ def carregar(cur, dados: dict) -> tuple:
         b3 = e["acoes_b3"] or {}
         ret_emp.append((carga, eid, e["ticker"], e["financeiro"], e["individual"], reais(e["valor_mercado"]),
                         reais(e["valor_mercado_dfp"]), b3.get("on"), b3.get("pn"), b3.get("tesouraria"),
+                        Jsonb(e["acoes_cvm"]) if e["acoes_cvm"] is not None else None,
                         reais(e["proventos_12m"]), dec(e["liquidez"])))
         for t, c in e["cotacao"].items():
             ret_pap.append((carga, pap[t], dec(c["preco"]), data(c["data"]), dec(c["volume"]), dec(e["dy12m"].get(t))))
@@ -243,7 +244,7 @@ def carregar(cur, dados: dict) -> tuple:
                                   [(int(a), dec(p["media"]), dec(p["fim"])) for a, p in dados["ptax"].items()], carga),
         "retrato_empresa": copiar(cur, "retrato_empresa",
                                   ["carga_id", "empresa_id", "ticker_principal", "financeiro", "individual", "valor_mercado",
-                                   "valor_mercado_dfp", "acoes_on", "acoes_pn", "tesouraria", "proventos_12m", "liquidez"], ret_emp),
+                                   "valor_mercado_dfp", "acoes_on", "acoes_pn", "tesouraria", "acoes_cvm", "proventos_12m", "liquidez"], ret_emp),
         "retrato_papel": copiar(cur, "retrato_papel", ["carga_id", "papel_id", "preco", "data", "volume", "dy12m"], ret_pap),
         "indice": copiar(cur, "indice", ["carga_id", "empresa_id", "moeda", "metodologia", "total", "componentes",
                                          "ano_ini", "ano_fim"], indice),
@@ -266,19 +267,20 @@ def exportar(cur, carga: int) -> dict:
 
     cur.execute(f"""select r.empresa_id, e.cnpj, e.cd_cvm, c.nome, c.setor, c.segmento, c.controle, c.site, c.exterior,
                            c.units, c.setor_b3, r.ticker_principal, r.financeiro, r.individual, r.valor_mercado,
-                           r.valor_mercado_dfp, r.acoes_on, r.acoes_pn, r.tesouraria, r.proventos_12m, r.liquidez
+                           r.valor_mercado_dfp, r.acoes_on, r.acoes_pn, r.tesouraria, r.acoes_cvm, r.proventos_12m, r.liquidez
                     from retrato_empresa r join empresa e on e.id = r.empresa_id
                     join cadastro c on c.empresa_id = r.empresa_id and {vig.format(a='c')}
                     where r.carga_id = %(c)s""", p)
     E = {}
     for (eid, cnpj, cd_cvm, nome, setor, segmento, controle, site, exterior, units, setor_b3, ticker, fin, ind,
-         vm, vm_dfp, on, pn, tes, prov, liq) in cur.fetchall():
+         vm, vm_dfp, on, pn, tes, cvm, prov, liq) in cur.fetchall():
         E[eid] = {
             "cnpj": cnpj, "cd_cvm": cd_cvm, "nome": nome, "tickers": [], "ticker": ticker, "setor": setor,
             "segmento": segmento, "controle": controle, "site": site, "exterior": exterior, "units": units,
             "setor_b3": setor_b3, "financeiro": fin, "individual": ind, "cotacao": {}, "valor_mercado": num(vm, True),
             "ttm": None, "valor_mercado_dfp": num(vm_dfp, True),
             "acoes_b3": None if on is None and pn is None and tes is None else {"on": on, "pn": pn, "tesouraria": tes},
+            "acoes_cvm": cvm,
             "proventos_12m": num(prov, True), "dy12m": {}, "liquidez": num(liq), "precos_ano": {}, "anos": [],
             "series": {}, "score": {"brl": None, "usd": None},
         }

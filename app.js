@@ -374,6 +374,35 @@
     return out.join("");
   }
 
+  /** Número de ações do formulário mais recente entregue à CVM (composição do capital da DFP ou do ITR). */
+  function acoesEmpresa(e) {
+    var c = e.acoes_cvm;
+    if (!c) return "";
+    var n = function (v) { return nf(0).format(v); };
+    var tes = c.tesouraria_on + c.tesouraria_pn, circ = c.on + c.pn - tes;
+    var itens = [
+      [L("Ações em circulação", "Shares outstanding"), n(circ), L("Emitidas menos as em tesouraria", "Issued minus treasury shares")],
+      [L("Ordinárias (ON)", "Common (ON)"), n(c.on), L("Ações com direito a voto, emitidas", "Voting shares issued")],
+    ];
+    if (c.pn) itens.push([L("Preferenciais (PN)", "Preferred (PN)"), n(c.pn), L("Ações com prioridade nos dividendos, emitidas", "Shares with dividend priority, issued")]);
+    itens.push([L("Em tesouraria", "Treasury shares"), n(tes), L("Recompradas pela própria empresa; não recebem dividendos", "Bought back by the company; they receive no dividends")]);
+    var fonte = (c.fonte === "ITR" ? L("formulário trimestral (ITR)", "quarterly filing (ITR)") : L("formulário anual (DFP)", "annual filing (DFP)")) + L(" de ", " of ") + data(c.data);
+    // a B3 informa a quantidade de hoje: diferença grande costuma ser grupamento, desdobramento ou emissão depois do formulário
+    var b = e.acoes_b3, aviso = "";
+    if (b && b.on + b.pn > 0) {
+      var razao = circ / (b.on + b.pn);
+      if (razao < 0.95 || razao > 1.05) {
+        aviso = '<p class="aviso">' + esc(L(
+          "A B3 informa hoje " + n(b.on + b.pn) + " ações em circulação. A diferença costuma vir de grupamento, desdobramento ou emissão de ações depois do formulário, ou de erro no próprio formulário. O valor de mercado usa a contagem da B3.",
+          "B3 reports " + n(b.on + b.pn) + " shares outstanding today. The gap usually comes from a reverse split, split or share issue after the filing, or from an error in the filing itself. Market cap uses the B3 count.")) + "</p>";
+      }
+    }
+    return '<h3 style="margin:18px 0 8px">' + L("Número de ações", "Share count") + ' <span class="mudo sub" style="font-weight:400">· CVM, ' + esc(fonte) + "</span></h3>" +
+      '<div class="grade-ind">' + itens.map(function (x) {
+        return '<div class="ind"><div class="r"><abbr title="' + esc(x[2]) + '">' + x[0] + '</abbr></div><div class="v num">' + x[1] + "</div></div>";
+      }).join("") + "</div>" + aviso;
+  }
+
   /** Pagamentos aprovados e ainda por fazer (fichas da B3), dentro da seção de valuation. */
   function pagamentosEmpresa(e) {
     var hoje = new Date().toISOString().slice(0, 10);
@@ -522,7 +551,7 @@
     var blocos =
       '<section class="cartao secao" id="s-valuation">' + titulo("s-valuation", "sec_valuation") +
       '<span class="mudo sub">' + esc(tf("valuation_sub", data(cot && cot.data), i.d12 ? tf("sobre_12m", data(i.d12.ate)) : tf("sobre_balanco", i.ano))) + "</span></div>" +
-      cartoes(valuation) + pagamentosEmpresa(e) + "</section>" +
+      cartoes(valuation) + acoesEmpresa(e) + pagamentosEmpresa(e) + "</section>" +
       (doze12 ? '<section class="cartao secao" id="s-12m">' + titulo("s-12m", "sec_12m") +
         '<span class="mudo sub">' + L("Até ", "To ") + data(i.d12.ate) + " · DFP + ITR</span></div>" + cartoes(doze12) + "</section>" : "") +
       '<section class="cartao secao" id="s-fund">' + titulo("s-fund", "", tf("fund_titulo", i.ano)) +

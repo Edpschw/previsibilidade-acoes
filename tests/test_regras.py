@@ -168,6 +168,30 @@ class UltimosDozeMeses(unittest.TestCase):
         self.assertIsNone(P.ultimos_12m([2025], s, {"2026-09-30": {"receita": 1, "lucro_liquido": 1}}))
 
 
+class AcoesDaCvm(unittest.TestCase):
+    """Ações do formulário mais recente da CVM (composição do capital da DFP ou do ITR)."""
+
+    def test_petrobras_itr_mais_recente(self):
+        comp = {"2025-12-31": (7_442_231_382, 5_446_501_379, 0, 0, "DFP"),
+                "2026-09-30": (7_442_231_382, 5_446_501_379, 0, 0, "ITR")}
+        c = P.acoes_cvm(comp, {"acoes": [12_888_732_761]}, 1, 12_888_732_761)
+        self.assertEqual((c["data"], c["fonte"], c["on"], c["pn"]), ("2026-09-30", "ITR", 7_442_231_382, 5_446_501_379))
+
+    def test_bgip4_itr_10x_com_dfp_e_b3_de_acordo(self):
+        # ITR de 2026 declarou 10× as ações; DFP e B3 concordam entre si
+        c = P.acoes_cvm({"2026-09-30": (0, 230_817_400, 0, 0, "ITR")}, {"acoes": [21_548_228]}, 1, 23_081_740)
+        self.assertEqual(c["pn"], 23_081_740)
+
+    def test_grupamento_depois_da_dfp_fica(self):
+        # PDGR3: a B3 já reflete o grupamento, a DFP não; o ITR fica como declarado
+        c = P.acoes_cvm({"2026-09-30": (3_287_000_000, 0, 0, 0, "ITR")}, {"acoes": [3_287_000_000]}, 1, 27_194_915)
+        self.assertEqual(c["on"], 3_287_000_000)
+
+    def test_itr_em_milhares_segue_a_escala_da_serie(self):
+        c = P.acoes_cvm({"2026-06-30": (1_688_174, 0, 0, 0, "ITR")}, {"acoes": [1_652_584_004]}, 1)
+        self.assertEqual(c["on"], 1_688_174_000)
+
+
 class Trava(unittest.TestCase):
     def setUp(self):
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))

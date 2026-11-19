@@ -1,18 +1,18 @@
 # Auditoria da base
 
-Gerada em 19/11/2026 sobre `data/empresas.js` de 2026-11-19 00:17 (balanços até 2025, cotações até 2026-11-18). Refaça com `python3 scripts/auditar.py --externo`.
+Gerada em 18/11/2026 sobre `data/empresas.js` de 2026-11-18 22:54 (balanços até 2025, cotações até 2026-11-18). Refaça com `python3 scripts/auditar.py --externo`.
 
 ## 1. Cobertura
 
 | Etapa | Quantidade |
 |---|---|
-| Emissores com ação ON/PN/unit negociada na B3 nos últimos 21 pregões (raiz do ticker) | 302 |
-| Tickers de ação negociados nesse período | 388 |
+| Emissores com ação ON/PN/unit negociada na B3 nos últimos 21 pregões (raiz do ticker) | 303 |
+| Tickers de ação negociados nesse período | 390 |
 | Emissores de ações na lista oficial da B3 (tipo 1) | 566 |
 | Companhias ativas na CVM com ação na B3 (FCA + lista da B3) | 345 |
 | Empresas na base | 345 |
-| … das quais negociaram no período | 301 |
-| Emissores negociados na B3 que estão na base | 301 de 302 (100%) |
+| … das quais negociaram no período | 302 |
+| Emissores negociados na B3 que estão na base | 302 de 303 (100%) |
 
 Referências externas:
 
@@ -32,20 +32,20 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 
 ### Na base sem negócio na B3 no período
 
-023175 (IGUA SANEAMENTO), AESO3 (Auren Operações), AHEB3 (SAO PAULO TURISMO), APTI4 (ALIPERTI), B1003 (B100), BBML3 (BBM Logística), BETP3 (BETAPART PARTICIPACOES), BPAR3 (BCO ESTADO DO PARA), BRFS3 (BRF), BRML3 (BR MALLS PARTICIPACOES), CEGR3 (CIA DISTRIB DE GAS DO RIO DE JANEIRO-CEG), CRTE3 (CONC RIO-TERESOPOLIS), CTCA3 (CTC - CENTRO DE TECNOLOGIA CANAVIEIRA), FIGE4 (INVESTIMENTOS BEMGE), FRIO3 (METALFRIO SOLUTIONS), GPAR3 (CIA CELG DE PARTICIPACOES - CELGPAR), HMOB3 (HMOBI Participações), IGTA3 (IGUATEMI EMPRESA DE SHOPPING CENTERS), INNC3 (INC EMPREENDIMENTOS IMOBILIÁRIOS), KLAS3 (KALLAS INCORPORAÇÕES E CONSTRUÇÕES), KRSA3 (Kora Saúde Participações), MERC4 (Mercantil Financeira), MMAQ4 (MINASMAQUINAS), NEMO3 (SUZANO HOLDING), NEOE3 (NEOENERGIA), NGRD3 (NEOGRID PARTICIPAÇÕES), ODER4 (CONSERVAS ODERICH), OIBR4 (OI), OPGM3 (GAMA PARTICIPACOES), OPSE3 (SUDESTE), OPTS3 (SUL 116 PARTICIPAÇÕES), PPAR3 (POLPAR), PRPT3 (PROMPT PARTICIPACOES), PTCA3 (PRÁTICA PRODUTOS), PTNT4 (PETTENATI), QUSW3 (QUALITY SOFTWARE), QVQP3 (524 PARTICIPACOES), SALT4 (Grupo Salta Educação), SHOW3 (T4F ENTRETENIMENTO), SRNA3 (SERENA ENERGIA), STBP3 (SANTOS BRASIL PARTICIPACOES), TKNO4 (TEKNO), VSPT4 (FERROVIA CENTRO-ATLANTICA), ZAMP3 (ZAMP)
+023175 (IGUA SANEAMENTO), AESO3 (Auren Operações), AHEB3 (SAO PAULO TURISMO), APTI4 (ALIPERTI), BBML3 (BBM Logística), BETP3 (BETAPART PARTICIPACOES), BPAR3 (BCO ESTADO DO PARA), BRFS3 (BRF), BRML3 (BR MALLS PARTICIPACOES), CEGR3 (CIA DISTRIB DE GAS DO RIO DE JANEIRO-CEG), CRTE3 (CONC RIO-TERESOPOLIS), CTCA3 (CTC - CENTRO DE TECNOLOGIA CANAVIEIRA), FIGE4 (INVESTIMENTOS BEMGE), FRIO3 (METALFRIO SOLUTIONS), GPAR3 (CIA CELG DE PARTICIPACOES - CELGPAR), HMOB3 (HMOBI Participações), IGTA3 (IGUATEMI EMPRESA DE SHOPPING CENTERS), INNC3 (INC EMPREENDIMENTOS IMOBILIÁRIOS), KLAS3 (KALLAS INCORPORAÇÕES E CONSTRUÇÕES), KRSA3 (Kora Saúde Participações), MERC4 (Mercantil Financeira), MMAQ4 (MINASMAQUINAS), NEMO3 (SUZANO HOLDING), NEOE3 (NEOENERGIA), NGRD3 (NEOGRID PARTICIPAÇÕES), ODER4 (CONSERVAS ODERICH), OIBR4 (OI), OPGM3 (GAMA PARTICIPACOES), OPSE3 (SUDESTE), OPTS3 (SUL 116 PARTICIPAÇÕES), PPAR3 (POLPAR), PRPT3 (PROMPT PARTICIPACOES), PTCA3 (PRÁTICA PRODUTOS), PTNT4 (PETTENATI), QUSW3 (QUALITY SOFTWARE), QVQP3 (524 PARTICIPACOES), SALT4 (Grupo Salta Educação), SHOW3 (T4F ENTRETENIMENTO), SRNA3 (SERENA ENERGIA), STBP3 (SANTOS BRASIL PARTICIPACOES), TKNO4 (TEKNO), VSPT4 (FERROVIA CENTRO-ATLANTICA), ZAMP3 (ZAMP)
 
 ## 2. Consistência
 
 | Severidade | Regra | Ocorrências |
 |---|---|---|
 | alta | LPA divergente | 9 |
-| média | ações B3 × DFP | 32 |
+| média | ações B3 × DFP | 33 |
 | média | margem líquida extrema | 24 |
 | média | receita não positiva | 12 |
 | média | DY acima de 30% | 9 |
 | média | P/L extremo | 9 |
 | média | LPA com sinal trocado na DRE | 8 |
-| média | cotação parada | 6 |
+| média | cotação parada | 7 |
 | média | P/VP extremo | 4 |
 | média | caixa operacional > 2× EBITDA sem explicação | 1 |
 | média | buraco no histórico | 1 |
@@ -53,7 +53,7 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | baixa | LPA divergente | 59 |
 | baixa | receita salta | 55 |
 | baixa | LPA com sinal trocado na DRE | 30 |
-| baixa | preço mudou de escala | 16 |
+| baixa | preço mudou de escala | 17 |
 | baixa | controladora × consolidado | 11 |
 | baixa | LPA declarado por lote de mil | 10 |
 | baixa | ITR atrasado | 10 |
@@ -63,7 +63,7 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | baixa | dividendos > 3× lucro | 2 |
 | info | DY 12m × DY do exercício | 58 |
 | info | só demonstração individual | 50 |
-| info | sem cotação | 44 |
+| info | sem cotação | 43 |
 | info | PL negativo | 33 |
 | info | caixa operacional > 2× EBITDA | 16 |
 
@@ -117,6 +117,7 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | AZEV3 | AZEVEDO E TRAVASSOS | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 0.19× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | AZTE3 | Azevedo & Travassos Energia | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 0.12× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | AZUL3 | AZUL | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 0.13× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
+| B1003 | B100 | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 5.05× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | BHIA3 | Grupo Casas Bahia | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 1.55× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | CCTY3 | Belora RDVC City Desenvolvimento Imobili | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 0.00× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | CTAX3 | CONTAX PARTICIPAÇÕES | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 0.30× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
@@ -144,6 +145,7 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | VVEO3 | CM Hospitalar | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 4.05× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | MLAS3 | GRUPO MULTILASER | média | buraco no histórico | sem DFP em 2018 |
 | ALPK3 | ALLPARK EMPREENDIMENTOS, PARTICIPAÇÕES E | média | caixa operacional > 2× EBITDA sem explicação | 2025: 545,220 × EBITDA 260,898; nem capital de giro (0) nem ajustes (0) explicam |
+| B1003 | B100 | média | cotação parada | último negócio de B1003 há mais de 14 dias |
 | DTCY3 | DTCOM - DIRECT TO COMPANY | média | cotação parada | último negócio de DTCY3 há mais de 14 dias |
 | EMAE4 | EMAE - EMPRESA METROP. DE AGUAS E ENERGI | média | cotação parada | último negócio de EMAE4 há mais de 14 dias |
 | FIEI3 | FICA EMPREENDIMENTOS IMOBILIÁRIOS | média | cotação parada | último negócio de FIEI3 há mais de 14 dias |
@@ -188,14 +190,3 @@ Ordenadas por volume médio diário. Cada linha diz em que etapa a empresa caiu.
 | QVQP3 | 524 PARTICIPACOES | média | receita não positiva | receita 0 em 2025 |
 
 As de severidade baixa e informativas ficam em `auditoria.json`.
-
-## 3. Conferência externa (brapi.dev)
-
-| Ticker | Cotação base | Cotação brapi | Valor de mercado base | brapi | Diferença |
-|---|---|---|---|---|---|
-| PETR4 | 43.17 | 43.17 | 602.0 bi | 607.4 bi | -0.9% |
-| VALE3 | 59.0 | 59 | 246.0 bi | 240.5 bi | +2.3% |
-| ITUB4 | 40.19 | 40.19 | 465.9 bi | 473.4 bi | -1.6% |
-| MGLU3 | 8.32 | 8.32 | 6.4 bi | 5.6 bi | +15.0% |
-
-A base usa a quantidade de ações atual informada pela B3, menos as ações em tesouraria do último balanço (mesmo critério do LPA). Fontes de mercado variam: algumas usam o total emitido, outras uma contagem defasada. A cotação é o teste mais direto, e deve bater exatamente.

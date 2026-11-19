@@ -144,6 +144,7 @@ O que sobra no relatório são, em geral, erros de preenchimento das próprias e
 
 - Preços sem ajuste por desdobramento ou grupamento. Os múltiplos históricos usam preço e ações da mesma data, então ficam certos; o gráfico de cotação pode ter saltos.
 - Valor de mercado atual = ações ON e PN da B3, menos a tesouraria do último balanço, × cotação de cada classe (units divididas pela composição). No histórico, ações da DFP; antes de 2020 a DFP não traz a quantidade e ela é estimada pelo LPA declarado.
+- Número de ações (`acoes_cvm`): composição do capital do formulário mais recente entregue à CVM (ITR do trimestre ou DFP), com ON e PN emitidas e as em tesouraria. Usa a mesma correção de escala da série anual; quando DFP e B3 concordam e o ITR difere delas por potência exata de 10, é escala trocada no formulário e é corrigida (BGIP4 e FIEI3 em 2026). Diferença maior que 5% para a B3 aparece na página como aviso: em geral é grupamento, desdobramento ou emissão depois do formulário.
 - Últimos 12 meses só para empresas com exercício de janeiro a dezembro e ITR posterior ao último balanço anual.
 - DY 12 meses = proventos com data-com nos últimos 12 meses segundo a ficha da B3. Para quem paga uma vez por ano perto da virada do período, a janela pode pegar zero ou dois pagamentos; o DY do exercício (DFP) fica ao lado para comparar.
 - Empresas sem negócio na B3 no último mês ficam sem cotação e múltiplos.
