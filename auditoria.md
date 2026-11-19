@@ -1,6 +1,6 @@
 # Auditoria da base
 
-Gerada em 18/11/2026 sobre `data/empresas.js` de 2026-11-18 22:54 (balanços até 2025, cotações até 2026-11-18). Refaça com `python3 scripts/auditar.py --externo`.
+Gerada em 18/11/2026 sobre `data/empresas.js` de 2026-11-18 23:05 (balanços até 2025, cotações até 2026-11-18). Refaça com `python3 scripts/auditar.py --externo`.
 
 ## 1. Cobertura
 

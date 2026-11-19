@@ -184,6 +184,52 @@ def data_br(x):
         return None
 
 
+# eventos que mudam a quantidade de ações sem entrada de dinheiro: multiplicador sobre a quantidade
+EVENTOS_ACOES = {
+    "DESDOBRAMENTO": ("desdobramento", lambda f: 1 + f / 100),  # fator em %: 100 = cada ação vira 2
+    "BONIFICACAO": ("bonificacao", lambda f: 1 + f / 100),      # 10 = 10% a mais em ações
+    "GRUPAMENTO": ("grupamento", lambda f: f),                  # 0,1 = cada 10 ações viram 1
+}
+
+
+def eventos_acoes(sup):
+    """Desdobramentos, bonificações e grupamentos da ficha da B3, um por data (a ficha repete o
+    evento para cada classe). data = último dia "com"; a quantidade muda no dia seguinte."""
+    out = {}
+    for x in (sup or {}).get("stockDividends") or []:
+        tipo = EVENTOS_ACOES.get((x.get("label") or "").strip().upper())
+        d, f = data_br(x.get("lastDatePrior")), num_br(x.get("factor"))
+        if not tipo or not d or f <= 0:
+            continue
+        mult = tipo[1](f)
+        if mult <= 0 or abs(mult - 1) < 1e-9:
+            continue
+        out.setdefault((d.isoformat(), tipo[0]), round(mult, 8))
+    return [{"data": d, "tipo": t, "fator": m} for (d, t), m in sorted(out.items())]
+
+
+def eventos_confirmados(anos, s, eventos):
+    """Fica só o evento que a contagem anual da CVM confirma: a quantidade salta pelo fator (±15%,
+    folga para emissões no mesmo ano) entre o fim do ano anterior e o do ano em que ele vale.
+    Grava "ano" = primeiro exercício cuja contagem já inclui o evento. Nos anos estimados pelo LPA
+    (média do ano), o salto pode aparecer só no exercício seguinte."""
+    ac, est = s["acoes"], s.get("acoes_estimadas") or [False] * len(anos)
+    out = []
+    for ev in eventos:
+        d = ev["data"]
+        y = int(d[:4]) + (1 if d[5:] >= "12-31" else 0)  # "com" no último dia do ano: vale no seguinte
+        for cand in (y, y + 1):
+            if cand not in anos or anos.index(cand) == 0:
+                continue
+            k = anos.index(cand)
+            if cand == y + 1 and not est[k - 1] and not est[k]:
+                continue
+            if ac[k] and ac[k - 1] and 0.85 < ac[k] / ac[k - 1] / ev["fator"] < 1.18:
+                out.append({**ev, "ano": cand})
+                break
+    return out
+
+
 # ISIN da B3: BR + raiz + espécie. Ex.: BRPETRACNOR9 (ON), BRPETRACNPR6 (PN), BRBPACCDAM16 (unit)
 ISIN_ESPECIE = {"3": "ACNOR", "4": "ACNPR", "5": "ACNPA", "6": "ACNPB", "7": "ACNPC", "8": "ACNPD", "11": "CDAM"}
 
@@ -1125,6 +1171,7 @@ def main():
             "valor_mercado_dfp": vm_dfp,
             "acoes_b3": acoes_b3,
             "acoes_cvm": cvm,
+            "eventos_acoes": eventos_confirmados(anos, s, eventos_acoes(sup)),
             "proventos_12m": prov_total,
             "dy12m": {t: round(v / precos_hoje[t], 4) for t, v in prov.items() if precos_hoje.get(t)},
             "liquidez": round(sum(c["volume"] for c in cotacao.values())),

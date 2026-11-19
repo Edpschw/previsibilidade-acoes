@@ -129,6 +129,7 @@ create table if not exists retrato_empresa (
   valor_mercado_dfp numeric,
   acoes_on          bigint, acoes_pn bigint, tesouraria bigint,  -- quantidade vigente na B3
   acoes_cvm         jsonb,                  -- formulário mais recente da CVM: data, fonte, on, pn, tesouraria_on, tesouraria_pn
+  eventos_acoes     jsonb,                  -- desdobramentos, grupamentos e bonificações (B3): data, tipo, fator
   proventos_12m     numeric,
   liquidez          numeric not null,       -- volume médio diário, R$
   primary key (carga_id, empresa_id)
@@ -136,6 +137,7 @@ create table if not exists retrato_empresa (
 
 -- bases criadas antes da coluna
 alter table retrato_empresa add column if not exists acoes_cvm jsonb;
+alter table retrato_empresa add column if not exists eventos_acoes jsonb;
 
 create table if not exists retrato_papel (
   carga_id bigint not null references carga,

@@ -101,6 +101,55 @@
     return iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4);
   }
 
+  /** quantidade de ações em formato curto: 12,89 bi · 345,2 mi · 18,6 mil */
+  function qtd(v) {
+    if (v == null) return "–";
+    var a = Math.abs(v);
+    if (a >= 1e9) return nf(2).format(v / 1e9) + L(" bi", " bn");
+    if (a >= 1e6) return nf(1).format(v / 1e6) + L(" mi", " m");
+    if (a >= 1e3) return nf(1).format(v / 1e3) + L(" mil", "k");
+    return nf(0).format(v);
+  }
+
+  /** fator que leva a quantidade do fim do exercício k para a base de ações de hoje: produto dos
+   *  desdobramentos, grupamentos e bonificações confirmados que vieram depois (e.eventos_acoes) */
+  function fatorAjuste(e, k) {
+    var f = 1, ano = e.anos[k];
+    (e.eventos_acoes || []).forEach(function (ev) { if (ev.ano > ano) f *= ev.fator; });
+    return f;
+  }
+  var NOME_EVENTO = { desdobramento: ["Desdobramento", "Split"], grupamento: ["Grupamento", "Reverse split"], bonificacao: ["Bonificação", "Bonus shares"] };
+  /** "Desdobramento 1:2" · "Grupamento 10:1" · "Bonificação 10%" */
+  function textoEvento(ev) {
+    var nome = L(NOME_EVENTO[ev.tipo][0], NOME_EVENTO[ev.tipo][1]), f = ev.fator;
+    if (ev.tipo === "bonificacao") return nome + " " + nf(f - 1 < 0.1 ? 1 : 0).format((f - 1) * 100) + "%";
+    return nome + " " + (f >= 1 ? "1:" + nf(f % 1 ? 2 : 0).format(f) : nf(1 / f % 1 ? 2 : 0).format(1 / f) + ":1");
+  }
+
+  /** séries por ação, ano a ano, na moeda da tela (valores da DFP em R$ mil × 1000 / ações).
+   *  A quantidade vai para a base de hoje: desdobramento, grupamento e bonificação não viram
+   *  falso salto de diluição nem derrubam o lucro por ação dos anos anteriores. */
+  function porAcaoAnual(e) {
+    var s = e.series, bruta = s.acoes;
+    var fatores = bruta.map(function (x, k) { return fatorAjuste(e, k); });
+    var ac = bruta.map(function (x, k) { return x ? x * fatores[k] : x; });
+    var pa = function (chave) {
+      var v = serie(e, chave);
+      return v.map(function (x, k) { return x != null && ac[k] ? x * 1000 / ac[k] : null; });
+    };
+    var fco = serie(e, "fco"), capex = serie(e, "capex");
+    return {
+      acoes: ac, acoesBrutas: bruta, fatores: fatores,
+      eventos: e.anos.map(function (a) { return (e.eventos_acoes || []).filter(function (ev) { return ev.ano === a; }); }),
+      variacao: ac.map(function (x, k) { return k && x && ac[k - 1] ? x / ac[k - 1] - 1 : null; }),
+      lpa: pa("lucro_controladora"),
+      vpa: pa("pl_controladora"),
+      dpa: pa("dividendos_pagos"),
+      fclpa: e.financeiro ? ac.map(function () { return null; }) :
+        fco.map(function (x, k) { return x != null && ac[k] ? (x - (capex[k] || 0)) * 1000 / ac[k] : null; }),
+    };
+  }
+
   function cagr(arr, n) {
     var fim = arr.length - 1, ini = fim - n;
     if (ini < 0) return null;
@@ -184,6 +233,11 @@
       fcl: !e.financeiro && fco != null ? fco - (capex || 0) : null, // caixa operacional de banco mistura depósitos e crédito
       cagrRec: cagr(r, 5),
       cagrLuc: cagr(lc, 5),
+      // métricas que dependem da quantidade de ações ao longo dos anos
+      acoesCagr: cagr(porAcaoAnual(e).acoes, 5),        // < 0: recompras; > 0: emissões (diluição)
+      lpaCagr: cagr(porAcaoAnual(e).lpa, 5),
+      dpaCagr: cagr(porAcaoAnual(e).dpa, 5),
+      fclpa: ultimo(porAcaoAnual(e).fclpa),
     };
   }
 
@@ -539,6 +593,10 @@
       [L("Fluxo de caixa livre", "Free cash flow"), dinheiro(i.fcl), L("Caixa operacional − investimento em imobilizado e intangível", "Operating cash flow − capital expenditure")],
       [L("CAGR receita 5a", "Revenue CAGR 5y"), pct(i.cagrRec), L("Crescimento anual composto da receita em 5 anos", "Compound annual revenue growth over 5 years")],
       [L("CAGR lucro 5a", "Earnings CAGR 5y"), pct(i.cagrLuc), L("Crescimento anual composto do lucro em 5 anos", "Compound annual earnings growth over 5 years")],
+      [L("CAGR LPA 5a", "EPS CAGR 5y"), pct(i.lpaCagr), L("Crescimento anual composto do lucro por ação em 5 anos: o lucro descontada a diluição", "Compound annual growth of earnings per share over 5 years: earnings net of dilution")],
+      [L("CAGR dividendo/ação 5a", "DPS CAGR 5y"), pct(i.dpaCagr), L("Crescimento anual composto do dividendo por ação em 5 anos", "Compound annual growth of dividends per share over 5 years")],
+      [L("Variação de ações 5a", "Share count change 5y"), pct(i.acoesCagr), L("Variação anual composta das ações em circulação em 5 anos; negativa = recompras", "Compound annual change in shares outstanding over 5 years; negative = buybacks"), "divida"],
+      [L("FCL por ação", "FCF per share"), porAcao(i.fclpa), L("Fluxo de caixa livre do ano / ações em circulação", "Free cash flow for the year / shares outstanding")],
     ];
     var cartoes = function (lista) {
       return '<div class="grade-ind">' + lista.map(function (c) {
@@ -585,7 +643,14 @@
       '<section class="cartao"><h2>' + (e.financeiro ? t("g_pl") : t("g_divida")) + '</h2><div class="grafico" id="g-divida"></div></section>' +
       '<section class="cartao"><h2>' + t("g_caixa") + '</h2><div class="grafico" id="g-caixa"></div></section></div>' +
       '<div class="duas bloco">' +
-      '<section class="cartao"><h2>' + t("g_dividendos") + '</h2><div class="grafico" id="g-dividendos"></div></section>' + comp + "</div>";
+      '<section class="cartao"><h2>' + t("g_dividendos") + '</h2><div class="grafico" id="g-dividendos"></div></section>' + comp + "</div>" +
+      '<div class="duas bloco">' +
+      '<section class="cartao"><h2>' + L("Ações em circulação", "Shares outstanding") + '</h2><div class="grafico" id="g-acoes"></div>' +
+      '<p class="aviso">' + esc(L("No fim de cada exercício, sem tesouraria (DFP), na base de ações de hoje: desdobramentos, grupamentos e bonificações já aplicados aos anos anteriores. Barras apagadas: anos antes de 2020, estimados pelo LPA declarado. Caindo = recompras; subindo = emissões que diluem o acionista.",
+        "At each fiscal year-end, ex-treasury (annual filing), in today's share basis: splits, reverse splits and bonus shares applied to earlier years. Faded bars: years before 2020, estimated from reported EPS. Falling = buybacks; rising = issues that dilute shareholders.")) + "</p></section>" +
+      '<section class="cartao"><h2>' + L("Lucro, dividendo e caixa por ação", "Earnings, dividends and cash per share") + '</h2><div class="grafico" id="g-poracao"></div>' +
+      '<p class="aviso">' + esc(L("Com a quantidade de ações de cada ano: mostra o crescimento que chega a cada ação, já descontada a diluição.",
+        "Using each year's share count: shows the growth that reaches each share, net of dilution.")) + "</p></section></div>";
 
     // capítulos numa coluna lateral que acompanha a rolagem (no celular, barra no topo)
     app.innerHTML = cab + '<div class="pagina-lateral">' + nav +
@@ -673,7 +738,9 @@
     var tk = e.precos_ano[estado.ticker] ? estado.ticker : e.ticker;
     var px = precosAno(e, tk);
     if (px) {
-      linhas($("#g-cotacao"), anos, [{ nome: tk, cor: "var(--c1)", v: px.slice(ini) }], porAcao,
+      // na base de ações de hoje: desdobramento ou grupamento não viram falsa queda ou alta
+      var pxAj = px.map(function (v, k) { return v == null ? null : v / fatorAjuste(e, k); });
+      linhas($("#g-cotacao"), anos, [{ nome: tk, cor: "var(--c1)", v: pxAj.slice(ini) }], porAcao,
         { eixo: function (v) { return nf(v >= 100 ? 0 : 2).format(v); }, limites: null });
     } else {
       $("#g-cotacao").innerHTML = '<p class="mudo">' + esc(tf("sem_cot_ano", tk)) + "</p>";
@@ -724,6 +791,29 @@
       },
     });
 
+    // ações por ano e métricas por ação
+    var pa = porAcaoAnual(e), corta = function (v) { return v.slice(ini); };
+    var est = e.series.acoes_estimadas || [];
+    var acoesV = corta(pa.acoes), varV = corta(pa.variacao);
+    barras($("#g-acoes"), anos, [{ nome: L("Ações", "Shares"), cor: "var(--c1)", v: acoesV,
+      claro: corta(est) }], qtd, {
+      eixo: qtd,
+      extra: function (k) {
+        var out = [];
+        if (varV[k] != null) out.push([L("Variação no ano", "Change in year"), (varV[k] > 0 ? "+" : "") + pct(varV[k], 1)]);
+        pa.eventos[ini + k].forEach(function (ev) { out.push([L("Evento", "Event"), textoEvento(ev)]); });
+        if (pa.fatores[ini + k] !== 1) out.push([L("Como divulgado", "As reported"), qtd(pa.acoesBrutas[ini + k])]);
+        if (est[ini + k]) out.push([L("Origem", "Source"), L("estimada pelo LPA", "estimated from EPS")]);
+        return out;
+      },
+    });
+    var seriesPa = [
+      { nome: L("LPA", "EPS"), cor: "var(--c2)", v: corta(pa.lpa) },
+      { nome: L("Dividendo/ação", "Dividend/share"), cor: "var(--c4)", v: corta(pa.dpa) },
+    ];
+    if (!e.financeiro) seriesPa.push({ nome: L("FCL/ação", "FCF/share"), cor: "var(--c3)", v: corta(pa.fclpa) });
+    linhas($("#g-poracao"), anos, seriesPa, porAcao, { eixo: function (v) { return nf(Math.abs(v) >= 100 ? 0 : 2).format(v); }, limites: null });
+
     tabelaDemonstracoes(e, r);
   }
 
@@ -742,7 +832,44 @@
         if (v.every(function (x) { return x == null; })) return "";
         return '<tr class="' + (l[2] ? "sub" : "") + '"><td>' + t(l[0]) + "</td>" +
           v.map(function (x) { return '<td class="num ' + classe(x) + '">' + dinheiro(x, true) + "</td>"; }).join("") + "</tr>";
-      }).join("") + "</tbody></table>";
+      }).join("") + "</tbody></table>" + tabelaPorAcao(e, r);
+  }
+
+  /** ações por ano e as métricas que dependem delas, na mesma janela de anos das demonstrações */
+  function tabelaPorAcao(e, r) {
+    var anos = r.anos, ini = e.anos.length - anos.length;
+    var pa = porAcaoAnual(e), est = e.series.acoes_estimadas || [];
+    var tk = e.precos_ano[estado.ticker] ? estado.ticker : e.ticker, px = precosAno(e, tk);
+    var mult = anos.map(function (a, k) { return multiplos(e, e.series.valor_mercado[ini + k], ini + k); });
+    var cel = function (v, txt, neg) { return '<td class="num' + (neg && v < 0 ? " neg" : "") + '">' + (v == null ? "–" : txt) + "</td>"; };
+    var lin = [
+      [L("Ações em circulação", "Shares outstanding"), function (k) { var v = pa.acoesBrutas[ini + k]; return cel(v, (est[ini + k] ? "≈ " : "") + qtd(v)); }],
+      [L("Na base de ações de hoje", "In today's share basis"), function (k) { var v = pa.acoes[ini + k]; return cel(v, (est[ini + k] ? "≈ " : "") + qtd(v)); }, 1, "ajuste"],
+      [L("Desdobramento, grupamento, bonificação", "Split, reverse split, bonus"), function (k) {
+        var evs = pa.eventos[ini + k];
+        return '<td class="num">' + (evs.length ? evs.map(textoEvento).join("<br>") : '<span class="mudo">–</span>') + "</td>"; }, 1, "ajuste"],
+      [L("Variação no ano", "Change in year"), function (k) { var v = pa.variacao[ini + k]; return cel(v, (v > 0 ? "+" : "") + pct(v, 1)); }, 1],
+      [L("LPA", "EPS"), function (k) { var v = pa.lpa[ini + k]; return cel(v, porAcao(v), 1); }],
+      [L("VPA", "Book value/share"), function (k) { var v = pa.vpa[ini + k]; return cel(v, porAcao(v), 1); }],
+      [L("Dividendo/ação", "Dividend/share"), function (k) { var v = pa.dpa[ini + k]; return cel(v, porAcao(v)); }],
+      [L("FCL por ação", "FCF per share"), function (k) { var v = pa.fclpa[ini + k]; return cel(v, porAcao(v), 1); }],
+      [L("Cotação ", "Price ") + tk + L(" (ajustada)", " (adjusted)"), function (k) { var v = px && px[ini + k] != null ? px[ini + k] / pa.fatores[ini + k] : null; return cel(v, porAcao(v)); }],
+      [L("P/L", "P/E"), function (k) { var v = mult[k].pl; return cel(v, vezes(v)); }, 1],
+      [L("P/VP", "P/B"), function (k) { var v = mult[k].pvp; return cel(v, vezes(v)); }, 1],
+      [L("Dividend yield", "Dividend yield"), function (k) { var v = mult[k].dy; return cel(v, pct(v, 1)); }, 1],
+    ];
+    var temAjuste = anos.some(function (a, k) { return pa.fatores[ini + k] !== 1 || pa.eventos[ini + k].length; });
+    lin = lin.filter(function (l) { return (l[3] !== "ajuste" || temAjuste) && !(e.financeiro && l[0] === L("FCL por ação", "FCF per share")); });
+    var temEst = anos.some(function (a, k) { return est[ini + k]; });
+    return '<h3 style="margin:22px 0 8px">' + L("Por ação, ano a ano", "Per share, year by year") + "</h3>" +
+      '<table class="tabela-dem"><thead><tr><th>' + simbolo() + "</th>" +
+      anos.map(function (a) { return "<th>" + a + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      lin.map(function (l) {
+        return '<tr class="' + (l[2] ? "sub" : "") + '"><td>' + l[0] + "</td>" + anos.map(function (a, k) { return l[1](k); }).join("") + "</tr>";
+      }).join("") + "</tbody></table>" +
+      '<p class="aviso">' + esc(L("Ações no fim de cada exercício, sem tesouraria. Valores por ação, variação e cotação usam a quantidade na base de hoje: desdobramentos, grupamentos e bonificações confirmados pela contagem da CVM (datas e fatores da B3) são aplicados aos anos anteriores, para os anos serem comparáveis. Múltiplos usam o valor de mercado no último pregão do ano.",
+        "Shares at each fiscal year-end, ex-treasury. Per-share figures, changes and prices use today's share basis: splits, reverse splits and bonus shares confirmed by the CVM count (dates and factors from B3) are applied to earlier years so they are comparable. Multiples use market cap on the year's last trading day.")) +
+      (temEst ? esc(L(" ≈ estimado pelo LPA declarado: a DFP só informa a quantidade de ações a partir de 2020.", " ≈ estimated from reported EPS: annual filings only report the share count from 2020 on.")) : "") + "</p>";
   }
 
   // ---------------------------------------------------------------- gráficos SVG
@@ -818,14 +945,16 @@
     if (!el) return;
     var todos = [].concat.apply([], series.map(function (s) { return s.v; }));
     if (!todos.some(function (v) { return v != null; })) { el.innerHTML = '<p class="mudo">' + t("sem_dados") + "</p>"; return; }
-    var g = base(el, anos, todos, function (v) { return dinheiro(v, true); });
+    var g = base(el, anos, todos, (opts && opts.eixo) || function (v) { return dinheiro(v, true); });
     var n = series.length, gap = Math.max(2, g.bw * 0.22), larg = Math.max(2, (g.bw - gap) / n - 1);
     var corpo = focoRect(g);
     series.forEach(function (s, j) {
       s.v.forEach(function (v, k) {
         if (v == null) return;
         var x0 = M.l + g.bw * k + gap / 2 + j * (larg + 1), y0 = g.y(Math.max(0, v)), y1 = g.y(Math.min(0, v));
-        corpo += '<rect x="' + x0 + '" y="' + y0 + '" width="' + larg + '" height="' + Math.max(1, y1 - y0) + '" rx="' + Math.min(3, larg / 3) + '" fill="' + s.cor + '"/>';
+        // s.claro[k]: valor estimado, desenhado mais claro
+        corpo += '<rect x="' + x0 + '" y="' + y0 + '" width="' + larg + '" height="' + Math.max(1, y1 - y0) + '" rx="' + Math.min(3, larg / 3) + '" fill="' + s.cor + '"' +
+          (s.claro && s.claro[k] ? ' fill-opacity="0.4"' : "") + "/>";
       });
     });
     el.innerHTML = g.svg.replace("</svg>", "") + corpo + "</svg>" + legenda(series);

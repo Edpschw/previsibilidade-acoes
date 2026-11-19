@@ -192,6 +192,41 @@ class AcoesDaCvm(unittest.TestCase):
         self.assertEqual(c["on"], 1_688_174_000)
 
 
+class EventosDeAcoes(unittest.TestCase):
+    """Desdobramento, grupamento e bonificação da ficha da B3, confirmados pela contagem anual da CVM."""
+
+    def test_le_a_ficha_da_b3(self):
+        sup = {"stockDividends": [
+            {"label": "DESDOBRAMENTO", "factor": "100,00000000000", "lastDatePrior": "15/04/2024"},
+            {"label": "DESDOBRAMENTO", "factor": "100,00000000000", "lastDatePrior": "15/04/2024"},  # outra classe
+            {"label": "GRUPAMENTO", "factor": "0,10000000000", "lastDatePrior": "24/05/2024"},
+            {"label": "BONIFICACAO", "factor": "10,00000000000", "lastDatePrior": "18/04/2022"},
+            {"label": "CIS RED CAP", "factor": "100,00000000000", "lastDatePrior": "01/10/2021"},
+        ]}
+        ev = P.eventos_acoes(sup)
+        self.assertEqual([(x["tipo"], x["fator"]) for x in ev],
+                         [("bonificacao", 1.1), ("desdobramento", 2.0), ("grupamento", 0.1)])
+
+    def test_bb_desdobramento_confirmado(self):
+        anos = [2022, 2023, 2024, 2025]
+        s = {"acoes": [2_854e6, 2_854e6, 5_708e6, 5_708e6], "acoes_estimadas": [False] * 4}
+        ev = P.eventos_confirmados(anos, s, [{"data": "2024-04-15", "tipo": "desdobramento", "fator": 2.0}])
+        self.assertEqual(ev[0]["ano"], 2024)
+
+    def test_evento_que_a_contagem_nao_mostra_fica_de_fora(self):
+        # ficha do Itaú lista um grupamento 100:1 em 2011 que a contagem da CVM não reflete
+        anos = [2010, 2011, 2012]
+        s = {"acoes": [4.5e9, 4.5e9, 4.5e9], "acoes_estimadas": [True] * 3}
+        self.assertEqual(P.eventos_confirmados(anos, s, [{"data": "2011-10-31", "tipo": "grupamento", "fator": 0.01}]), [])
+
+    def test_ano_estimado_pelo_lpa_atrasa_um_ano(self):
+        # LPA é média do ano: desdobramento em novembro aparece na contagem estimada só no ano seguinte
+        anos = [2017, 2018, 2019]
+        s = {"acoes": [6.5e9, 6.6e9, 9.8e9], "acoes_estimadas": [True, True, True]}
+        ev = P.eventos_confirmados(anos, s, [{"data": "2018-11-19", "tipo": "desdobramento", "fator": 1.5}])
+        self.assertEqual(ev[0]["ano"], 2019)
+
+
 class Trava(unittest.TestCase):
     def setUp(self):
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
