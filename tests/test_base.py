@@ -96,7 +96,8 @@ class BasePostgres(unittest.TestCase):
 
     def test_reapresentacao_guarda_o_valor_anterior(self):
         """Receita reapresentada, empresa que sai, ticker novo e 12 meses que andam: cada carga
-        continua remontável do jeito que foi publicada."""
+        continua remontável do jeito que foi publicada, sem a empresa que saiu (ela sai do escopo
+        inteiro, com o histórico: corte de liquidez de processar.py)."""
         d1 = self.amostra()
         c1, _ = cb.publicar(self.conn, d1)
 
@@ -110,16 +111,18 @@ class BasePostgres(unittest.TestCase):
         d2["gerado_em"] = "2026-11-19 00:05"
         c2, resumo = cb.publicar(self.conn, d2)
 
-        self.assertEqual(cb.comparar(d1, self.exportar(c1)), [])
+        sem_ela = copy.deepcopy(d1)
+        sem_ela["empresas"] = [x for x in sem_ela["empresas"] if x["cd_cvm"] != saiu["cd_cvm"]]
+        self.assertEqual(cb.comparar(sem_ela, self.exportar(c1)), [])
         self.assertEqual(cb.comparar(d2, self.exportar(c2)), [])
         # a receita tem duas versões: a de c1 (encerrada em c2) e a de c2 (vigente)
         cd = e["cd_cvm"]
         versoes = self.contar(f"""select count(*) from fundamento_anual f join empresa x on x.id = f.empresa_id
                                   where x.cd_cvm = '{cd}' and f.metrica = 'receita' and f.exercicio = {e['anos'][-1]}""")
         self.assertEqual(versoes, 2)
-        # a empresa que saiu continua na base, com o cadastro encerrado
-        self.assertEqual(self.contar(f"""select count(*) from cadastro c join empresa x on x.id = c.empresa_id
-                                         where x.cd_cvm = '{saiu['cd_cvm']}' and c.carga_ate = {c2}"""), 1)
+        # a empresa que saiu foi apagada da base, com o histórico
+        self.assertEqual(self.contar(f"select count(*) from empresa where cd_cvm = '{saiu['cd_cvm']}'"), 0)
+        self.assertEqual(resumo["expurgadas"], 1)
         self.assertGreater(resumo["fundamento_anual"]["encerradas"], 0)
 
     def test_divergencia_desfaz_a_carga_inteira(self):
