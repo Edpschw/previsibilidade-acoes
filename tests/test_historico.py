@@ -135,6 +135,32 @@ class Proventos(unittest.TestCase):
         self.assertEqual(H.composicao_unit(e, "BPAC11"), {"ACNOR": 1, "ACNPA": 2})
 
 
+class ProventosDaPagina(unittest.TestCase):
+    """Página de eventos corporativos da B3: o histórico inteiro, por classe, sem data de pagamento."""
+    ITENS = [
+        {"typeStock": "PN", "corporateAction": "JRS CAP PROPRIO", "valueCash": "0,30", "lastDatePrior": "15/03/2012",
+         "quotedPerShares": "1"},
+        {"typeStock": "PN", "corporateAction": "DIVIDENDO", "valueCash": "450,00", "lastDatePrior": "20/04/2010",
+         "quotedPerShares": "1000"},                                    # cotado por lote de mil ações
+        {"typeStock": "ON", "corporateAction": "DIVIDENDO", "valueCash": "0,25", "lastDatePrior": "15/03/2012"},
+        {"typeStock": "PN", "corporateAction": "SUBSCRICAO", "valueCash": "1,00", "lastDatePrior": "15/03/2013"},
+    ]
+
+    def test_da_classe_com_pagamento_estimado(self):
+        self.assertEqual(H.proventos_da_pagina(self.ITENS, "PN", date(2026, 11, 21)), [
+            ("2010-04-20", 0.45, "dividendo", "2010-05-20"),
+            ("2012-03-15", 0.3, "jcp", "2012-04-14"),
+        ])
+
+    def test_ficha_por_cima_da_pagina(self):
+        ficha = [("2026-03-10", 0.25, "jcp", "2026-04-30")]
+        pagina = [("2026-03-10", 0.25, "jcp", "2026-04-09"), ("2012-03-15", 0.3, "jcp", "2012-04-14")]
+        self.assertEqual(H.juntar_proventos(ficha, pagina), [
+            ("2012-03-15", 0.3, "jcp", "2012-04-14"),
+            ("2026-03-10", 0.25, "jcp", "2026-04-30"),
+        ])
+
+
 class Saida(unittest.TestCase):
     def test_datas_e_precos_compactos_voltam_iguais(self):
         datas = ["2024-12-27", "2024-12-30", "2024-12-31", "2025-01-02"]

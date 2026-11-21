@@ -19,11 +19,14 @@ Fontes, todas já usadas por processar.py e guardadas em scripts/sources:
   - CDI (SGS 12), IPCA (SGS 433) e PTAX (SGS 1): API do Banco Central.
 """
 
+import base64
 import gzip
 import json
 import math
 import re
 import sys
+import time
+import urllib.request
 import zipfile
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -36,6 +39,9 @@ SAIDA = RAIZ / "data" / "historico"
 CACHE = P.FONTES / "historico"
 INICIO = date(P.ANO_INICIAL, 1, 1)
 URL_SGS = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{serie}/dados?formato=json&dataInicial={ini}&dataFinal={fim}"
+URL_B3_PROVENTOS = "https://sistemaswebb3-listados.b3.com.br/listedCompaniesProxy/CompanyCall/GetListedCashDividends/"
+CLASSE_B3 = {"3": "ON", "4": "PN", "5": "PNA", "6": "PNB", "7": "PNC", "8": "PND", "11": "UNT"}
+PAGAMENTO_ESTIMADO = 30   # dias entre a data-com e o pagamento, quando a fonte não informa
 TIPOS_DINHEIRO = {"DIVIDENDO": "dividendo", "JRS CAP PROPRIO": "jcp", "RENDIMENTO": "rendimento",
                   "REST CAP DIN": "restituicao"}
 
@@ -292,6 +298,73 @@ def proventos(sup, raizes, especie, composicao=None):
     return sorted((com, round(v, 8), tipo, pag) for (com, tipo, pag), v in somados.items())
 
 
+def proventos_b3(raiz, nome_pregao, hoje):
+    """Histórico completo de proventos em dinheiro da empresa: o mesmo da página "Eventos corporativos"
+    de cada emissor no site da B3 (a ficha só traz os últimos 12 meses). Paginado; cache de 7 dias."""
+    destino = CACHE / "proventos" / f"{raiz}.json"
+    idade = (time.time() - destino.stat().st_mtime) / 86400 if destino.exists() else 999
+    if idade > 7 and nome_pregao:
+        try:
+            itens, pagina = [], 1
+            while True:
+                q = base64.b64encode(json.dumps({"language": "pt-br", "pageNumber": pagina, "pageSize": 120,
+                                                 "tradingName": nome_pregao}).encode()).decode()
+                req = urllib.request.Request(URL_B3_PROVENTOS + q, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=60) as r:
+                    d = json.load(r)
+                itens += d.get("results") or []
+                if pagina >= int((d.get("page") or {}).get("totalPages") or 1) or pagina >= 30:
+                    break
+                pagina += 1
+                time.sleep(0.05)
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            destino.write_text(json.dumps(itens, ensure_ascii=False), encoding="utf-8")
+        except Exception as e:  # noqa: BLE001
+            print(f"  proventos de {raiz} ({nome_pregao}) indisponíveis: {e}")
+    return json.loads(destino.read_text(encoding="utf-8")) if destino.exists() else []
+
+
+def _campo(item, *nomes):
+    for n in nomes:
+        if item.get(n) not in (None, ""):
+            return item[n]
+    return None
+
+
+def proventos_da_pagina(itens, classe_b3, hoje):
+    """Itens da página de eventos corporativos → [(data-com, R$ por ação, tipo, pagamento)] da classe
+    (ON, PN, PNA, UNT…). A página não traz a data de pagamento: fica a data-com mais 30 dias."""
+    out, vistos = [], set()
+    for x in itens:
+        tipo = TIPOS_DINHEIRO.get((_campo(x, "corporateAction", "label", "typeEvent") or "").strip().upper())
+        com = P.data_br(_campo(x, "lastDatePrior", "lastDatePriorDate", "dateLastPrior"))
+        valor = P.num_br(_campo(x, "valueCash", "rate", "value"))
+        por = P.num_br(_campo(x, "quotedPerShares", "quotedPerShare")) or 1
+        cls = (_campo(x, "typeStock", "stockType", "classStock") or "").strip().upper()
+        if not tipo or not com or valor <= 0 or com < INICIO or cls != classe_b3:
+            continue
+        valor = round(valor / por, 8)
+        pag = P.data_br(_campo(x, "paymentDate", "datePayment"))
+        if not pag:
+            pag = com + timedelta(days=PAGAMENTO_ESTIMADO)
+        chave = (com, valor, tipo)
+        if chave in vistos:
+            continue
+        vistos.add(chave)
+        out.append((com.isoformat(), valor, tipo, pag.isoformat() if pag <= hoje or pag.year < 9999 else None))
+    return sorted(out)
+
+
+def juntar_proventos(da_ficha, da_pagina):
+    """Ficha (12 meses, com data de pagamento) por cima da página de eventos (histórico inteiro):
+    o mesmo provento (data-com, tipo e valor a 0,1%) fica com a data de pagamento da ficha."""
+    out = list(da_ficha)
+    for p in da_pagina:
+        if not any(p[0] == f[0] and p[2] == f[2] and abs(p[1] - f[1]) <= 0.001 * max(p[1], f[1]) for f in da_ficha):
+            out.append(p)
+    return sorted(out)
+
+
 def composicao_unit(e, t):
     """{espécie: quantidade} de uma unit, pela composição do cadastro ([ON, PN]); a PN é a classe
     preferencial que a empresa negocia (BPAC5 no BTG, PN nas demais)."""
@@ -408,14 +481,32 @@ def main():
     cot = todas_as_cotacoes(hoje, precisa)
     print("Fichas dos emissores (B3)…")
     sups = P.carregar_suplementos({t[:4] for e in empresas for t in e["tickers"]}, False)
+    print("Proventos desde 2010 (eventos corporativos da B3)…")
+    nomes = {r.get("issuingCompany"): (r.get("tradingName") or "").strip() for r in P.carregar_empresas_b3(False)}
+    paginas = {}
+    for raiz in sorted({t[:4] for e in empresas for t in e["tickers"]}):
+        paginas[raiz] = proventos_b3(raiz, nomes.get(raiz), hoje)
+    amostra = next((v[0] for v in paginas.values() if v), None)
+    print(f"  {sum(1 for v in paginas.values() if v)} de {len(paginas)} emissores com histórico; "
+          f"{sum(len(v) for v in paginas.values())} itens; campos: {sorted(amostra) if amostra else '-'}")
 
     SAIDA.mkdir(parents=True, exist_ok=True)
-    feitos, costurados, sem_cotacao, n_ev, n_pv = set(), [], [], 0, 0
+    feitos, costurados, nao_costurados, sem_cotacao, n_ev, n_pv = set(), [], [], [], 0, 0
     for e in empresas:
         cods = codigos.get(P.so_digitos(e["cnpj"]), {})
         for t in e["tickers"]:
             antigas = {c: cot.get(c, {}) for c in cods if c != t and classe(c) == classe(t) and cot.get(c)}
             serie, origem = costurar(cot.get(t, {}), antigas)
+            if antigas and not origem and cot.get(t):
+                ini = min(cot[t])
+                motivo = []
+                for c, s in antigas.items():
+                    antes = [d for d in s if d < ini]
+                    if antes:
+                        u = max(antes)
+                        motivo.append(f"{c} até {u} a {s[u]:.2f}")
+                if motivo:
+                    nao_costurados.append(f"{t} (desde {ini} a {cot[t][ini]:.2f}; {', '.join(motivo)})")
             if len(serie) < 2:
                 sem_cotacao.append(t)
                 continue
@@ -429,6 +520,16 @@ def main():
             datas = sorted(serie)
             eventos = eventos_com_data(datas, [serie[d] for d in datas], sup, raizes, especies, e.get("eventos_acoes") or [])
             provs = proventos(sup, raizes, especie, comp) if especie else []
+            hist = proventos_da_pagina(paginas.get(t[:4]) or [], CLASSE_B3.get(classe(t), ""), hoje)
+            if unit and not hist and comp:
+                # unit sem linha própria na página: soma as ações que a compõem
+                por_classe = {"ACNOR": "ON", "ACNPR": "PN", "ACNPA": "PNA", "ACNPB": "PNB"}
+                somados = {}
+                for esp, n in comp.items():
+                    for com, valor, tipo, pag in proventos_da_pagina(paginas.get(t[:4]) or [], por_classe.get(esp, ""), hoje):
+                        somados[(com, tipo, pag)] = somados.get((com, tipo, pag), 0) + valor * n
+                hist = sorted((com, round(v, 8), tipo, pag) for (com, tipo, pag), v in somados.items())
+            provs = juntar_proventos(provs, hist)
             escrever(t, serie, eventos, provs, origem, hoje)
             feitos.add(t)
             n_ev += len(eventos)
@@ -441,6 +542,8 @@ def main():
     print(f"  {len(feitos)} tickers → {SAIDA.relative_to(RAIZ)} ({n_ev} eventos, {n_pv} proventos)")
     if costurados:
         print(f"  códigos antigos costurados: {'; '.join(costurados)}")
+    if nao_costurados:
+        print(f"  códigos antigos que não colaram (preço não continua ou buraco grande): {'; '.join(nao_costurados)}")
     if sem_cotacao:
         print(f"  sem cotação: {', '.join(sem_cotacao)}")
 

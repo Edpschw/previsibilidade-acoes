@@ -22,10 +22,12 @@ A CVM regera os ZIPs dos últimos anos quando há reapresentação. Use `python3
 | `scripts/processar.py` | Lê DFP e FCA da CVM, cotações e fichas de emissores da B3 e a PTAX do BCB e gera `data/empresas.js`. A docstring explica os cuidados com a base. |
 | `scripts/auditar.py` | Audita a base contra as fontes e gera `auditoria.md` (resumo) e `auditoria.json` (todas as ocorrências). Com `--trava`, sai com código 2 se a base piorou em relação a `auditoria_resumo.json`. |
 | `scripts/mudancas.py` | Compara a base nova com a commitada e escreve `mudancas.md` (entradas e saídas, balanços novos, cotações que mudaram mais de 15% em papéis com liquidez de pelo menos R$ 1 mi/dia, índice que mudou 5 pontos ou mais). |
+| `scripts/historico.py` | Histórico diário da aba Simular: fechamento de cada ticker desde 2010 (COTAHIST, com códigos antigos colados pelo FCA), desdobramentos com data (ficha da B3 conferida pelo preço; os achados pelo LPA ou pela contagem ganham a data do salto do preço), proventos em dinheiro com data-com e pagamento, CDI, IPCA e PTAX do Banco Central. Grava `data/historico/<TICKER>.js` e `data/historico/_indices.js`. Roda depois de `processar.py`. |
 | `scripts/versionar.py` | Atualiza o `?v=` dos assets no `index.html` com o hash do conteúdo. Roda sozinho no fim do processamento. |
 | `docs/arquitetura-comercial.md` | Proposta de arquitetura para vender acesso: formato da base (bruto → staging → Postgres), modelo de dados, API, planos, bloqueios jurídicos e fases. |
+| `docs/metodologia-simulacao.md` | Metodologia do simulador: dados e tratamento, regras da simulação do passado (proventos, reinvestimento, IR do JCP, CDI e IPCA), modelo de blocos do retorno de referência, volatilidade e correlações, cenários e probabilidades, limites e referências. |
 | `docs/metodologia-ranking.md` | Análise teórica do que olhar antes de comprar uma ação, setor a setor, e a metodologia completa da nota da aba Ranking: pilares, indicadores e fórmulas, indicadores futuros, perfis setoriais com pesos e travas, exemplos trabalhados, limites e referências. |
-| `tests/` | `test_regras.py` (regras com dados sintéticos), `test_dados.py` (invariantes da base gerada) e `test_base.py` (base em Postgres; precisa de `DATABASE_URL_TESTE`). `python3 -m unittest discover -s tests` |
+| `tests/` | `test_regras.py` (regras com dados sintéticos), `test_historico.py` (histórico diário com dados sintéticos), `test_dados.py` (invariantes da base gerada) e `test_base.py` (base em Postgres; precisa de `DATABASE_URL_TESTE`). `python3 -m unittest discover -s tests` |
 | `db/schema.sql` | Esquema da base em PostgreSQL (histórico por intervalo de cargas, retratos diários, catálogo de métricas). |
 | `scripts/carregar_base.py` | Carrega `data/empresas.js` no Postgres numa transação, remonta a base a partir do banco e compara campo a campo; se divergir, desfaz tudo. |
 | `requirements.txt` | Única dependência externa: `psycopg` (só para a base em Postgres; o processamento continua só com a biblioteca padrão). |
@@ -33,11 +35,13 @@ A CVM regera os ZIPs dos últimos anos quando há reapresentação. Use `python3
 | `scripts/sources/` | ZIPs e JSON brutos baixados (fora do git, ~300 MB) |
 | `auditoria.md`, `auditoria.json` | Saída da auditoria (regerada a cada execução) |
 | `data/empresas.js` | `window.DADOS` com séries anuais em R$ mil, PTAX e índice. Gerado, não edite. |
+| `data/historico/` | Um arquivo por ticker (`window.HIST`: datas e fechamentos compactos, eventos e proventos) e `_indices.js` (`window.INDICES`: CDI e PTAX diários, IPCA mensal). Gerados por `historico.py`; o navegador só baixa os da simulação. |
 | `index.html`, `app.js`, `style.css` | Rotas: entrada (`#/`), lista de ações (`#/acoes`), ranking por fundamentos (`#/ranking`), teia (`#/teia/PETR4,VALE3`; o antigo `#/mapa` cai nela) e página da empresa (`#/PETR4`), com cabeçalho-resumo, selos e navegação por seções. Gráficos em SVG próprio. Filtro de setor numa faixa sob o cabeçalho: vale para todas as abas (início, ranking, agenda e comparar, que passa a comparar o setor inteiro), fica gravado no navegador e usa a classificação da B3. `app.js` expõe `window.RealTerms` (dados, formatos, textos, `visiveis()` e `setorAtivo()`) para os módulos abaixo. |
 | `inicio.js` | Página de entrada em cinco capítulos (o mercado em números, previsibilidade, real × dólar, glossário, três passos), calculada da base. |
 | `teia.js` | Aba Comparar (`#/comparar/PETR4,VALE3`; os antigos `#/teia` e `#/mapa` caem nela): até quatro empresas lado a lado. Placar (indicadores × empresas, valor real e cor pela posição entre as ações líquidas), régua do mercado (valor real contra a faixa do meio, a mediana e os extremos do mercado), previsibilidade por componente em barras, qualidade × preço (ROE × P/VP), receita em base 100, margem líquida por ano e tamanho/liquidez. Tudo em posição ou comprimento numa escala comum; o radar saiu porque ângulo e área enganam. As empresas escolhidas ficam no endereço. |
 | `agenda.js` | Agenda de proventos (`#/agenda`): dividendos e JCP aprovados e ainda por pagar, das fichas da B3 (`e.agenda`, gravado pelo processamento). A página da empresa mostra os pagamentos dela. |
 | `ranking.js` | Aba Ranking (`#/ranking`, `#/ranking/PETR4` abre a explicação da empresa): nota de fundamentos de 0 a 100 por empresa, em quatro pilares (qualidade, preço, solidez e futuro). Cada indicador vira percentil (metade contra os pares do mesmo perfil setorial, metade contra o mercado); 14 perfis setoriais cobrem os 59 segmentos da B3, com pesos, limite de dívida e pontos de análise próprios; travas para recuperação judicial, patrimônio negativo, prejuízo e dívida alta. Explicação por empresa (fatores a favor e contra, pilares, indicadores futuros) e metodologia na própria aba. Respeita o filtro de setor. Detalhes em `docs/metodologia-ranking.md`. Métrica quantitativa, não é recomendação. |
+| `simular.js` | Aba Simular (`#/simular/PETR4,VALE3/2020-01-02/10000`): compra de uma ou mais ações num dia ou ano, com valorização, desdobramentos, dividendos e JCP (com ou sem reinvestimento e IR) até o último pregão, contra o CDI e o IPCA; projeção de 5 anos da carteira de hoje em três cenários (percentis 10, 50 e 90), com retorno de referência pelos fundamentos (dividend yield sustentável + crescimento do lucro por ação + reprecificação parcial do P/L), volatilidade e correlações semanais de 3 anos e os pressupostos por ação à mostra. Detalhes em `docs/metodologia-simulacao.md`. Não é recomendação. |
 | `termos.js` | Glossário PT/EN com dica ao passar o mouse (no celular, ao tocar): o que o termo é, como ler, exemplo de valor bom e ruim e a mediana atual das ações líquidas. Os termos são achados pelo texto depois de cada renderização (`MutationObserver` em `#app`); termo novo é uma linha em `LISTA`, com os nomes em PT e EN. |
 | `scripts/gerar_paginas.py` | Páginas estáticas indexáveis por empresa (`acao/PETR4/`), índice por setor (`acao/`), `sitemap.xml` e `robots.txt`, em inglês, com título, descrição, Open Graph e schema.org. Roda todo dia no Actions. O endereço público fica em `SITE_URL`. |
 | `scripts/gerar_imagens.swift` | Gera `og.png` (imagem de compartilhamento 1200×630) e os ícones `icon-180.png`/`icon-512.png` com AppKit: `swift scripts/gerar_imagens.swift`. `favicon.svg` e `manifest.webmanifest` são escritos à mão. |
@@ -50,13 +54,14 @@ Depois de editar `app.js` ou `style.css`, rode `python3 scripts/versionar.py` (o
 O GitHub Actions roda `.github/workflows/atualizar.yml` em todo dia útil, às 20h17 de Brasília (e sob demanda pela aba Actions):
 
 1. `processar.py` baixa só o que falta ou venceu: pregões novos todo dia; fichas e lista da B3, DFP e ITR recentes a cada 7 dias. As fontes ficam no cache do Actions.
-2. `gerar_paginas.py` reescreve as páginas indexáveis (`acao/`) e o sitemap.
-3. Testes de regressão.
-4. `auditar.py --externo --trava`: se a cobertura cair abaixo de 97%, a base encolher mais de 5% ou surgirem mais de 5 ocorrências graves novas, o job falha e nada é publicado.
-5. `mudancas.py` resume o que mudou desde o último commit.
-6. Commit de `data/empresas.js`, `index.html`, das páginas indexáveis e da auditoria; o GitHub Pages publica o commit.
-7. Um issue avisa quando há mudanças relevantes ou quando a atualização falha (o GitHub manda por e-mail).
-8. Se o segredo `DATABASE_URL` existir, `carregar_base.py` grava a mesma base no Postgres. Se a carga falhar, o site já foi publicado e um issue próprio avisa; nada fica gravado pela metade.
+2. `historico.py` atualiza o histórico diário da aba Simular. Se falhar, a base sai do mesmo jeito, com o histórico da véspera, e um issue avisa.
+3. `gerar_paginas.py` reescreve as páginas indexáveis (`acao/`) e o sitemap.
+4. Testes de regressão.
+5. `auditar.py --externo --trava`: se a cobertura cair abaixo de 97%, a base encolher mais de 5% ou surgirem mais de 5 ocorrências graves novas, o job falha e nada é publicado.
+6. `mudancas.py` resume o que mudou desde o último commit.
+7. Commit de `data/empresas.js`, `data/historico/`, `index.html`, das páginas indexáveis e da auditoria; o GitHub Pages publica o commit.
+8. Um issue avisa quando há mudanças relevantes ou quando a atualização falha (o GitHub manda por e-mail).
+9. Se o segredo `DATABASE_URL` existir, `carregar_base.py` grava a mesma base no Postgres. Se a carga falhar, o site já foi publicado e um issue próprio avisa; nada fica gravado pela metade.
 
 Os dados trimestrais (ITR) entram nos indicadores de 12 meses: último exercício + acumulado do ano − acumulado do mesmo período do ano anterior.
 
@@ -108,6 +113,8 @@ Abaixo do corte, a empresa fica fora de tudo: `processar.py` aplica o corte logo
 - Cotações: série histórica da B3 (COTAHIST), https://bvmf.bmfbovespa.com.br/InstDados/SerHist/. Arquivos diários a partir de 2018 (último pregão de cada ano e os 21 pregões mais recentes, para preço atual e liquidez); anuais de 2009 a 2017.
 - Lista de emissores da B3 (CNPJ, código CVM, raiz do ticker) e ficha de cada emissor (ações ON/PN atuais, proventos com data-com): API pública `sistemaswebb3-listados.b3.com.br`
 - PTAX venda diária: API SGS do Banco Central, série 1
+- CDI diário (série 12) e IPCA mensal (série 433): API SGS do Banco Central, para a aba Simular
+- Cotações diárias desde 2010 para a aba Simular: arquivos anuais da COTAHIST (os de 2018 em diante são lidos uma vez e guardados resumidos no cache) e os diários recentes
 
 ## Índice de previsibilidade
 

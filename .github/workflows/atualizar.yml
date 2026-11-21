@@ -1,5 +1,5 @@
 # Atualiza a base todo dia útil depois do fechamento da B3 e publica no GitHub Pages.
-# Ordem: processa → testa → audita com trava → resume mudanças → commita (o Pages publica o commit)
+# Ordem: processa → histórico da aba Simular → testa → audita com trava → resume mudanças → commita (o Pages publica o commit)
 # → carrega a mesma base no Postgres (só se o segredo DATABASE_URL existir).
 # Se a trava ou os testes falharem, nada é commitado e um issue avisa.
 name: Atualizar base
@@ -54,6 +54,13 @@ jobs:
       - name: Processar
         run: python3 scripts/processar.py
 
+      # Histórico diário da aba Simular (cotações, eventos, proventos, CDI, IPCA). Se falhar, a base
+      # sai do mesmo jeito, com o histórico da véspera, e um issue avisa.
+      - name: Histórico diário (aba Simular)
+        id: historico
+        continue-on-error: true
+        run: python3 scripts/historico.py
+
       - name: Páginas indexáveis e sitemap
         run: python3 scripts/gerar_paginas.py
 
@@ -70,7 +77,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/empresas.js data/agenda.js index.html auditoria.md auditoria.json auditoria_resumo.json acao sitemap.xml robots.txt
+          git add data/empresas.js data/agenda.js data/historico index.html auditoria.md auditoria.json auditoria_resumo.json acao sitemap.xml robots.txt
           if git diff --cached --quiet; then echo "sem mudanças"; exit 0; fi
           git commit -m "Atualiza base ($(date -u +%F))"
           git push
@@ -83,6 +90,14 @@ jobs:
           if ! head -1 mudancas.md | grep -q "^Nada relevante"; then
             gh issue create --title "Real Terms: $(head -1 mudancas.md) ($(date -u +%d/%m/%Y))" --body-file mudancas.md
           fi
+
+      - name: Avisar falha no histórico
+        if: steps.historico.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --title "Real Terms: histórico da aba Simular falhou ($(date -u +%d/%m/%Y))" \
+            --body "A base foi publicada normalmente; o histórico diário da aba Simular ficou o da execução anterior. Detalhes: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
       # Carga no Postgres, conferida campo a campo com o JSON; se divergir, nada é gravado.
       - name: Carregar base (Postgres)
