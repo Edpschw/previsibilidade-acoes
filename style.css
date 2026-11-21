@@ -527,6 +527,105 @@ tbody tr:last-child td { border-bottom: 0; }
   .inicio-layout .secao, .pagina-lateral .secao { scroll-margin-top: calc(var(--topo-h, 60px) + 20px); }
 }
 
+/* ranking por fundamentos (ranking.js) -------------------------------- */
+.rk > * + * { margin-top: 18px; }
+.rk-cab h1 { margin: 14px 0 8px; font-size: clamp(26px, 3.6vw, 38px); letter-spacing: -.03em; }
+.rk-intro { max-width: 760px; margin: 0; line-height: 1.6; }
+.rk-aviso { font-size: 13px; color: var(--muted); border-left: 3px solid var(--border); padding: 6px 10px; margin: 12px 0; max-width: 760px; line-height: 1.5; }
+.rk-controles { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; margin: 14px 0 10px; }
+.rk-controles label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.rk-controles select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font: inherit; font-size: 14px; max-width: 100%; }
+.rk-controles .contagem { margin-left: auto; }
+.rk-tabela td { vertical-align: middle; }
+.rk-tabela tr.rk-linha { cursor: pointer; }
+.rk-tabela tr.rk-linha:hover, .rk-tabela tr.rk-linha:focus-visible { background: var(--surface-2); outline: none; }
+.rk-tabela tr.rk-linha.aberta { background: var(--accent-soft); }
+.rk-perfil-cel span { display: block; }
+.rk-perfil-cel small { color: var(--muted); font-size: 12px; }
+.rk-nota { display: inline-grid; place-items: center; min-width: 40px; padding: 4px 8px; border-radius: 8px; font-weight: 750; font-variant-numeric: tabular-nums;
+  color: var(--cor); background: color-mix(in srgb, var(--cor) 13%, transparent); border: 1px solid color-mix(in srgb, var(--cor) 35%, transparent); }
+.rk-nota.mini { min-width: 0; padding: 1px 6px; font-size: 12px; border-radius: 6px; }
+.rk-pils, .rk-pils-cab { display: inline-flex; gap: 4px; align-items: flex-end; vertical-align: middle; }
+.rk-pils i { display: block; width: 10px; height: 26px; border-radius: 3px; background: var(--grid); position: relative; overflow: hidden; }
+.rk-pils i b { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 3px; }
+.rk-pils-cab b { width: 10px; text-align: center; font-size: 10.5px; color: var(--muted); }
+.rk-selo { display: inline-block; font-size: 11.5px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); margin: 1px 4px 1px 0; white-space: nowrap; }
+.rk-selo.trava { color: var(--neg); border-color: color-mix(in srgb, var(--neg) 40%, transparent); }
+.rk-tabela td.rk-marcas { white-space: normal; min-width: 110px; }
+.rk-pesos th:first-child, .rk-pesos td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+.rk-pesos thead th:first-child { z-index: 2; background: var(--surface-2); }
+tr.rk-detalhe > td { white-space: normal; text-align: left; background: var(--surface-2); padding: 16px; }
+.rk-exp { display: grid; gap: 14px; contain: inline-size; }
+.rk-resumo { margin: 0; line-height: 1.6; max-width: 920px; }
+.rk-pilares { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.rk-pilar, .rk-futuro, .rk-alertas { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.rk-pilar h4, .rk-futuro h4, .rk-alertas h4 { margin: 0 0 8px; font-size: 14px; display: flex; gap: 8px; align-items: baseline; }
+.rk-pilar h4 span { font-size: 12px; font-weight: 500; }
+.rk-pilar h4 b { margin-left: auto; font-size: 18px; }
+.rk-pilar ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rk-pilar li { display: grid; grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1fr) 64px; gap: 8px; align-items: center; font-size: 13px; }
+.rk-m-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-m-v { font-weight: 600; text-align: right; white-space: nowrap; }
+.rk-m-ref { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-m-n { position: relative; height: 18px; border-radius: 5px; background: var(--grid); overflow: hidden; }
+.rk-m-n i { position: absolute; left: 0; top: 0; bottom: 0; opacity: .38; }
+.rk-m-n b { position: relative; display: block; text-align: right; padding-right: 6px; font-size: 12px; line-height: 18px; }
+.rk-futuro dl { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+.rk-futuro dt { font-size: 12px; color: var(--muted); }
+.rk-futuro dd { margin: 2px 0 0; font-size: 13.5px; }
+.rk-alertas ul { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.5; }
+.rk-alertas .rk-trava { color: var(--neg); }
+.rk-links { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; font-size: 14px; font-weight: 600; }
+.rk-pil-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0; }
+.rk-pil-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: var(--surface-2); }
+.rk-pil-card h3 { font-size: 16px; margin-bottom: 2px; }
+.rk-pil-card p { margin: 0 0 8px; line-height: 1.55; font-size: 14px; max-width: none; }
+.rk-pil-card .rk-pergunta { color: var(--accent); font-weight: 650; }
+.rk-passos { padding-left: 20px; line-height: 1.6; max-width: 820px; }
+.rk-passos li + li { margin-top: 6px; }
+.rk-futuro-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rk-futuro-lista dt { font-family: var(--font); }
+.rk-futuro-lista dd { margin: 0; line-height: 1.55; font-size: 14px; }
+.rk-pesos th, .rk-pesos td { white-space: nowrap; padding: 9px 10px; }
+.rk-pesos th:last-child, .rk-pesos td:last-child { white-space: normal; text-align: left; min-width: 120px; }
+.rk-peso { display: inline-flex; align-items: center; gap: 6px; min-width: 74px; }
+.rk-peso i { display: block; height: 8px; border-radius: 4px; background: var(--accent); opacity: .55; }
+.rk-peso b { font-size: 12.5px; font-weight: 600; }
+.rk-perfis { display: grid; gap: 12px; margin-top: 12px; }
+details.rk-perfil { padding: 0; }
+details.rk-perfil > summary { cursor: pointer; padding: 16px 20px; list-style: none; display: flex; flex-direction: column; gap: 3px; }
+details.rk-perfil > summary::-webkit-details-marker { display: none; }
+details.rk-perfil > summary h3 { font-size: 16px; }
+details.rk-perfil > summary h3::before { content: "▸ "; color: var(--accent); }
+details.rk-perfil[open] > summary h3::before { content: "▾ "; }
+details.rk-perfil > summary span { font-size: 13px; }
+.rk-perfil-corpo { padding: 0 20px 18px; }
+.rk-perfil-corpo > p { line-height: 1.6; max-width: 820px; margin-top: 0; }
+.rk-perfil-corpo h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 12px 0 6px; }
+.rk-perfil-corpo ul { padding-left: 18px; margin: 0; line-height: 1.55; font-size: 14px; }
+.rk-perfil-corpo ul.rk-enfase { list-style: none; padding-left: 0; margin-top: 8px; }
+.rk-membros { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 0; }
+.rk-membros a { display: inline-flex; gap: 6px; align-items: center; padding: 3px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text); background: var(--surface-2); }
+.rk-membros a:hover { text-decoration: none; border-color: var(--accent); }
+.rk-membros a b { font-family: var(--mono); font-size: 12.5px; }
+@media (max-width: 760px) {
+  .rk-pilares, .rk-pil-grade, .rk-futuro dl, .rk-futuro-lista { grid-template-columns: 1fr; }
+  .rk-tabela .rk-perfil-cel, .rk-tabela .rk-marcas { display: none; }
+  .rk-controles .contagem { margin-left: 0; }
+}
+@media (max-width: 640px) {
+  .rk-pilar li { grid-template-columns: minmax(0, 1fr) auto 52px; }
+  .rk-m-ref { display: none; }
+  tr.rk-detalhe > td { padding: 12px 10px; }
+  .rk-tabela th, .rk-tabela td { padding: 8px 6px; }
+  .rk-tabela .tk span { max-width: 150px; }
+  .rk-peso i { display: none; }
+  .rk-peso { min-width: 0; }
+}
+@media (max-width: 480px) {
+  .nav-principal a { padding: 6px 4px; font-size: 13px; }
+}
+
 /* termos: dica ao passar o mouse (termos.js) ------------------------- */
 [data-termo] { text-decoration: underline dotted; text-decoration-color: color-mix(in srgb, var(--muted) 70%, transparent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
 [data-termo]:not(th) { cursor: help; }
