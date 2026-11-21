@@ -124,13 +124,28 @@ def checar_empresa(e, d):
             sev = "alta" if i == ult else "baixa"
             add(sev, "LPA divergente", f"{anos[i]}: calculado R$ {lpa_c:.2f} × declarado R$ {lpa_d:.2f} (razão {razao:.2f})")
 
-    # saltos na quantidade de ações sem estimativa (desdobramento, grupamento ou escala trocada)
+    # saltos na quantidade de ações sem estimativa que nenhum evento registrado explica
+    # (emissão, escala trocada ou evento que nem a B3 nem o LPA mostram)
+    eventos = e.get("eventos_acoes") or []
+    fa = P.fatores_ano(anos, eventos, "ano")
     for i in range(1, n):
         a0, a1 = s["acoes"][i - 1], s["acoes"][i]
-        if a0 and a1 and not s["acoes_estimadas"][i] and not s["acoes_estimadas"][i - 1]:
-            r = a1 / a0
+        if a0 and a1 and fa[i] and fa[i - 1] and not s["acoes_estimadas"][i] and not s["acoes_estimadas"][i - 1]:
+            r = a1 * fa[i] / (a0 * fa[i - 1])
             if r > 2.5 or r < 0.4:
-                add("baixa", "salto de ações", f"{anos[i-1]}→{anos[i]}: ×{r:.2f} (desdobramento, grupamento, emissão ou escala)")
+                add("baixa", "salto de ações", f"{anos[i-1]}→{anos[i]}: ×{r:.2f} sem evento que explique (emissão ou escala)")
+
+    # o que não veio da ficha da B3, para conferir à mão
+    for ev in eventos:
+        f = ev.get("fator")
+        txt = "" if f is None else (f"1:{f:g}" if f >= 1 else f"{1 / f:g}:1")
+        if ev.get("origem") == "lpa":
+            add("info", "evento pelo LPA reapresentado", f"{ev['ano']}: {ev['tipo']} {txt} (a ficha da B3 não lista)")
+        elif ev.get("origem") == "contagem" and ev["tipo"] == "base":
+            add("info", "quebra de base", f"{ev['ano']}: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação")
+        elif ev.get("origem") == "contagem":
+            add("info", "ajuste de base inferido", f"{ev['ano']}: {txt} pela contagem" +
+                ("" if ev.get("ano_preco") is not None else ", cotação não ajustada (erro de estimativa)"))
 
     # balanço
     at, pl = s["ativo_total"][ult], s["pl"][ult]
