@@ -1075,7 +1075,7 @@
 
   // ---------------------------------------------------------------- roteamento e controles
 
-  /** "#/" início · "#/acoes" ranking · "#/comparar/PETR4,VALE3" comparar (#/teia e #/mapa antigos caem nela) · "#/PETR4" empresa */
+  /** "#/" início · "#/acoes" lista de ações · "#/ranking/PETR4" ranking por fundamentos · "#/comparar/PETR4,VALE3" comparar (#/teia e #/mapa antigos caem nela) · "#/PETR4" empresa */
   function rota() {
     var m = location.hash.match(/^#\/([A-Za-z0-9]+)/);
     var alvo = m ? m[1] : "";
@@ -1083,13 +1083,14 @@
     espiao = null;
     if (window.RealTermsTeia) window.RealTermsTeia.parar();
     var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "comparar" || alvo === "teia" || alvo === "mapa" ? "teia" :
-      alvo === "agenda" ? "agenda" : "empresa";
+      alvo === "agenda" ? "agenda" : alvo === "ranking" ? "ranking" : "empresa";
     $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
     document.body.setAttribute("data-pagina", pagina);
     if (pagina === "inicio" && window.RealTermsInicio) window.RealTermsInicio.render($("#app"));
     else if (pagina === "inicio" || pagina === "acoes") telaRanking();
     else if (pagina === "teia") { if (window.RealTermsTeia) window.RealTermsTeia.render($("#app")); }
     else if (pagina === "agenda") { if (window.RealTermsAgenda) window.RealTermsAgenda.render($("#app")); }
+    else if (pagina === "ranking") { if (window.RealTermsRanking) window.RealTermsRanking.render($("#app")); }
     else telaEmpresa(alvo.toUpperCase());
   }
 
