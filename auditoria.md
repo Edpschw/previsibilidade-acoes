@@ -1,6 +1,6 @@
 # Auditoria da base
 
-Gerada em 20/11/2026 sobre `data/empresas.js` de 2026-11-20 04:03 (balanços até 2025, cotações até 2026-11-19). Refaça com `python3 scripts/auditar.py --externo`.
+Gerada em 21/11/2026 sobre `data/empresas.js` de 2026-11-21 04:03 (balanços até 2025, cotações até 2026-11-19). Refaça com `python3 scripts/auditar.py --externo`.
 
 ## 1. Cobertura
 
@@ -111,9 +111,9 @@ As de severidade baixa e informativas ficam em `auditoria.json`.
 
 | Ticker | Cotação base | Cotação brapi | Valor de mercado base | brapi | Diferença |
 |---|---|---|---|---|---|
-| PETR4 | 42.67 | 42.67 | 594.3 bi | 596.2 bi | -0.3% |
-| VALE3 | 58.48 | 58.48 | 243.8 bi | 235.1 bi | +3.7% |
-| ITUB4 | 40.07 | 40.07 | 466.3 bi | 464.9 bi | +0.3% |
-| MGLU3 | 8.2 | 8.2 | 6.4 bi | 5.9 bi | +8.3% |
+| PETR4 | 42.67 | 42.67 | 594.3 bi | 588.5 bi | +1.0% |
+| VALE3 | 58.48 | 58.48 | 243.8 bi | 233.1 bi | +4.6% |
+| ITUB4 | 40.07 | 40.07 | 466.3 bi | 465.3 bi | +0.2% |
+| MGLU3 | 8.2 | 8.2 | 6.4 bi | 5.8 bi | +9.9% |
 
 A base usa a quantidade de ações atual informada pela B3, menos as ações em tesouraria do último balanço (mesmo critério do LPA). Fontes de mercado variam: algumas usam o total emitido, outras uma contagem defasada. A cotação é o teste mais direto, e deve bater exatamente.
