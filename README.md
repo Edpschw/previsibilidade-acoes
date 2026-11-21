@@ -22,12 +22,12 @@ A CVM regera os ZIPs dos últimos anos quando há reapresentação. Use `python3
 | `scripts/processar.py` | Lê DFP e FCA da CVM, cotações e fichas de emissores da B3 e a PTAX do BCB e gera `data/empresas.js`. A docstring explica os cuidados com a base. |
 | `scripts/auditar.py` | Audita a base contra as fontes e gera `auditoria.md` (resumo) e `auditoria.json` (todas as ocorrências). Com `--trava`, sai com código 2 se a base piorou em relação a `auditoria_resumo.json`. |
 | `scripts/mudancas.py` | Compara a base nova com a commitada e escreve `mudancas.md` (entradas e saídas, balanços novos, cotações que mudaram mais de 15% em papéis com liquidez de pelo menos R$ 1 mi/dia, índice que mudou 5 pontos ou mais). |
-| `scripts/historico.py` | Histórico diário da aba Simular: fechamento de cada ticker desde 2010 (COTAHIST, com códigos antigos colados pelo FCA), desdobramentos com data (ficha da B3 conferida pelo preço; os achados pelo LPA ou pela contagem ganham a data do salto do preço), proventos em dinheiro com data-com e pagamento, CDI, IPCA e PTAX do Banco Central. Grava `data/historico/<TICKER>.js` e `data/historico/_indices.js`. Roda depois de `processar.py`. |
+| `scripts/historico.py` | Histórico diário da aba Simular: fechamento de cada ticker desde 2010 (COTAHIST, com códigos antigos colados pelo FCA), desdobramentos com data (ficha da B3 conferida pelo preço; os achados pelo LPA ou pela contagem ganham a data do salto do preço), proventos em dinheiro desde 2010 (página de eventos corporativos da B3, com a ficha por cima nos últimos 12 meses), CDI, IPCA e PTAX do Banco Central. Grava `data/historico/<TICKER>.js` e `data/historico/_indices.js`. Roda depois de `processar.py`. |
 | `scripts/versionar.py` | Atualiza o `?v=` dos assets no `index.html` com o hash do conteúdo. Roda sozinho no fim do processamento. |
 | `docs/arquitetura-comercial.md` | Proposta de arquitetura para vender acesso: formato da base (bruto → staging → Postgres), modelo de dados, API, planos, bloqueios jurídicos e fases. |
 | `docs/metodologia-simulacao.md` | Metodologia do simulador: dados e tratamento, regras da simulação do passado (proventos, reinvestimento, IR do JCP, CDI e IPCA), modelo de blocos do retorno de referência, volatilidade e correlações, cenários e probabilidades, limites e referências. |
 | `docs/metodologia-ranking.md` | Análise teórica do que olhar antes de comprar uma ação, setor a setor, e a metodologia completa da nota da aba Ranking: pilares, indicadores e fórmulas, indicadores futuros, perfis setoriais com pesos e travas, exemplos trabalhados, limites e referências. |
-| `tests/` | `test_regras.py` (regras com dados sintéticos), `test_historico.py` (histórico diário com dados sintéticos), `test_dados.py` (invariantes da base gerada) e `test_base.py` (base em Postgres; precisa de `DATABASE_URL_TESTE`). `python3 -m unittest discover -s tests` |
+| `tests/` | `test_regras.py` (regras com dados sintéticos), `test_historico.py` (histórico diário com dados sintéticos), `test_simular.py` (contas do simulador em `simular_contas.js`; precisa do Node), `test_dados.py` (invariantes da base gerada) e `test_base.py` (base em Postgres; precisa de `DATABASE_URL_TESTE`). `python3 -m unittest discover -s tests` |
 | `db/schema.sql` | Esquema da base em PostgreSQL (histórico por intervalo de cargas, retratos diários, catálogo de métricas). |
 | `scripts/carregar_base.py` | Carrega `data/empresas.js` no Postgres numa transação, remonta a base a partir do banco e compara campo a campo; se divergir, desfaz tudo. |
 | `requirements.txt` | Única dependência externa: `psycopg` (só para a base em Postgres; o processamento continua só com a biblioteca padrão). |
@@ -114,6 +114,7 @@ Abaixo do corte, a empresa fica fora de tudo: `processar.py` aplica o corte logo
 - Lista de emissores da B3 (CNPJ, código CVM, raiz do ticker) e ficha de cada emissor (ações ON/PN atuais, proventos com data-com): API pública `sistemaswebb3-listados.b3.com.br`
 - PTAX venda diária: API SGS do Banco Central, série 1
 - CDI diário (série 12) e IPCA mensal (série 433): API SGS do Banco Central, para a aba Simular
+- Proventos em dinheiro desde 2010, para a aba Simular: página de eventos corporativos de cada emissor na mesma API da B3 (`GetListedCashDividends`); a ficha só traz os últimos 12 meses
 - Cotações diárias desde 2010 para a aba Simular: arquivos anuais da COTAHIST (os de 2018 em diante são lidos uma vez e guardados resumidos no cache) e os diários recentes
 
 ## Índice de previsibilidade

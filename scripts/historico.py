@@ -495,7 +495,7 @@ def main():
           f"{sum(len(v) for v in paginas.values())} itens; campos: {sorted(amostra) if amostra else '-'}")
 
     SAIDA.mkdir(parents=True, exist_ok=True)
-    feitos, costurados, nao_costurados, sem_cotacao, n_ev, n_pv = set(), [], [], [], 0, 0
+    feitos, costurados, nao_costurados, sem_antigo, sem_cotacao, n_ev, n_pv = set(), [], [], [], [], 0, 0
     for e in empresas:
         cods = codigos.get(P.so_digitos(e["cnpj"]), {})
         for t in e["tickers"]:
@@ -511,6 +511,10 @@ def main():
                         motivo.append(f"{c} até {u} a {s[u]:.2f}")
                 if motivo:
                     nao_costurados.append(f"{t} (desde {ini} a {cot[t][ini]:.2f}; {', '.join(motivo)})")
+            elif not origem and cot.get(t) and min(cot[t]) > f"{INICIO.year}-03-01":
+                # começa depois de 2010 sem código antigo da mesma classe no FCA (abertura de capital, ou
+                # troca de código que o FCA não registra, como KROT3 → COGN3)
+                sem_antigo.append(f"{t} desde {min(cot[t])} (FCA: {', '.join(sorted(cods)) or '-'})")
             if len(serie) < 2:
                 sem_cotacao.append(t)
                 continue
@@ -548,6 +552,8 @@ def main():
         print(f"  códigos antigos costurados: {'; '.join(costurados)}")
     if nao_costurados:
         print(f"  códigos antigos que não colaram (preço não continua ou buraco grande): {'; '.join(nao_costurados)}")
+    if sem_antigo:
+        print(f"  começam depois de {INICIO.year} sem código antigo: {'; '.join(sem_antigo)}")
     if sem_cotacao:
         print(f"  sem cotação: {', '.join(sem_cotacao)}")
 

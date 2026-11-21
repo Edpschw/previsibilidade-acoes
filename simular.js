@@ -649,6 +649,8 @@
       "<li>" + esc(L("Crescimento de longo prazo: IPCA de 12 meses (" + pctF(ctx.ipca) + ") mais " + X.pct(CRESC_REAL, 0) + " reais ao ano. O peso do histórico do lucro por ação cresce com o índice de previsibilidade da empresa (até 40%).",
         "Long-run growth: 12-month inflation (" + pctF(ctx.ipca) + ") plus " + X.pct(CRESC_REAL, 0) + " real a year. The weight on each company's own earnings-per-share history grows with its predictability score (up to 40%).")) + "</li>" +
       "<li>" + esc(L("CDI de hoje (" + pctF(ctx.cdi) + " ao ano) mantido por 5 anos, só como régua; a taxa vai mudar.", "Today's CDI rate (" + pctF(ctx.cdi) + " a year) held for 5 years, only as a yardstick; the rate will change.")) + "</li>" +
+      (usd ? "<li>" + esc(L("Em US$: a projeção é feita em reais e convertida pela PTAX de hoje; a variação do câmbio nos próximos 5 anos fica de fora.",
+        "In US$: the projection is made in reais and converted at today's PTAX rate; exchange-rate moves over the next 5 years are left out.")) + "</li>" : "") +
       "</ul>" +
       '<p class="aviso">' + esc(L("Projeção estatística a partir de dados públicos, não recomendação de investimento. O retorno de referência vem dos fundamentos de hoje (lucro, proventos, preço) e não do retorno passado da ação. Metodologia completa em docs/metodologia-simulacao.md.",
         "Statistical projection from public data, not investment advice. The reference return comes from today's fundamentals (earnings, payouts, price), not from the stock's past return. Full methodology in docs/metodologia-simulacao.md.")) + "</p></section>";
