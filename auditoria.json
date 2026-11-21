@@ -7,6 +7,13 @@
   "msg": "a empresa não publica consolidado"
  },
  {
+  "ticker": "ABEV3",
+  "nome": "AMBEV S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2012: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
   "ticker": "AGRO3",
   "nome": "BRASILAGRO - CIA BRAS DE PROP AGRICOLAS",
   "sev": "baixa",
@@ -35,11 +42,18 @@
   "msg": "2025: 2,179,430 × EBITDA 551,870; explicado por capital de giro (1,628,059)"
  },
  {
+  "ticker": "ALOS3",
+  "nome": "ALLOS S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2011: grupamento 10:1 (a ficha da B3 não lista)"
+ },
+ {
   "ticker": "AMER3",
   "nome": "AMERICANAS S.A. - em Recuperação Judicial",
   "sev": "baixa",
   "regra": "salto de ações",
-  "msg": "2023→2024: ×0.22 (desdobramento, grupamento, emissão ou escala)"
+  "msg": "2023→2024: ×22.19 sem evento que explique (emissão ou escala)"
  },
  {
   "ticker": "AMOB3",
@@ -47,13 +61,6 @@
   "sev": "baixa",
   "regra": "LPA divergente",
   "msg": "2024: calculado R$ -0.06 × declarado R$ -6.56 (razão 0.01)"
- },
- {
-  "ticker": "AMOB3",
-  "nome": "Automob Participações S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2024→2025: ×0.02 (desdobramento, grupamento, emissão ou escala)"
  },
  {
   "ticker": "AMOB3",
@@ -72,9 +79,9 @@
  {
   "ticker": "ANIM3",
   "nome": "ANIMA HOLDING S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×2.97 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2014: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "ANIM3",
@@ -93,9 +100,9 @@
  {
   "ticker": "ARML3",
   "nome": "ARMAC LOCAÇÃO, LOGÍSTICA E SERVIÇOS S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×356.07 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "ARML3",
@@ -107,13 +114,6 @@
  {
   "ticker": "ASAI3",
   "nome": "SENDAS DISTRIBUIDORA S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×5.02 (desdobramento, grupamento, emissão ou escala)"
- },
- {
-  "ticker": "ASAI3",
-  "nome": "SENDAS DISTRIBUIDORA S.A.",
   "sev": "info",
   "regra": "só demonstração individual",
   "msg": "a empresa não publica consolidado"
@@ -121,9 +121,9 @@
  {
   "ticker": "AUAU3",
   "nome": "União Pet Participações S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2024→2025: ×110.46 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2025: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "AUAU3",
@@ -151,14 +151,14 @@
   "nome": "AZEVEDO E TRAVASSOS S.A.",
   "sev": "baixa",
   "regra": "salto de ações",
-  "msg": "2020→2021: ×2.75 (desdobramento, grupamento, emissão ou escala)"
+  "msg": "2020→2021: ×2.75 sem evento que explique (emissão ou escala)"
  },
  {
   "ticker": "AZEV3",
   "nome": "AZEVEDO E TRAVASSOS S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2024→2025: ×3.00 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2025: 1:3 pela contagem"
  },
  {
   "ticker": "AZEV3",
@@ -241,6 +241,13 @@
   "ticker": "AZUL3",
   "nome": "AZUL S.A.",
   "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2020: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "AZUL3",
+  "nome": "AZUL S.A.",
+  "sev": "info",
   "regra": "PL negativo",
   "msg": "patrimônio líquido negativo em 2025 (P/VP e ROE não se aplicam)"
  },
@@ -254,30 +261,30 @@
  {
   "ticker": "B3SA3",
   "nome": "B3 S.A. - BRASIL, BOLSA, BALCÃO",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×2.99 (desdobramento, grupamento, emissão ou escala)"
- },
- {
-  "ticker": "B3SA3",
-  "nome": "B3 S.A. - BRASIL, BOLSA, BALCÃO",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 6.3% × pagos em 2025 (DFP) 2.1%"
  },
  {
-  "ticker": "BHIA3",
-  "nome": "Grupo Casas Bahia S.A. - Em Recuperação Judicial",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2022→2023: ×60.03 (desdobramento, grupamento, emissão ou escala)"
+  "ticker": "BBDC4",
+  "nome": "BCO BRADESCO S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2015: bonificacao 1:1.2 (a ficha da B3 não lista)"
  },
  {
   "ticker": "BHIA3",
   "nome": "Grupo Casas Bahia S.A. - Em Recuperação Judicial",
   "sev": "baixa",
   "regra": "salto de ações",
-  "msg": "2024→2025: ×6.88 (desdobramento, grupamento, emissão ou escala)"
+  "msg": "2024→2025: ×6.88 sem evento que explique (emissão ou escala)"
+ },
+ {
+  "ticker": "BHIA3",
+  "nome": "Grupo Casas Bahia S.A. - Em Recuperação Judicial",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2023: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "BHIA3",
@@ -310,16 +317,16 @@
  {
   "ticker": "BMGB4",
   "nome": "BANCO BMG S/A",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2019: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "BMGB4",
+  "nome": "BANCO BMG S/A",
   "sev": "baixa",
   "regra": "fluxo de caixa não fecha",
   "msg": "2021: operacional + investimento + financiamento = 244,471 × variação do caixa declarada 0 (erro de extração ou de preenchimento)"
- },
- {
-  "ticker": "BPAC11",
-  "nome": "BCO BTG PACTUAL S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×4.24 (desdobramento, grupamento, emissão ou escala)"
  },
  {
   "ticker": "BPAC11",
@@ -394,9 +401,9 @@
  {
   "ticker": "BRST3",
   "nome": "BRISANET SERVIÇOS DE TELECOMUNICAÇÕES S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2023→2024: ×0.32 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2024: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "CAML3",
@@ -410,14 +417,21 @@
   "nome": "MÉLIUZ S.A.",
   "sev": "baixa",
   "regra": "salto de ações",
-  "msg": "2020→2021: ×6.34 (desdobramento, grupamento, emissão ou escala)"
+  "msg": "2022→2023: ×10.01 sem evento que explique (emissão ou escala)"
  },
  {
   "ticker": "CASH3",
   "nome": "MÉLIUZ S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2022→2023: ×0.10 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2020: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "CASH3",
+  "nome": "MÉLIUZ S.A.",
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2021: 1:6 pela contagem"
  },
  {
   "ticker": "CBAV3",
@@ -441,18 +455,53 @@
   "msg": "2021: operacional + investimento + financiamento = 641,895 × variação do caixa declarada 816,621 (erro de extração ou de preenchimento)"
  },
  {
+  "ticker": "CEAB3",
+  "nome": "C&A Modas S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2019: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "CMIG4",
+  "nome": "CIA ENERGETICA DE MINAS GERAIS - CEMIG",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2022: bonificacao 1:1.3 (a ficha da B3 não lista)"
+ },
+ {
   "ticker": "CMIN3",
   "nome": "CSN MINERAÇÃO S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×29.73 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "COGN3",
+  "nome": "COGNA EDUCAÇÃO S.A.",
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2011: 1:6 pela contagem"
+ },
+ {
+  "ticker": "COGN3",
+  "nome": "COGNA EDUCAÇÃO S.A.",
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2012: 2:1 pela contagem"
+ },
+ {
+  "ticker": "COGN3",
+  "nome": "COGNA EDUCAÇÃO S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2014: desdobramento 1:4 (a ficha da B3 não lista)"
  },
  {
   "ticker": "CSAN3",
   "nome": "COSAN S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×4.89 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2017: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "CSAN3",
@@ -469,11 +518,39 @@
   "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 22.1%"
  },
  {
+  "ticker": "CSED3",
+  "nome": "CRUZEIRO DO SUL EDUCACIONAL S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "CSMG3",
+  "nome": "CIA SANEAMENTO DE MINAS GERAIS-COPASA MG",
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2011: 1:20 pela contagem, cotação não ajustada (erro de estimativa)"
+ },
+ {
   "ticker": "CSNA3",
   "nome": "CIA SIDERURGICA NACIONAL",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 15.3%"
+ },
+ {
+  "ticker": "CURY3",
+  "nome": "Cury Construtora e Incorporadora S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2020: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "CVCB3",
+  "nome": "CVC BRASIL OPERADORA E AGÊNCIA DE VIAGENS S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2017: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "DESK3",
@@ -492,23 +569,16 @@
  {
   "ticker": "DESK3",
   "nome": "DESKTOP S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×3.08 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2021: 1:3 pela contagem"
  },
  {
   "ticker": "DEXP3",
   "nome": "DEXXOS PARTICIPAÇÕES S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×3.00 (desdobramento, grupamento, emissão ou escala)"
- },
- {
-  "ticker": "DIRR3",
-  "nome": "DIRECIONAL ENGENHARIA S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2024→2025: ×3.00 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2020: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "DIRR3",
@@ -532,6 +602,13 @@
   "msg": "3586.1x"
  },
  {
+  "ticker": "EGIE3",
+  "nome": "ENGIE BRASIL ENERGIA S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2018: bonificacao 1:1.25 (a ficha da B3 não lista)"
+ },
+ {
   "ticker": "ENEV3",
   "nome": "ENEVA S.A",
   "sev": "alta",
@@ -541,9 +618,9 @@
  {
   "ticker": "ENEV3",
   "nome": "ENEVA S.A",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×3.99 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2012: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "ENGI11",
@@ -602,6 +679,13 @@
   "msg": "proventos 12m (B3) 0.4% × pagos em 2025 (DFP) 13.0%"
  },
  {
+  "ticker": "EUCA4",
+  "nome": "EUCATEX S.A. INDUSTRIA E COMERCIO",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2017: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
   "ticker": "EVEN3",
   "nome": "EVEN CONSTRUTORA E INCORPORADORA S.A.",
   "sev": "baixa",
@@ -625,13 +709,6 @@
  {
   "ticker": "FESA4",
   "nome": "CIA FERRO LIGAS DA BAHIA - FERBASA",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2023→2024: ×4.00 (desdobramento, grupamento, emissão ou escala)"
- },
- {
-  "ticker": "FESA4",
-  "nome": "CIA FERRO LIGAS DA BAHIA - FERBASA",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 4.7%"
@@ -639,9 +716,9 @@
  {
   "ticker": "FIQE3",
   "nome": "Unifique Telecomunicações S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×29.98 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "GFSA3",
@@ -655,14 +732,14 @@
   "nome": "GAFISA S.A.",
   "sev": "baixa",
   "regra": "salto de ações",
-  "msg": "2021→2022: ×0.15 (desdobramento, grupamento, emissão ou escala)"
+  "msg": "2021→2022: ×0.15 sem evento que explique (emissão ou escala)"
  },
  {
   "ticker": "GFSA3",
   "nome": "GAFISA S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2024→2025: ×0.11 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2016: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "GFSA3",
@@ -695,9 +772,9 @@
  {
   "ticker": "GGPS3",
   "nome": "GPS PARTICIPAÇÕES E EMPREENDIMENTOS S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×116.79 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "GMAT3",
@@ -735,13 +812,6 @@
   "msg": "proventos 12m (B3) 42.1% × pagos em 2025 (DFP) 6.5%"
  },
  {
-  "ticker": "HAPV3",
-  "nome": "HAPVIDA PARTICIPAÇÕES E INVESTIMENTOS S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2024→2025: ×0.06 (desdobramento, grupamento, emissão ou escala)"
- },
- {
   "ticker": "HBOR3",
   "nome": "HELBOR EMPREENDIMENTOS S.A.",
   "sev": "baixa",
@@ -761,6 +831,13 @@
   "sev": "alta",
   "regra": "LPA divergente",
   "msg": "2025: calculado R$ 0.27 × declarado R$ 0.94 (razão 0.28)"
+ },
+ {
+  "ticker": "HBRE3",
+  "nome": "HBR Realty Empreendimentos Imobiliários S.A.",
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2020: 3:1 pela contagem"
  },
  {
   "ticker": "HBRE3",
@@ -807,6 +884,13 @@
  {
   "ticker": "HBSA3",
   "nome": "HIDROVIAS DO BRASIL S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2011: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "HBSA3",
+  "nome": "HIDROVIAS DO BRASIL S.A.",
   "sev": "baixa",
   "regra": "receita salta",
   "msg": "2013→2014: ×24.4"
@@ -814,9 +898,9 @@
  {
   "ticker": "IGTI11",
   "nome": "IGUATEMI S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×12.81 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2016: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "IGTI11",
@@ -828,9 +912,9 @@
  {
   "ticker": "INTB3",
   "nome": "Intelbras S.A. Ind. de Telecomunicação Eletrônica Brasileira",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×11.63 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "IRBR3",
@@ -842,16 +926,16 @@
  {
   "ticker": "IRBR3",
   "nome": "IRB - BRASIL RESSEGUROS S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2021→2022: ×0.07 (desdobramento, grupamento, emissão ou escala)"
- },
- {
-  "ticker": "IRBR3",
-  "nome": "IRB - BRASIL RESSEGUROS S.A.",
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 2.7% × pagos em 2025 (DFP) 0.0%"
+ },
+ {
+  "ticker": "ISAE4",
+  "nome": "ISA ENERGIA BRASIL",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2019: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "ISAE4",
@@ -870,9 +954,9 @@
  {
   "ticker": "JALL3",
   "nome": "Jalles Machado S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×645.98 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "JALL3",
@@ -907,7 +991,7 @@
   "nome": "KEPLER WEBER S.A.",
   "sev": "baixa",
   "regra": "salto de ações",
-  "msg": "2021→2022: ×2.98 (desdobramento, grupamento, emissão ou escala)"
+  "msg": "2021→2022: ×2.98 sem evento que explique (emissão ou escala)"
  },
  {
   "ticker": "LAVV3",
@@ -915,6 +999,13 @@
   "sev": "média",
   "regra": "DY acima de 30%",
   "msg": "30% (dividendo extraordinário ou valor de mercado subestimado)"
+ },
+ {
+  "ticker": "LEVE3",
+  "nome": "MAHLE METAL LEVE S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2012: desdobramento 1:3 (a ficha da B3 não lista)"
  },
  {
   "ticker": "LIGT3",
@@ -933,16 +1024,16 @@
  {
   "ticker": "LOGG3",
   "nome": "LOG COMMERCIAL PROPERTIES E PARTICIPAÇÕES",
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2016: 4:1 pela contagem"
+ },
+ {
+  "ticker": "LOGG3",
+  "nome": "LOG COMMERCIAL PROPERTIES E PARTICIPAÇÕES",
   "sev": "média",
   "regra": "margem líquida extrema",
   "msg": "+146% em 2025 (holding, ganho não recorrente ou receita mal identificada)"
- },
- {
-  "ticker": "LWSA3",
-  "nome": "LWSA S/A",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×4.66 (desdobramento, grupamento, emissão ou escala)"
  },
  {
   "ticker": "LWSA3",
@@ -954,9 +1045,9 @@
  {
   "ticker": "MATD3",
   "nome": "HOSPITAL MATER DEI S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×3.34 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2020: 3:1 pela contagem"
  },
  {
   "ticker": "MBRF3",
@@ -983,15 +1074,43 @@
   "ticker": "MDNE3",
   "nome": "MOURA DUBEUX ENGENHARIA S/A",
   "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2020: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "MDNE3",
+  "nome": "MOURA DUBEUX ENGENHARIA S/A",
+  "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 24.6% × pagos em 2025 (DFP) 5.7%"
  },
  {
+  "ticker": "MELK3",
+  "nome": "Melnick Desenvolvimento Imobiliário S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2020: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
   "ticker": "MGLU3",
   "nome": "MAGAZINE LUIZA S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2023→2024: ×0.11 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2015: grupamento 8:1 (a ficha da B3 não lista)"
+ },
+ {
+  "ticker": "MGLU3",
+  "nome": "MAGAZINE LUIZA S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2017: desdobramento 1:8 (a ficha da B3 não lista)"
+ },
+ {
+  "ticker": "MGLU3",
+  "nome": "MAGAZINE LUIZA S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2019: desdobramento 1:8 (a ficha da B3 não lista)"
  },
  {
   "ticker": "MGLU3",
@@ -1017,9 +1136,9 @@
  {
   "ticker": "MLAS3",
   "nome": "GRUPO MULTILASER S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×3.85 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "MLAS3",
@@ -1027,6 +1146,20 @@
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 2.3% × pagos em 2025 (DFP) 0.0%"
+ },
+ {
+  "ticker": "MOTV3",
+  "nome": "MOTIVA INFRAESTRUTURA DE MOBILIDADE S.A.",
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2012: 1:3 pela contagem"
+ },
+ {
+  "ticker": "MOVI3",
+  "nome": "MOVIDA PARTICIPACOES SA",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2017: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "MOVI3",
@@ -1041,6 +1174,13 @@
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 13.3% × pagos em 2025 (DFP) 2.3%"
+ },
+ {
+  "ticker": "MTRE3",
+  "nome": "Mitre Realty Empreendimentos e Participações S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2020: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "MYPK3",
@@ -1087,9 +1227,9 @@
  {
   "ticker": "ONCO3",
   "nome": "ONCOCLÍNICAS DO BRASIL SERVIÇOS MÉDICOS S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×117.21 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "ONCO3",
@@ -1115,9 +1255,9 @@
  {
   "ticker": "ORVR3",
   "nome": "Orizon Valorização de Resíduos S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×13.96 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "ORVR3",
@@ -1125,6 +1265,20 @@
   "sev": "média",
   "regra": "ações B3 × DFP",
   "msg": "valor de mercado com ações da B3 hoje é 5.71× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3"
+ },
+ {
+  "ticker": "PASS3",
+  "nome": "Compass Gás e Energia S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2020: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "PGMN3",
+  "nome": "EMPREENDIMENTOS PAGUE MENOS S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2013: bonificacao 1:1.3 (a ficha da B3 não lista)"
  },
  {
   "ticker": "PINE4",
@@ -1157,6 +1311,13 @@
  {
   "ticker": "POMO4",
   "nome": "MARCOPOLO S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2013: desdobramento 1:2 (a ficha da B3 não lista)"
+ },
+ {
+  "ticker": "POMO4",
+  "nome": "MARCOPOLO S.A.",
   "sev": "média",
   "regra": "DY acima de 30%",
   "msg": "32% (dividendo extraordinário ou valor de mercado subestimado)"
@@ -1171,9 +1332,16 @@
  {
   "ticker": "PRIO3",
   "nome": "PRIO S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×6.13 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2014: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "PRIO3",
+  "nome": "PRIO S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2019: desdobramento 1:10 (a ficha da B3 não lista)"
  },
  {
   "ticker": "PRIO3",
@@ -1193,6 +1361,13 @@
   "ticker": "RAIL3",
   "nome": "RUMO S.A.",
   "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2017: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "RAIL3",
+  "nome": "RUMO S.A.",
+  "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 0.6% × pagos em 2025 (DFP) 4.8%"
  },
@@ -1201,7 +1376,7 @@
   "nome": "RAÍZEN S.A.",
   "sev": "baixa",
   "regra": "salto de ações",
-  "msg": "2021→2022: ×5.93 (desdobramento, grupamento, emissão ou escala)"
+  "msg": "2021→2022: ×5.93 sem evento que explique (emissão ou escala)"
  },
  {
   "ticker": "RAIZ4",
@@ -1218,6 +1393,13 @@
   "msg": "sem ITR posterior ao último balanço anual (atraso, exercício fora de jan–dez ou plano de contas)"
  },
  {
+  "ticker": "RANI3",
+  "nome": "IRANI PAPEL E EMBALAGEM S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2019: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
   "ticker": "RAPT4",
   "nome": "RANDONCORP S.A.",
   "sev": "info",
@@ -1229,14 +1411,21 @@
   "nome": "RECRUSUL S.A.",
   "sev": "baixa",
   "regra": "salto de ações",
-  "msg": "2022→2023: ×3.36 (desdobramento, grupamento, emissão ou escala)"
+  "msg": "2022→2023: ×3.36 sem evento que explique (emissão ou escala)"
  },
  {
   "ticker": "RCSL4",
   "nome": "RECRUSUL S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2023→2024: ×0.25 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2020: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "RCSL4",
+  "nome": "RECRUSUL S.A.",
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2024: 4:1 pela contagem"
  },
  {
   "ticker": "RCSL4",
@@ -1281,11 +1470,25 @@
   "msg": "RCSL4: 6.71 no fim de 2025 → 0.63 hoje (evento societário ou movimento forte)"
  },
  {
+  "ticker": "RDOR3",
+  "nome": "Rede D'Or São Luiz S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2019: desdobramento 1:2 (a ficha da B3 não lista)"
+ },
+ {
   "ticker": "RECV3",
   "nome": "PETRORECÔNCAVO S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×2.96 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2021: 1:3 pela contagem"
+ },
+ {
+  "ticker": "RIAA3",
+  "nome": "GUARARAPES CONFECCOES S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2019: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "RIAA3",
@@ -1300,6 +1503,13 @@
   "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 5.8% × pagos em 2025 (DFP) 38.7%"
+ },
+ {
+  "ticker": "SANB11",
+  "nome": "BCO SANTANDER (BRASIL) S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2013: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "SAPR11",
@@ -1318,9 +1528,23 @@
  {
   "ticker": "SAUD3",
   "nome": "BRADSAÚDE S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2012: desdobramento 1:3 (a ficha da B3 não lista)"
+ },
+ {
+  "ticker": "SAUD3",
+  "nome": "BRADSAÚDE S.A.",
   "sev": "média",
   "regra": "ações B3 × DFP",
   "msg": "valor de mercado com ações da B3 hoje é 5.36× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3"
+ },
+ {
+  "ticker": "SBSP3",
+  "nome": "CIA SANEAMENTO BASICO EST SAO PAULO",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2013: desdobramento 1:3 (a ficha da B3 não lista)"
  },
  {
   "ticker": "SBSP3",
@@ -1361,13 +1585,6 @@
   "ticker": "SIMH3",
   "nome": "SIMPAR S.A.",
   "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×4.01 (desdobramento, grupamento, emissão ou escala)"
- },
- {
-  "ticker": "SIMH3",
-  "nome": "SIMPAR S.A.",
-  "sev": "baixa",
   "regra": "controladora × consolidado",
   "msg": "lucro da controladora 39,471 × consolidado 215,250 em 2025"
  },
@@ -1381,9 +1598,9 @@
  {
   "ticker": "SMFT3",
   "nome": "SMARTFIT ESCOLA DE GINÁSTICA E DANÇA S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×26.31 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2021: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "SMFT3",
@@ -1416,9 +1633,9 @@
  {
   "ticker": "SOJA3",
   "nome": "BOA SAFRA SEMENTES S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×13.26 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2021: desdobramento 1:8 (a ficha da B3 não lista)"
  },
  {
   "ticker": "SOJA3",
@@ -1438,8 +1655,22 @@
   "ticker": "TASA4",
   "nome": "TAURUS ARMAS S.A.",
   "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2014: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "TASA4",
+  "nome": "TAURUS ARMAS S.A.",
+  "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 0.1% × pagos em 2025 (DFP) 3.8%"
+ },
+ {
+  "ticker": "TEND3",
+  "nome": "CONSTRUTORA TENDA S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2016: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
  },
  {
   "ticker": "TFCO4",
@@ -1472,6 +1703,13 @@
  {
   "ticker": "TIMS3",
   "nome": "TIM S.A.",
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2020: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "TIMS3",
+  "nome": "TIM S.A.",
   "sev": "baixa",
   "regra": "receita salta",
   "msg": "2018→2019: ×5.2"
@@ -1489,6 +1727,13 @@
   "sev": "info",
   "regra": "só demonstração individual",
   "msg": "a empresa não publica consolidado"
+ },
+ {
+  "ticker": "TOTS3",
+  "nome": "TOTVS S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2011: desdobramento 1:5 (a ficha da B3 não lista)"
  },
  {
   "ticker": "TPIS3",
@@ -1509,7 +1754,7 @@
   "nome": "TPI - TRIUNFO PARTICIP. E INVEST. S.A.",
   "sev": "baixa",
   "regra": "salto de ações",
-  "msg": "2024→2025: ×0.25 (desdobramento, grupamento, emissão ou escala)"
+  "msg": "2024→2025: ×0.25 sem evento que explique (emissão ou escala)"
  },
  {
   "ticker": "TPIS3",
@@ -1540,6 +1785,13 @@
   "msg": "proventos 12m (B3) 0.0% × pagos em 2025 (DFP) 6.9%"
  },
  {
+  "ticker": "VALE3",
+  "nome": "VALE S.A.",
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2010: 2:1 pela contagem, cotação não ajustada (erro de estimativa)"
+ },
+ {
   "ticker": "VAMO3",
   "nome": "VAMOS LOCAÇÃO DE CAMINHÕES, MÁQUINAS E EQUIPAMENTOS S.A.",
   "sev": "baixa",
@@ -1549,9 +1801,16 @@
  {
   "ticker": "VAMO3",
   "nome": "VAMOS LOCAÇÃO DE CAMINHÕES, MÁQUINAS E EQUIPAMENTOS S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2020→2021: ×5.07 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "quebra de base",
+  "msg": "2019: salto da quantidade sem fator conhecido; anos anteriores sem valor por ação"
+ },
+ {
+  "ticker": "VAMO3",
+  "nome": "VAMOS LOCAÇÃO DE CAMINHÕES, MÁQUINAS E EQUIPAMENTOS S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2020: desdobramento 1:2 (a ficha da B3 não lista)"
  },
  {
   "ticker": "VAMO3",
@@ -1571,6 +1830,13 @@
   "ticker": "VIVT3",
   "nome": "TELEFÔNICA BRASIL S.A",
   "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2025: 1:2 pela contagem"
+ },
+ {
+  "ticker": "VIVT3",
+  "nome": "TELEFÔNICA BRASIL S.A",
+  "sev": "info",
   "regra": "DY 12m × DY do exercício",
   "msg": "proventos 12m (B3) 7.3% × pagos em 2025 (DFP) 1.9%"
  },
@@ -1579,14 +1845,14 @@
   "nome": "VITRU EDUCAÇÃO S.A.",
   "sev": "baixa",
   "regra": "salto de ações",
-  "msg": "2021→2022: ×2.74 (desdobramento, grupamento, emissão ou escala)"
+  "msg": "2021→2022: ×2.74 sem evento que explique (emissão ou escala)"
  },
  {
   "ticker": "VTRU3",
   "nome": "VITRU EDUCAÇÃO S.A.",
-  "sev": "baixa",
-  "regra": "salto de ações",
-  "msg": "2023→2024: ×0.07 (desdobramento, grupamento, emissão ou escala)"
+  "sev": "info",
+  "regra": "ajuste de base inferido",
+  "msg": "2024: 15:1 pela contagem"
  },
  {
   "ticker": "VULC3",
@@ -1601,5 +1867,19 @@
   "sev": "média",
   "regra": "ações B3 × DFP",
   "msg": "valor de mercado com ações da B3 hoje é 4.05× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3"
+ },
+ {
+  "ticker": "WEGE3",
+  "nome": "WEG S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2014: bonificacao 1:1.3 (a ficha da B3 não lista)"
+ },
+ {
+  "ticker": "WEGE3",
+  "nome": "WEG S.A.",
+  "sev": "info",
+  "regra": "evento pelo LPA reapresentado",
+  "msg": "2015: desdobramento 1:2 (a ficha da B3 não lista)"
  }
 ]

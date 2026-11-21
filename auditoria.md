@@ -1,6 +1,6 @@
 # Auditoria da base
 
-Gerada em 21/11/2026 sobre `data/empresas.js` de 2026-11-21 04:03 (balanços até 2025, cotações até 2026-11-19). Refaça com `python3 scripts/auditar.py --externo`.
+Gerada em 21/11/2026 sobre `data/empresas.js` de 2026-11-21 17:49 (balanços até 2025, cotações até 2026-11-19). Refaça com `python3 scripts/auditar.py --externo`.
 
 ## 1. Cobertura
 
@@ -46,9 +46,9 @@ nenhuma
 | média | P/L extremo | 1 |
 | média | P/VP extremo | 1 |
 | média | buraco no histórico | 1 |
-| baixa | salto de ações | 50 |
 | baixa | LPA divergente | 25 |
 | baixa | receita salta | 16 |
+| baixa | salto de ações | 10 |
 | baixa | LPA com sinal trocado na DRE | 9 |
 | baixa | controladora × consolidado | 9 |
 | baixa | preço mudou de escala | 6 |
@@ -58,7 +58,10 @@ nenhuma
 | baixa | LPA declarado por lote de mil | 3 |
 | baixa | dividendos > 3× lucro | 2 |
 | baixa | unit sem composição | 1 |
+| info | quebra de base | 45 |
 | info | DY 12m × DY do exercício | 44 |
+| info | evento pelo LPA reapresentado | 20 |
+| info | ajuste de base inferido | 15 |
 | info | caixa operacional > 2× EBITDA | 8 |
 | info | só demonstração individual | 5 |
 | info | PL negativo | 4 |
