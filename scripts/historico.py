@@ -337,13 +337,17 @@ def proventos_da_pagina(itens, classe_b3, hoje):
     out, vistos = [], set()
     for x in itens:
         tipo = TIPOS_DINHEIRO.get((_campo(x, "corporateAction", "label", "typeEvent") or "").strip().upper())
-        com = P.data_br(_campo(x, "lastDatePrior", "lastDatePriorDate", "dateLastPrior"))
+        com = P.data_br(_campo(x, "lastDatePriorEx", "lastDatePrior", "dateLastPrior"))
         valor = P.num_br(_campo(x, "valueCash", "rate", "value"))
         por = P.num_br(_campo(x, "quotedPerShares", "quotedPerShare")) or 1
         cls = (_campo(x, "typeStock", "stockType", "classStock") or "").strip().upper()
         if not tipo or not com or valor <= 0 or com < INICIO or cls != classe_b3:
             continue
         valor = round(valor / por, 8)
+        # mais de 60% do preço do último dia "com" (que a página traz) é erro de escala, não provento
+        fech = P.num_br(_campo(x, "closingPricePriorExDate"))
+        if fech > 0 and valor / fech > 0.6:
+            continue
         pag = P.data_br(_campo(x, "paymentDate", "datePayment"))
         if not pag:
             pag = com + timedelta(days=PAGAMENTO_ESTIMADO)

@@ -249,9 +249,11 @@
 
   /** Blocos do retorno de uma ação só com a base anual (frações ao ano, antes do IR do JCP):
    *  dividend yield sustentável, crescimento do lucro por ação e reprecificação do P/L.
-   *  O lucro de referência é o menor entre o de 12 meses e a mediana dos 5 últimos exercícios: em empresa
-   *  cíclica, P/L baixo no pico do lucro não é ação barata (lucro normalizado de Graham e Dodd). */
-  function fundamentos(e, t, ctx) {
+   *  - O dividend yield se sustenta se o lucro de 12 meses ou o normalizado (mediana dos 5 últimos
+   *    exercícios, Graham e Dodd) o cobrem: lucro deprimido por um ano ruim não zera o provento.
+   *  - A reprecificação compara o P/L de hoje com a mediana da própria empresa e pesa pelo índice de
+   *    previsibilidade: em empresa cíclica, P/L baixo no pico do lucro (ou alto no vale) não é sinal. */
+  function fundamentos(e, t, ctx, dyHist) {
     var X = window.RealTerms, ind = X.indicadores(e), vmHoje = e.valor_mercado;
     if (!(vmHoje > 0)) return null;
     var lc = e.series.lucro_controladora || [], vm = e.series.valor_mercado || [];
@@ -259,8 +261,12 @@
     var cinco = lc.slice(Math.max(0, lc.length - 5)).filter(function (v) { return v != null; });
     var eyAtual = lucro12 != null ? lucro12 / vmHoje : null;
     var eyNorm = cinco.length >= 3 ? mediana(cinco) / vmHoje : null;
-    var ey = eyAtual != null && eyNorm != null ? Math.min(eyAtual, eyNorm) : eyAtual;
-    var dy12 = e.dy12m && e.dy12m[t] != null ? e.dy12m[t] : (ind.dyExercicio != null ? ind.dyExercicio : 0);
+    var ey = Math.max(eyAtual != null ? eyAtual : -1, eyNorm != null ? eyNorm : -1);
+    if (ey === -1) ey = null;
+    // proventos de 12 meses: do histórico do ticker (inclui os do código antigo), senão da base (o maior
+    // entre as classes da empresa: a ficha às vezes não lista a unit), senão os pagos no exercício (DFP)
+    var dyBase = e.dy12m ? Math.max.apply(null, [0].concat(Object.keys(e.dy12m).map(function (k) { return e.dy12m[k] || 0; }))) : 0;
+    var dy12 = dyHist > 0 ? dyHist : e.dy12m && e.dy12m[t] > 0 ? e.dy12m[t] : dyBase > 0 ? dyBase : (ind.dyExercicio || 0);
     var dy = dy12, dyNota = "12m";
     if (ey == null || ey <= 0) { dy = 0; dyNota = "prejuizo"; }
     else if (dy12 > ey) { dy = ey; dyNota = "lucro"; }
@@ -275,25 +281,31 @@
     var wHist = gHist != null ? 0.4 * score / 100 : 0, wSust = gSust != null ? 0.3 : 0, wLp = 1 - wHist - wSust;
     var g = wHist * (gHist || 0) + wSust * (gSust || 0) + wLp * gLp;
     // reprecificação: metade da distância entre o P/L de hoje e a mediana do P/L da empresa em 10 anos, em 5 anos
-    var plHoje = ey > 0 ? 1 / ey : null, pls = [];
+    var plHoje = eyAtual > 0 ? 1 / eyAtual : null, pls = [];
     for (var k = Math.max(0, e.anos.length - 10); k < e.anos.length; k++) if (vm[k] > 0 && lc[k] > 0) pls.push(vm[k] / lc[k]);
     var plMed = pls.length >= 5 ? mediana(pls) : null;
-    var v = plHoje && plMed ? clip(Math.pow(plMed / plHoje, 0.5 / ANOS) - 1, -0.04, 0.04) : 0;
+    var vCheio = plHoje && plMed ? clip(Math.pow(plMed / plHoje, 0.5 / ANOS) - 1, -0.04, 0.04) : 0;
+    var v = vCheio * score / 100;
     return {
       ey: ey, eyAtual: eyAtual, eyNorm: eyNorm, dy12: dy12, dy: dy, dyNota: dyNota,
       gHist: gHist, gSust: gSust, gLp: gLp, pesos: { hist: wHist, sust: wSust, lp: wLp }, g: g, score: score,
-      roe: roe, payout: payout, plHoje: plHoje, plMed: plMed, nPl: pls.length, v: v,
+      roe: roe, payout: payout, plHoje: plHoje, plMed: plMed, nPl: pls.length, vCheio: vCheio, v: v,
       rBruto: (1 + dy) * (1 + g) * (1 + v) - 1,
     };
   }
 
-  /** mediana do retorno de referência (antes do encolhimento) de todas as empresas da base */
+  /** retorno de referência do mercado: média dos retornos de referência (antes do encolhimento) de todas
+   *  as empresas da base, pesada pelo valor de mercado, como numa carteira do mercado inteiro */
   var ancora = { chave: null, valor: null };
   function ancoraMercado(ctx) {
     var chave = String(ctx.ipca) + "|" + (window.DADOS && window.DADOS.gerado_em);
     if (ancora.chave !== chave) {
-      var rs = window.RealTerms.EMPRESAS.map(function (e) { var f = fundamentos(e, e.ticker, ctx); return f && f.rBruto; });
-      ancora = { chave: chave, valor: mediana(rs) };
+      var soma = 0, peso = 0;
+      window.RealTerms.EMPRESAS.forEach(function (e) {
+        var f = fundamentos(e, e.ticker, ctx);
+        if (f && isFinite(f.rBruto)) { soma += e.valor_mercado * f.rBruto; peso += e.valor_mercado; }
+      });
+      ancora = { chave: chave, valor: peso ? soma / peso : null };
     }
     return ancora.valor;
   }
@@ -303,10 +315,11 @@
    *  Previsão de retorno de uma ação isolada erra muito: a referência fica a meio caminho entre o que os
    *  fundamentos dela dizem e a mediana do mercado. */
   function pressupostos(e, t, s, ctx) {
-    var f = fundamentos(e, t, ctx) || { dy: 0, dy12: 0, dyNota: "prejuizo", g: 0, v: 0, pesos: { hist: 0, sust: 0, lp: 1 }, gLp: 0, rBruto: 0 };
     var hoje = s.datas[s.datas.length - 1], umAno = iso(Date.parse(hoje) - 365 * 864e5);
     var prov12 = 0, jcp12 = 0;
     s.pv.forEach(function (p) { if (p[0] > umAno && p[0] <= hoje) { prov12 += p[1]; if (p[2] === "jcp") jcp12 += p[1]; } });
+    var f = fundamentos(e, t, ctx, prov12 / s.precos[s.precos.length - 1]) ||
+      { dy: 0, dy12: 0, dyNota: "prejuizo", g: 0, v: 0, vCheio: 0, pesos: { hist: 0, sust: 0, lp: 1 }, gLp: 0, rBruto: 0 };
     var fracJcp = prov12 > 0 ? jcp12 / prov12 : 0;
     var dyLiq = f.dy * (1 - (ctx.irJcp ? IR_JCP * fracJcp : 0));
     var rProprio = (1 + dyLiq) * (1 + f.g) * (1 + f.v) - 1;
@@ -526,7 +539,8 @@
     }
     var R = ui.reinvestir;
     var conv = function (v, d) { return v == null ? null : usd ? v / ptaxEm(d) : v; };
-    var moeda = function (v) { return v == null || !isFinite(v) ? "–" : (usd ? "US$ " : "R$ ") + nf(Math.abs(v) >= 1000 ? 0 : 2).format(v); };
+    var moeda = function (v) { return v == null || !isFinite(v) ? "–" : (usd ? "US$ " : "R$ ") + nf(Math.abs(v) >= 100 ? 0 : 2).format(v); };
+    var preco = function (v) { return v == null || !isFinite(v) ? "–" : (usd ? "US$ " : "R$ ") + nf(v < 1 ? 3 : 2).format(v); };
     var sinal = function (v, txt) { return (v > 0 ? "+" : "") + txt; };
     var pctS = function (v) { return v == null ? "–" : sinal(v, X.pct(v, 1)); };
     var investido = conv(valorBrl, ui.data), final = conv(R ? c.valorR : c.valor, c.hoje);
@@ -567,8 +581,8 @@
         var val = conv(x.emAcoes, x.hoje) / ini - 1, prov = conv(x.proventos, x.hoje) / ini;
         var evs = x.eventos.map(function (ev) { return (ev[1] >= 1 ? "1:" + nf(ev[1] % 1 ? 2 : 0).format(ev[1]) : nf(1 / ev[1] % 1 ? 2 : 0).format(1 / ev[1]) + ":1") + " " + X.data(ev[0]); });
         return "<tr><td><a href=\"#/" + x.t + "\"><b>" + x.t + "</b></a></td>" +
-          '<td class="num">' + X.data(x.dCompra) + "<br><small class=\"mudo\">" + moeda(conv(x.pCompra, x.dCompra)) + "</small></td>" +
-          '<td class="num">' + moeda(conv(x.pHoje, x.hoje)) + (evs.length ? '<br><small class="mudo" title="' + esc(evs.join(" · ")) + '">' + esc(evs.length === 1 ? evs[0] : evs.length + L(" eventos de ações", " share events")) + "</small>" : "") + "</td>" +
+          '<td class="num">' + X.data(x.dCompra) + "<br><small class=\"mudo\">" + preco(conv(x.pCompra, x.dCompra)) + "</small></td>" +
+          '<td class="num">' + preco(conv(x.pHoje, x.hoje)) + (evs.length ? '<br><small class="mudo" title="' + esc(evs.join(" · ")) + '">' + esc(evs.length === 1 ? evs[0] : evs.length + L(" eventos de ações", " share events")) + "</small>" : "") + "</td>" +
           '<td class="num ' + (val < 0 ? "neg" : "") + '">' + pctS(val) + "</td>" +
           '<td class="num">' + pctS(prov) + "</td>" +
           '<td class="num ' + (tot < 0 ? "neg" : "") + '"><b>' + pctS(tot) + "</b></td>" +
@@ -607,27 +621,28 @@
       '<div class="tabela-wrap"><table class="tabela-dem sim-tabela sim-pres"><thead><tr><th>' + esc(L("Ação", "Stock")) + "</th><th>" + esc(L("Peso", "Weight")) + "</th><th>" + esc(L("Dividend yield", "Dividend yield")) +
       "</th><th>" + esc(L("Crescimento do lucro por ação", "Earnings-per-share growth")) + "</th><th>" + esc(L("Reprecificação", "Re-rating")) + "</th><th>" + esc(L("Retorno de referência", "Reference return")) + "</th><th>" + esc(L("Volatilidade", "Volatility")) + "</th></tr></thead><tbody>" +
       ps.map(function (p, k) {
-        var notaDy = p.dyNota === "prejuizo" ? L("sem lucro de referência: zero", "no reference earnings: zero") : p.dyNota === "lucro" ? L("limitado ao lucro (yield 12m " + X.pct(p.dy12, 1) + ")", "capped at earnings (12m yield " + X.pct(p.dy12, 1) + ")") :
+        var notaDy = p.dyNota === "prejuizo" ? L("prejuízo em 12 meses e em 5 anos: zero", "losses over 12 months and 5 years: zero") : p.dyNota === "lucro" ? L("limitado ao lucro (yield 12m " + X.pct(p.dy12, 1) + ")", "capped at earnings (12m yield " + X.pct(p.dy12, 1) + ")") :
           p.dyNota === "teto" ? L("teto de 15% (yield 12m " + X.pct(p.dy12, 1) + ")", "15% cap (12m yield " + X.pct(p.dy12, 1) + ")") : L("proventos de 12 meses", "12-month payouts");
         var partes = [];
         if (p.pesos.hist) partes.push(L("histórico ", "history ") + pctF(p.gHist) + " × " + nf(0).format(p.pesos.hist * 100) + "%");
         if (p.pesos.sust) partes.push(L("ROE × retenção ", "ROE × retention ") + pctF(p.gSust) + " × " + nf(0).format(p.pesos.sust * 100) + "%");
         partes.push(L("longo prazo ", "long run ") + pctF(p.gLp) + " × " + nf(0).format(p.pesos.lp * 100) + "%");
-        var notaV = p.plMed ? L("P/L ", "P/E ") + nf(1).format(p.plHoje) + L(" → mediana de 10 anos ", " → 10-year median ") + nf(1).format(p.plMed) + L(", metade em 5 anos", ", half of the gap in 5 years") : L("sem histórico de P/L comparável", "no comparable P/E history");
+        var notaV = p.plMed && p.plHoje ? L("P/L ", "P/E ") + nf(1).format(p.plHoje) + L(" → mediana de 10 anos ", " → 10-year median ") + nf(1).format(p.plMed) +
+          L(": " + pctS(p.vCheio) + " × previsibilidade " + nf(0).format(p.score), ": " + pctS(p.vCheio) + " × predictability " + nf(0).format(p.score)) : L("sem histórico de P/L comparável", "no comparable P/E history");
         return "<tr><td><b>" + p.t + "</b></td>" +
           '<td class="num">' + nf(0).format(pesos[k] * 100) + "%</td>" +
           '<td class="num">' + pctF(p.dyLiq) + '<br><small class="mudo">' + esc(notaDy + (p.fracJcp && ui.irJcp ? L("; JCP líquido de IR", "; JCP net of tax") : "")) + "</small></td>" +
           '<td class="num">' + pctF(p.g) + '<br><small class="mudo">' + esc(partes.join(" + ")) + "</small></td>" +
           '<td class="num">' + pctS(p.v) + '<br><small class="mudo">' + esc(notaV) + "</small></td>" +
           '<td class="num"><b>' + pctS(p.r) + "</b>" + '<br><small class="mudo">' + esc(p.mercado != null ?
-            L("próprio " + pctS(p.rProprio) + ", metade do caminho até a mediana do mercado (" + pctS(p.mercado) + ")", "own " + pctS(p.rProprio) + ", halfway to the market median (" + pctS(p.mercado) + ")") : L("ao ano", "a year")) + "</small></td>" +
+            L("próprio " + pctS(p.rProprio) + ", metade do caminho até o do mercado (" + pctS(p.mercado) + ")", "own " + pctS(p.rProprio) + ", halfway to the market's (" + pctS(p.mercado) + ")") : L("ao ano", "a year")) + "</small></td>" +
           '<td class="num">' + pctF(p.sigma) + '<br><small class="mudo">' + esc(p.sigmaHist != null ? L(p.nSemanas + " semanas: " + X.pct(p.sigmaHist, 1), p.nSemanas + " weeks: " + X.pct(p.sigmaHist, 1)) : L("pouco histórico: referência", "short history: reference")) + "</small></td></tr>";
       }).join("") + "</tbody></table></div>" +
       "<h3>" + esc(L("Pressupostos da carteira", "Portfolio assumptions")) + "</h3>" +
       '<ul class="sim-lista">' +
       "<li>" + esc(L("Retorno de referência da carteira: ", "Portfolio reference return: ") + pctS(pr.r) + L(" ao ano (média dos retornos de referência pelos pesos de hoje). É a mediana: metade dos cenários fica acima.", " a year (reference returns averaged by today's weights). It is the median: half the scenarios end above it.")) + "</li>" +
-      "<li>" + esc(L("Retorno de referência de cada ação = (1 + dividend yield) × (1 + crescimento do lucro por ação) × (1 + reprecificação) − 1, puxado metade do caminho para a mediana do mercado (" + pctS(ps[0].mercado) + " ao ano, a mesma conta para todas as ações da base): previsão de retorno de uma ação isolada erra muito. Lucro de referência: o menor entre o de 12 meses e a mediana dos 5 últimos anos.",
-        "Each stock's reference return = (1 + dividend yield) × (1 + earnings-per-share growth) × (1 + re-rating) − 1, pulled halfway to the market median (" + pctS(ps[0].mercado) + " a year, the same calculation for every stock in the database): single-stock return forecasts are very noisy. Reference earnings: the lower of the last 12 months and the median of the last 5 years.")) + "</li>" +
+      "<li>" + esc(L("Retorno de referência de cada ação = (1 + dividend yield) × (1 + crescimento do lucro por ação) × (1 + reprecificação) − 1, puxado metade do caminho para o do mercado (" + pctS(ps[0].mercado) + " ao ano: a mesma conta para todas as ações da base, pesada pelo valor de mercado). Previsão de retorno de uma ação isolada erra muito; a do mercado inteiro, menos.",
+        "Each stock's reference return = (1 + dividend yield) × (1 + earnings-per-share growth) × (1 + re-rating) − 1, pulled halfway to the market's (" + pctS(ps[0].mercado) + " a year: the same calculation for every stock in the database, weighted by market value). Single-stock return forecasts are very noisy; the whole market's much less so.")) + "</li>" +
       "<li>" + esc(L("Volatilidade da carteira: ", "Portfolio volatility: ") + pctF(pr.sigma) + L(" ao ano", " a year") + (pr.rhoMedio != null ? L(", com correlação média de ", ", with an average correlation of ") + nf(2).format(pr.rhoMedio) + L(" entre as ações (semanais de 3 anos, puxadas um quarto para 0,45)", " between the stocks (3 years of weekly returns, pulled a quarter of the way to 0.45)") : "") + ".") + "</li>" +
       "<li>" + esc(L("Cenários: percentis 10, 50 e 90 de uma distribuição lognormal do patrimônio em 5 anos. Na prática, crises e saltos deixam as pontas mais largas do que a curva normal sugere.",
         "Scenarios: 10th, 50th and 90th percentiles of a lognormal distribution of wealth in 5 years. In practice, crises and jumps make the tails fatter than the normal curve suggests.")) + "</li>" +
@@ -641,7 +656,12 @@
     alvo.innerHTML = html;
 
     // ------------------------------------------------------------ gráficos
-    var rotMes = function (mes) { return mes.slice(5) === "01" || c.linha.length <= 24 ? mes.slice(0, 4) + (c.linha.length <= 24 ? "-" + mes.slice(5) : "") : mes; };
+    var rotMes = function (mes) { return mes.slice(5) + "/" + mes.slice(0, 4); };
+    var passoAno = c.linha.length > 120 ? 2 : 1;
+    var rotEixo = c.linha.length <= 24 ? null : function (r, k) {
+      var ano = +r.slice(3), primeiro = k === 0 || c.linha[k - 1].mes.slice(0, 4) !== r.slice(3);
+      return primeiro && k > 0 && ano % passoAno === 0 ? String(ano) : "";
+    };
     var linha = c.linha.map(function (m) { return conv(R ? m.vR : m.v, m.d || m.mes + "-28"); });
     var serieCdi = ix && ix.cdi ? c.linha.map(function (m) { var d = m.d || m.mes + "-28"; return conv(valorBrl * valorEm(ix.cdi, d) / valorEm(ix.cdi, c.dCompra), d); }) : null;
     var serieIpca = !usd && ix && ix.ipca ? c.linha.map(function (m) { return valorBrl * ipcaFim(ix.ipca, m.mes + "-01") / ipcaInicio(ix.ipca, c.dCompra); }) : null;
@@ -649,7 +669,7 @@
     if (serieCdi) sP.push({ nome: "CDI", cor: "var(--c3)", v: serieCdi });
     if (serieIpca) sP.push({ nome: L("Inflação (IPCA)", "Inflation (IPCA)"), cor: "var(--muted)", v: serieIpca });
     X.linhas(document.getElementById("sim-graf-passado"), c.linha.map(function (m) { return rotMes(m.mes); }), sP, moeda,
-      { eixo: function (v) { return nf(0).format(v); }, limites: null, pontos: false });
+      { eixo: function (v) { return nf(0).format(v); }, limites: null, pontos: false, rotX: rotEixo });
     var rotAno = pr.anos.map(function (a) { return a.ano === 0 ? L("hoje", "today") : "+" + a.ano + L(a.ano === 1 ? " ano" : " anos", a.ano === 1 ? " yr" : " yrs"); });
     var cv = function (q) { return pr.anos.map(function (a) { return conv(a[q], c.hoje); }); };
     var sF = [
@@ -669,4 +689,6 @@
     pressupostos: pressupostos, fundamentos: fundamentos, ancoraMercado: ancoraMercado, projetar: projetar, retornosSemanais: retornosSemanais, volatilidade: volatilidade,
     correlacao: correlacao, anual: anual, semana: semana, ipcaInicio: ipcaInicio, ipcaFim: ipcaFim, phi: phi,
   };
+  // app.js roteia antes deste arquivo carregar: se a página já é a do simulador, desenha agora
+  if (typeof document !== "undefined" && document.body && document.body.getAttribute("data-pagina") === "simular") render(document.getElementById("app"));
 })();

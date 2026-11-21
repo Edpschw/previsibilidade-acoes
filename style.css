@@ -657,7 +657,7 @@ abbr[data-termo] { text-decoration: underline dotted; }
 .sim-chips .chip { cursor: pointer; }
 .sim-chip { display: inline-flex; align-items: center; gap: 4px; }
 .sim-chip button { border: 0; background: transparent; color: inherit; font: inherit; font-size: 15px; line-height: 1; padding: 0 2px; cursor: pointer; }
-.sim-busca { max-width: 420px; }
+.sim-busca { max-width: 420px; flex: 0 0 auto; }
 .sim-linha { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; }
 .sim-linha input[type="date"], .sim-linha input[type="number"], .sim-linha select {
   padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; }

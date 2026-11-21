@@ -138,12 +138,14 @@ class Proventos(unittest.TestCase):
 class ProventosDaPagina(unittest.TestCase):
     """Página de eventos corporativos da B3: o histórico inteiro, por classe, sem data de pagamento."""
     ITENS = [
-        {"typeStock": "PN", "corporateAction": "JRS CAP PROPRIO", "valueCash": "0,30", "lastDatePrior": "15/03/2012",
+        {"typeStock": "PN", "corporateAction": "JRS CAP PROPRIO", "valueCash": "0,30", "lastDatePriorEx": "15/03/2012",
          "quotedPerShares": "1"},
-        {"typeStock": "PN", "corporateAction": "DIVIDENDO", "valueCash": "450,00", "lastDatePrior": "20/04/2010",
-         "quotedPerShares": "1000"},                                    # cotado por lote de mil ações
-        {"typeStock": "ON", "corporateAction": "DIVIDENDO", "valueCash": "0,25", "lastDatePrior": "15/03/2012"},
-        {"typeStock": "PN", "corporateAction": "SUBSCRICAO", "valueCash": "1,00", "lastDatePrior": "15/03/2013"},
+        {"typeStock": "PN", "corporateAction": "DIVIDENDO", "valueCash": "450,00", "lastDatePriorEx": "20/04/2010",
+         "quotedPerShares": "1000", "closingPricePriorExDate": "30,00"},  # cotado por lote de mil ações
+        {"typeStock": "PN", "corporateAction": "DIVIDENDO", "valueCash": "25,00", "lastDatePriorEx": "20/05/2011",
+         "closingPricePriorExDate": "30,00"},                           # 83% do preço: escala errada
+        {"typeStock": "ON", "corporateAction": "DIVIDENDO", "valueCash": "0,25", "lastDatePriorEx": "15/03/2012"},
+        {"typeStock": "PN", "corporateAction": "SUBSCRICAO", "valueCash": "1,00", "lastDatePriorEx": "15/03/2013"},
     ]
 
     def test_da_classe_com_pagamento_estimado(self):

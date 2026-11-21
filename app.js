@@ -959,7 +959,8 @@
     return { lo: lo, hi: hi, ticks: ticks };
   }
 
-  function base(el, anos, todos, fmtEixo) {
+  /** rotX(rótulo, k): texto do eixo x (vazio pula); sem ele, o eixo mostra os rótulos espaçados */
+  function base(el, anos, todos, fmtEixo, rotX) {
     var w = Math.max(280, el.clientWidth), h = ALTURA;
     var vals = todos.filter(function (v) { return v != null && isFinite(v); });
     var min = Math.min(0, Math.min.apply(null, vals.length ? vals : [0]));
@@ -976,7 +977,8 @@
           '<text class="eixo" x="' + (M.l - 8) + '" y="' + (y(tk) + 4) + '" text-anchor="end">' + fmtEixo(tk) + "</text>";
       }).join("") +
       anos.map(function (a, k) {
-        return k % passoRot === (anos.length - 1) % passoRot ? '<text class="eixo" x="' + x(k) + '" y="' + (h - 6) + '" text-anchor="middle">' + a + "</text>" : "";
+        var txt = rotX ? rotX(a, k) : k % passoRot === (anos.length - 1) % passoRot ? a : "";
+        return txt ? '<text class="eixo" x="' + x(k) + '" y="' + (h - 6) + '" text-anchor="middle">' + txt + "</text>" : "";
       }).join("");
     return { w: w, h: h, x: x, y: y, bw: bw, svg: svg, ih: ih };
   }
@@ -1043,7 +1045,7 @@
     var corta = function (v) { return v == null || !lim ? v : Math.max(lim[0], Math.min(lim[1], v)); };
     var todos = [].concat.apply([], series.map(function (s) { return s.v; })).map(corta);
     if (!todos.some(function (v) { return v != null; })) { el.innerHTML = '<p class="mudo">' + t("sem_dados") + "</p>"; return; }
-    var g = base(el, anos, todos, opts.eixo || function (v) { return nf(0).format(v * 100) + "%"; });
+    var g = base(el, anos, todos, opts.eixo || function (v) { return nf(0).format(v * 100) + "%"; }, opts.rotX);
     var corpo = focoRect(g);
     // opts.faixas: [{ de, ate, cor }] área entre duas séries (leque de cenários do simulador)
     (opts.faixas || []).forEach(function (f) {
