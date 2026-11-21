@@ -215,26 +215,290 @@ def eventos_acoes(sup):
     return [{"data": d, "tipo": t, "fator": m} for (d, t), m in sorted(out.items())]
 
 
+def contagem_confirma(r, f):
+    """A contagem confirma o evento de fator f se o salto r do ano passa por ele, com folga de
+    recompra (15%) e de emissão no mesmo ano. Evento pequeno (bonificação de até 25%) fica na
+    folga de 15% para cada lado. Nos outros, ou o evento explica o grosso do salto (sobra até
+    2,5× de emissão; grupamento 2:1 com a contagem parada não é grupamento mais emissão de 100%),
+    ou a contagem andou 2× ou mais no sentido dele: emissão grande no mesmo ano (Americanas,
+    2024: grupamento 100:1 e aumento de capital de 22×; a contagem caiu 4,5×)."""
+    if not r or r <= 0:
+        return False
+    x = r / f
+    if abs(math.log(f)) < math.log(1.25):
+        return 0.85 < x < 1.18
+    if x <= 0.85:
+        return False
+    if x < 2.5 and abs(math.log(x)) < abs(math.log(r)):
+        return True
+    return math.log(r) * math.log(f) > 0 and abs(math.log(r)) >= LOG_2
+
+
 def eventos_confirmados(anos, s, eventos):
-    """Fica só o evento que a contagem anual da CVM confirma: a quantidade salta pelo fator (±15%,
-    folga para emissões no mesmo ano) entre o fim do ano anterior e o do ano em que ele vale.
-    Grava "ano" = primeiro exercício cuja contagem já inclui o evento. Nos anos estimados pelo LPA
-    (média do ano), o salto pode aparecer só no exercício seguinte."""
+    """Fica só o evento que a contagem anual da CVM confirma: a quantidade salta pelo fator entre o
+    fim do ano anterior e o do ano em que ele vale. Folga de 15% para baixo (recompra) e até 2,5×
+    para cima: emissão no mesmo ano (Cosan, 2021: desdobramento e incorporação da controladora).
+    Dois eventos no mesmo ano: cada um confere o que sobrou do salto depois do outro.
+
+    Grava "ano" = primeiro exercício cuja contagem já inclui o evento e "ano_preco" = primeiro fim
+    de ano cotado na base nova. Os dois diferem quando:
+      - o ano é estimado pelo LPA (média do ano): o salto aparece só no exercício seguinte;
+      - o evento é do começo do ano (até abril) e a DFP do ano anterior, entregue depois dele, já
+        traz a quantidade nova (IRB: grupamento de fevereiro de 2023 já na DFP de 2022)."""
     ac, est = s["acoes"], s.get("acoes_estimadas") or [False] * len(anos)
+    ja = [1.0] * len(anos)  # fator dos eventos já confirmados em cada ano
     out = []
-    for ev in eventos:
+    for ev in sorted(eventos, key=lambda x: x["data"]):
         d = ev["data"]
         y = int(d[:4]) + (1 if d[5:] >= "12-31" else 0)  # "com" no último dia do ano: vale no seguinte
-        for cand in (y, y + 1):
+        for cand in (y, y + 1, y - 1):
             if cand not in anos or anos.index(cand) == 0:
                 continue
             k = anos.index(cand)
             if cand == y + 1 and not est[k - 1] and not est[k]:
                 continue
-            if ac[k] and ac[k - 1] and 0.85 < ac[k] / ac[k - 1] / ev["fator"] < 1.18:
-                out.append({**ev, "ano": cand})
+            if cand == y - 1 and d[5:7] > "04":
+                continue
+            if ac[k] and ac[k - 1] and contagem_confirma(ac[k] / ac[k - 1] / ja[k], ev["fator"]):
+                ja[k] *= ev["fator"]
+                out.append({**ev, "ano": cand, "ano_preco": y})
                 break
     return out
+
+
+# Fatores de desdobramento e grupamento usuais. A contagem só infere um evento por um destes;
+# as bonificações de 20% a 50% só entram pelo LPA reapresentado (emissões desse tamanho são comuns).
+FATORES = sorted({float(x) for b in (2, 3, 4, 5, 6, 8, 10, 15, 20, 25, 30, 40, 50, 100, 1000) for x in (b, 1 / b)})
+FATORES_LPA = sorted(FATORES + [1.2, 1.25, 1.3, 1.5, 1 / 1.5])
+LPA_MIN = 0.1  # abaixo disso, o arredondamento do LPA na DFP já desloca a razão em mais de 1%
+LOG_15, LOG_2, LOG_3 = math.log(1.5), math.log(2), math.log(3)
+
+
+def fator_comum(r, tol, grandes=False, fatores=FATORES):
+    """O fator usual mais próximo de r, se a diferença for de no máximo tol (0,03 = 3%).
+    grandes=True: só 1:3 ou maior (e 3:1 ou maior), que o preço consegue confirmar."""
+    if not r or r <= 0:
+        return None
+    f = min(fatores, key=lambda x: abs(math.log(r / x)))
+    if grandes and abs(math.log(f)) < LOG_3 - 1e-9:
+        return None
+    return f if abs(r / f - 1) <= tol else None
+
+
+def fatores_ano(anos, eventos, chave):
+    """Por ano, o produto dos fatores dos eventos que valem depois dele: chave "ano" (contagem) ou
+    "ano_preco" (cotação; evento sem ano_preco não mexe nela). Na contagem, None antes de uma
+    quebra de base."""
+    out = []
+    for a in anos:
+        f = 1.0
+        for ev in eventos:
+            if ev["tipo"] == "base":
+                if chave == "ano" and ev["ano"] > a:
+                    f = None
+                    break
+            elif ev.get(chave) is not None and ev[chave] > a:
+                f *= ev["fator"]
+        out.append(f)
+    return out
+
+
+def _razoes_contagem(anos, s, eventos):
+    """r[k] = ações(k) / ações(k-1), as duas na base de hoje pelos eventos já conhecidos."""
+    fa = fatores_ano(anos, eventos, "ano")
+    ac = [x * f if x and f else None for x, f in zip(s["acoes"], fa)]
+    return [None] + [ac[k] / ac[k - 1] if ac[k] and ac[k - 1] else None for k in range(1, len(anos))]
+
+
+def _razoes_preco(anos, precos_ano, eventos):
+    """q[k] = cotação(k) / cotação(k-1) do primeiro ticker com as duas, na base de hoje."""
+    fp = fatores_ano(anos, eventos, "ano_preco")
+    q = [None] * len(anos)
+    for k in range(1, len(anos)):
+        for v in precos_ano.values():
+            if v[k - 1] and v[k]:
+                q[k] = (v[k] / fp[k]) / (v[k - 1] / fp[k - 1])
+                break
+    return q
+
+
+def _ganho(q, f):
+    """Quanto o evento de fator f explica a variação q da cotação melhor do que a ausência dele
+    (em log): positivo quando a cotação andou como num desdobramento (caiu para ~1/f)."""
+    return abs(math.log(q)) - abs(math.log(q * f))
+
+
+def _ano_do_preco(anos, k, f, q, estimado):
+    """Primeiro fim de ano cotado na base nova, para um evento que a contagem põe no ano k.
+
+    A cotação confirma (andou como num desdobramento) ou não diz nada: fica k. Desmente com força
+    (a variação sem o evento é bem mais normal) e um vizinho tem o salto que só o evento explica:
+    vai para o vizinho (contagem atrasada; Tegma: grupamento no preço de 2023, na contagem só
+    em 2025). Fator 2 é confundido com a volatilidade de um ano: só olha o ano seguinte.
+    Sem vizinho, ou com a cotação ambígua num ano estimado pelo LPA, devolve None: a contagem é
+    ajustada e a cotação, não (erro na estimativa, não evento; Vale, 2009).
+    Devolve (ano ou None, aceita): aceita=False quando nada sustenta o evento."""
+    if q[k] is None:
+        return anos[k], True
+    g = _ganho(q[k], f)
+    if g > LOG_15:
+        return anos[k], True
+    if g < -LOG_2:
+        grande = abs(math.log(f)) >= LOG_3 - 1e-9
+        vizinhos = (k + 1, k - 1, k + 2, k - 2) if grande else (k + 1,)
+        melhor = max(((j, _ganho(q[j], f)) for j in vizinhos if 0 < j < len(anos) and q[j] is not None),
+                     key=lambda x: x[1], default=None)
+        if melhor and melhor[1] > LOG_2:
+            return anos[melhor[0]], True
+        return None, estimado
+    return (None if estimado else anos[k]), True
+
+
+def eventos_por_lpa(anos, s, precos_ano, eventos):
+    """Desdobramento e grupamento que a ficha da B3 não lista, achados pelo LPA reapresentado.
+
+    Cada DFP repete o LPA do ano anterior, e o CPC 41 manda refazê-lo na base nova de ações
+    quando há desdobramento, grupamento ou bonificação (inclusive entre o fim do exercício e a
+    entrega da DFP); emissão não muda o LPA já divulgado. LPA original / reapresentado a 1% de um
+    fator usual, com a contagem saltando pelo fator (folga de emissão como na B3) no ano seguinte
+    ou no outro (DFP ainda com a quantidade antiga), vira evento. s["_lpa_seguinte"][i] = LPA de
+    anos[i] na DFP do ano seguinte."""
+    seg = s.get("_lpa_seguinte")
+    if not seg:
+        return []
+    lpa = s["lpa_declarado"]
+    todos, out = list(eventos), []
+    for i in range(len(anos)):
+        a, b = lpa[i], seg[i]
+        if a is None or b is None or abs(a) < LPA_MIN or abs(b) < LPA_MIN or a * b < 0:
+            continue
+        f = fator_comum(a / b, 0.01, fatores=FATORES_LPA)
+        if f is None:
+            continue
+        for c in (anos[i] + 1, anos[i] + 2):
+            if c not in anos:
+                continue
+            k = anos.index(c)
+            if contagem_confirma(_razoes_contagem(anos, s, todos)[k], f):
+                # o evento é posterior à DFP de anos[i]: a cotação muda de base no ano da contagem
+                # ou, se foi no começo do ano seguinte (antes da entrega da DFP), nele
+                ap, q = c, _razoes_preco(anos, precos_ano, todos)
+                if (c == anos[i] + 1 and k + 1 < len(anos) and q[k] is not None and q[k + 1] is not None
+                        and _ganho(q[k], f) < -LOG_2 and _ganho(q[k + 1], f) > LOG_2):
+                    ap = anos[k + 1]
+                tipo = "desdobramento" if f >= 2 else "bonificacao" if f > 1 else "grupamento"
+                ev = {"tipo": tipo, "fator": round(f, 8),
+                      "ano": c, "ano_preco": ap, "origem": "lpa"}
+                out.append(ev)
+                todos.append(ev)
+                break
+    return out
+
+
+def _lpa_nega(anos, s, k):
+    """A DFP do ano k repetiu o LPA do ano anterior igual (±2%): não houve desdobramento nem
+    grupamento entre as duas DFPs, e o salto da contagem no ano k é emissão (ou cancelamento)."""
+    seg = s.get("_lpa_seguinte")
+    if not seg or anos[k] - anos[k - 1] != 1:
+        return False
+    a, b = s["lpa_declarado"][k - 1], seg[k - 1]
+    return a is not None and b is not None and abs(a) >= LPA_MIN and abs(b) >= LPA_MIN and 0.98 < a / b < 1.02
+
+
+def eventos_inferidos(anos, s, precos_ano, eventos):
+    """O salto da contagem que sobra depois dos eventos da B3 e do LPA.
+
+    - A 3% de um fator usual, sem a cotação desmentir: "ajuste" de base (desdobramento que a B3
+      não lista, como o da Vivo em 2025, ou troca de base antes da abertura de capital, como a da
+      CSN Mineração em 2021). Fator de 3× ou mais com a cotação confirmando aceita até 8%:
+      desdobramento e emissão no mesmo ano (Magalu, 2019). Na emenda entre ano estimado pelo LPA e
+      ano da DFP, até 6% (a estimativa erra uns % quando ON e PN têm direitos diferentes).
+    - Salto de 3× ou mais sem explicação, sem cotação para conferir, ou com ano estimado e valor
+      de mercado que salta 4×: "base" — os anos anteriores ficam sem valor por ação comparável
+      (GPS: 117× na abertura de capital, em 2021).
+    - Emissão de verdade, com cotação (Casas Bahia, 2025: conversão de dívida), fica como está.
+    Não infere no ano que já tem evento da B3 ou do LPA: a ficha lista todos os do ano, e o que
+    sobra do salto é emissão. O LPA reapresentado igual também veta. Ano sem quantidade no meio
+    (LPA ausente) só entra na regra da quebra, comparando com o último ano com quantidade."""
+    n = len(anos)
+    est = s.get("acoes_estimadas") or [False] * n
+    todos, out = list(eventos), []
+    com_evento = {ev["ano"] for ev in eventos}
+    for k in range(1, n):
+        if anos[k] in com_evento:
+            continue
+        fa = fatores_ano(anos, todos, "ano")
+        ac = [x * f if x and f else None for x, f in zip(s["acoes"], fa)]
+        j = next((i for i in range(k - 1, -1, -1) if ac[i]), None)
+        if not ac[k] or j is None:
+            continue
+        r = ac[k] / ac[j]
+        if abs(math.log(r)) < math.log(1.3):
+            continue
+        q = _razoes_preco(anos, precos_ano, todos)
+        estimado = est[k] or est[j]
+        if j < k - 1:
+            # buraco na série: só a quebra, com a cotação do período inteiro
+            qs = [q[i] for i in range(j + 1, k + 1)]
+            qk = math.prod(qs) if all(x is not None for x in qs) else None
+            if abs(math.log(r)) >= LOG_3 - 1e-9 and (qk is None or (estimado and not 0.25 < r * qk < 4)):
+                ev = {"tipo": "base", "ano": anos[k], "origem": "contagem"}
+                out.append(ev)
+                todos.append(ev)
+            continue
+        f, exige_preco = fator_comum(r, 0.03), False
+        if f is None and est[k] != est[k - 1]:
+            f, exige_preco = fator_comum(r, 0.06, grandes=True), True
+        if f is None:
+            g = fator_comum(r, 0.08, grandes=True)
+            if g and q[k] is not None and _ganho(q[k], g) > LOG_15:
+                f = g
+        if f and not _lpa_nega(anos, s, k):
+            ap, aceita = _ano_do_preco(anos, k, f, q, estimado)
+            if exige_preco and ap is None:
+                aceita = False
+            if exige_preco and ap == anos[k] and (q[k] is None or _ganho(q[k], f) <= LOG_15):
+                aceita = False  # na emenda, só com a cotação confirmando
+            if aceita:
+                ev = {"tipo": "ajuste", "fator": f, "ano": anos[k], "ano_preco": ap, "origem": "contagem"}
+                out.append(ev)
+                todos.append(ev)
+                continue
+        if abs(math.log(r)) >= LOG_3 - 1e-9 and (q[k] is None or (estimado and not 0.25 < r * q[k] < 4)):
+            ev = {"tipo": "base", "ano": anos[k], "origem": "contagem"}
+            out.append(ev)
+            todos.append(ev)
+    return out
+
+
+def eventos_da_empresa(anos, s, precos_ano, eventos_b3):
+    """Eventos que mudam a base de ações, em ordem: ficha da B3, LPA reapresentado e inferidos.
+    Antes da última quebra de base, o inferido que não mexe na cotação não muda nada (os anos
+    anteriores já ficam sem valor por ação) e sai, como as quebras anteriores."""
+    ev = eventos_confirmados(anos, s, eventos_b3)
+    ev += eventos_por_lpa(anos, s, precos_ano, ev)
+    ev += eventos_inferidos(anos, s, precos_ano, ev)
+    quebra = max((x["ano"] for x in ev if x["tipo"] == "base"), default=None)
+    if quebra:
+        def mexe_no_preco(x):
+            ap = x.get("ano_preco")
+            return ap is not None and any(v[i] for v in precos_ano.values() for i, a in enumerate(anos) if a < ap)
+        ev = [x for x in ev if x["ano"] >= quebra or x.get("origem") != "contagem" or
+              (x["tipo"] == "ajuste" and mexe_no_preco(x))]
+    return sorted(ev, key=lambda x: (x["ano"], x.get("data") or ""))
+
+
+def ajustar_valor_mercado(anos, s, eventos):
+    """Valor de mercado do fim de cada ano = ações × cotação da mesma data. Quando a contagem já
+    está na base nova e a cotação ainda na velha (evento entre o fim do ano e a entrega da DFP,
+    ou contagem atrasada), leva as duas para a base de hoje antes de multiplicar. Ajuste sem
+    ano_preco (erro de estimativa, não evento) não entra: não se sabe a base da cotação."""
+    com_preco = [ev for ev in eventos if ev["tipo"] == "base" or ev.get("ano_preco") is not None]
+    fa, fp = fatores_ano(anos, com_preco, "ano"), fatores_ano(anos, com_preco, "ano_preco")
+    vm = s["valor_mercado"]
+    for k in range(len(anos)):
+        if vm[k] and fa[k] and abs(fa[k] / fp[k] - 1) > 1e-9:
+            vm[k] = round(vm[k] * fa[k] / fp[k])
 
 
 # ISIN da B3: BR + raiz + espécie. Ex.: BRPETRACNOR9 (ON), BRPETRACNPR6 (PN), BRBPACCDAM16 (unit)
@@ -515,6 +779,10 @@ def extrair_ano(zf, ano, cnpjs, base, itr=False):
         elif c.startswith("3.99.01.") and nivel(c) == 3 and ds.strip() == "on":
             # LPA básico ON, em R$/ação (não segue ESCALA_MOEDA); serve para conferir a escala das ações
             gravar(cnpj, a, u, "lpa_on", float(l["VL_CONTA"] or 0))
+            if not u and not itr:
+                # o mesmo LPA repetido na DFP do ano seguinte: desdobramento e grupamento o
+                # reapresentam na base nova (CPC 41), emissão não (ver eventos_por_lpa)
+                gravar(cnpj, a, True, "_lpa_on_seguinte", float(l["VL_CONTA"] or 0))
         elif nivel(c) == 2 and "controladora" in ds and ("atribu" in ds or "sócios" in ds):
             reg = base.get(cnpj, {}).get(a, {})
             if c.startswith(reg.get("_cod_lucro", "#")) or reg.get("_cod_lucro") is None:
@@ -756,6 +1024,8 @@ def montar_series(anos_dados):
         s["acoes_on"].append(round(d["acoes_on"] * fator) if d.get("acoes_on") is not None else None)
         s["acoes_pn"].append(round(d["acoes_pn"] * fator) if d.get("acoes_pn") is not None else None)
         tesouraria = [round(d.get("tesouraria_on", 0) * fator), round(d.get("tesouraria_pn", 0) * fator)]
+    s["_lpa_seguinte"] = [anos_dados[a].get("_lpa_on_seguinte") if anos_dados[a].get("_origem", {}).get("lpa_on")
+                          else None for a in anos]
     estimar_acoes_antigas(anos, anos_dados, s)
     s["_tesouraria"] = tesouraria  # do último exercício; descontada da contagem atual da B3
     s["_fator_acoes"] = fator      # correção de escala do último exercício (vale também para o ITR)
@@ -767,22 +1037,69 @@ def estimar_acoes_antigas(anos, anos_dados, s):
     LPA ON declarado na DRE (lucro da controladora / LPA), que é a média ponderada do ano.
     Marca esses anos em s["acoes_estimadas"] para a interface avisar."""
     s["acoes_estimadas"] = [False] * len(anos)
-    conhecidas = next((x for x in s["acoes"] if x), None)
     for i, a in enumerate(anos):
         if s["acoes"][i]:
             continue
         lpa, lucro = anos_dados[a].get("lpa_on"), s["lucro_controladora"][i]
         if not lpa or not lucro or abs(lpa) < 0.05:
             continue
-        estimada = abs(lucro * 1000 / lpa)
-        if conhecidas:
-            # LPA declarado por lote de mil ações (acontece): corrige pela ordem de grandeza
-            while estimada / conhecidas > 300:
-                estimada /= 1000
-            while estimada / conhecidas < 1 / 300:
-                estimada *= 1000
-        s["acoes"][i] = round(estimada)
+        s["acoes"][i] = round(abs(lucro * 1000 / lpa))
         s["acoes_estimadas"][i] = True
+    ancorar_estimativas(s)
+
+
+def ancorar_estimativas(s):
+    """LPA declarado por lote de mil ações (acontece): leva cada estimativa à ordem de grandeza do
+    ano seguinte com quantidade, de trás para a frente a partir da primeira DFP. Salto de 300× ou
+    mais de um ano para o outro é escala, não evento. Roda de novo depois de
+    corrigir_escala_por_preco: a quantidade da DFP pode estar em milhares e só ser corrigida pelo
+    preço (Portobello e Banrisul em 2020 deixavam as estimativas mil vezes menores)."""
+    ac, est = s["acoes"], s["acoes_estimadas"]
+    ref = None
+    for i in range(len(ac) - 1, -1, -1):
+        x = ac[i]
+        if not x:
+            continue
+        if est[i] and ref:
+            while x / ref > 300:
+                x /= 1000
+            while x / ref < 1 / 300:
+                x *= 1000
+            ac[i] = round(x)
+        ref = ac[i]
+
+
+def descartar_estimativas_isoladas(anos, s):
+    """Ano estimado pelo LPA que destoa dos dois vizinhos por 3× ou mais, com os vizinhos de
+    acordo entre si (±30%): lucro ou LPA daquele ano em outra escala (Portobello, 2019: 16 mi de
+    ações entre 159 mi e 154 mi). A estimativa sai e o ano fica sem quantidade."""
+    ac, est = s["acoes"], s["acoes_estimadas"]
+    for k in range(1, len(anos) - 1):
+        if not est[k] or not (ac[k - 1] and ac[k] and ac[k + 1]):
+            continue
+        r1, r2 = ac[k] / ac[k - 1], ac[k + 1] / ac[k]
+        if abs(math.log(r1)) >= LOG_3 and abs(math.log(r2)) >= LOG_3 and 0.77 < r1 * r2 < 1.3:
+            ac[k], est[k] = None, False
+
+
+def corrigir_ano_pelo_lpa(anos, s):
+    """Quantidade da DFP que destoa num ano só: os dois vizinhos e as ações implícitas no LPA do
+    ano (lucro / LPA) concordam entre si (±15%) e a quantidade declarada fica a mais de 30% de
+    todos (PetroRio, 2022: 491 mi de ações entre 839 mi e 835 mi, com LPA que implica 844 mi).
+    Fica a quantidade implícita no LPA; o ano entra em s["acoes_corrigidas"]."""
+    ac, est, lpa, luc = s["acoes"], s["acoes_estimadas"], s["lpa_declarado"], s["lucro_controladora"]
+    for k in range(1, len(anos) - 1):
+        if est[k - 1] or est[k] or est[k + 1] or not (ac[k - 1] and ac[k] and ac[k + 1]):
+            continue
+        if not lpa[k] or not luc[k] or abs(lpa[k]) < 0.05:
+            continue
+        impl = abs(luc[k] * 1000 / lpa[k])
+        if all(0.87 < impl / ac[j] < 1.15 for j in (k - 1, k + 1)) and not 0.77 < ac[k] / impl < 1.3:
+            fator = impl / ac[k]
+            for chave in ("acoes", "acoes_on", "acoes_pn"):
+                if s[chave][k]:
+                    s[chave][k] = round(s[chave][k] * fator)
+            s.setdefault("acoes_corrigidas", []).append(anos[k])
 
 
 def acoes_cvm(comp, s, fator, b3=None):
@@ -1161,6 +1478,9 @@ def main():
         # fechamento de cada ticker no fim de cada exercício e valor de mercado na mesma data
         precos_ano = {t: [anuais.get(a, {}).get(t, (None, None))[1] for a in anos] for t in tk}
         corrigir_escala_por_preco(anos, s, precos_ano)
+        ancorar_estimativas(s)
+        corrigir_ano_pelo_lpa(anos, s)
+        descartar_estimativas_isoladas(anos, s)
         s["valor_mercado"] = [
             valor_mercado({t: precos_ano[t][i] for t in tk if precos_ano[t][i]}, tk, units,
                           s["acoes_on"][i], s["acoes_pn"][i], s["acoes"][i])
@@ -1182,6 +1502,9 @@ def main():
                         "pn": round(pn - tes_pn if pn > tes_pn else pn),
                         "tesouraria": tes_on + tes_pn}
         cvm = acoes_cvm(COMPOSICAO.get(cnpj), s, fator_acoes, acoes_b3 and acoes_b3["on"] + acoes_b3["pn"])
+        eventos = eventos_da_empresa(anos, s, precos_ano, eventos_acoes(sup))
+        ajustar_valor_mercado(anos, s, eventos)
+        s.pop("_lpa_seguinte", None)
         vm_atual = valor_mercado(precos_hoje, tk, units, acoes_b3["on"], acoes_b3["pn"],
                                  acoes_b3["on"] + acoes_b3["pn"]) if acoes_b3 else vm_dfp
         prov = proventos_12m(sup, tk) if sup else {}
@@ -1205,7 +1528,7 @@ def main():
             "valor_mercado_dfp": vm_dfp,
             "acoes_b3": acoes_b3,
             "acoes_cvm": cvm,
-            "eventos_acoes": eventos_confirmados(anos, s, eventos_acoes(sup)),
+            "eventos_acoes": eventos,
             "proventos_12m": prov_total,
             "dy12m": {t: round(v / precos_hoje[t], 4) for t, v in prov.items() if precos_hoje.get(t)},
             "liquidez": round(sum(c["volume"] for c in cotacao.values())),

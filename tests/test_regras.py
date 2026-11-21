@@ -225,6 +225,207 @@ class EventosDeAcoes(unittest.TestCase):
         s = {"acoes": [6.5e9, 6.6e9, 9.8e9], "acoes_estimadas": [True, True, True]}
         ev = P.eventos_confirmados(anos, s, [{"data": "2018-11-19", "tipo": "desdobramento", "fator": 1.5}])
         self.assertEqual(ev[0]["ano"], 2019)
+        self.assertEqual(ev[0]["ano_preco"], 2018)  # a cotação de fim de 2018 já é da base nova
+
+    def test_desdobramento_com_emissao_no_mesmo_ano(self):
+        # Cosan, 2021: desdobramento 1:4 e incorporação da controladora (contagem ×4,9)
+        anos = [2020, 2021, 2022]
+        s = {"acoes": [382.5e6, 1868.6e6, 1866.6e6], "acoes_estimadas": [False] * 3}
+        ev = P.eventos_confirmados(anos, s, [{"data": "2021-03-01", "tipo": "desdobramento", "fator": 4.0}])
+        self.assertEqual([(x["ano"], x["fator"]) for x in ev], [(2021, 4.0)])
+
+    def test_grupamento_com_a_contagem_parada_fica_de_fora(self):
+        # não é "grupamento 2:1 mais emissão de 100%": a contagem não mostra o evento
+        anos = [2022, 2023, 2024]
+        s = {"acoes": [500e6, 500e6, 501e6], "acoes_estimadas": [False] * 3}
+        self.assertEqual(P.eventos_confirmados(anos, s, [{"data": "2023-06-01", "tipo": "grupamento", "fator": 0.5}]), [])
+
+    def test_grupamento_com_aumento_de_capital_grande(self):
+        # Americanas, 2024: grupamento 100:1 e aumento de capital de 22×; a contagem caiu 4,5×
+        anos = [2023, 2024, 2025]
+        s = {"acoes": [902.5e6, 200.2e6, 200.2e6], "acoes_estimadas": [False] * 3}
+        ev = P.eventos_confirmados(anos, s, [{"data": "2024-06-20", "tipo": "grupamento", "fator": 0.01}])
+        self.assertEqual([(x["ano"], x["fator"]) for x in ev], [(2024, 0.01)])
+
+    def test_evento_do_comeco_do_ano_ja_na_dfp_anterior(self):
+        # IRB: grupamento 30:1 em fevereiro de 2023, já na composição do capital da DFP de 2022
+        anos = [2021, 2022, 2023]
+        s = {"acoes": [1255.3e6, 81.8e6, 81.8e6], "acoes_estimadas": [False] * 3}
+        ev = P.eventos_confirmados(anos, s, [{"data": "2023-02-10", "tipo": "grupamento", "fator": 1 / 30}])
+        self.assertEqual((ev[0]["ano"], ev[0]["ano_preco"]), (2022, 2023))
+
+    def test_dois_eventos_no_mesmo_ano(self):
+        anos = [2023, 2024]
+        s = {"acoes": [100e6, 220e6], "acoes_estimadas": [False] * 2}
+        ev = P.eventos_confirmados(anos, s, [{"data": "2024-03-01", "tipo": "desdobramento", "fator": 2.0},
+                                             {"data": "2024-09-01", "tipo": "bonificacao", "fator": 1.1}])
+        self.assertEqual(len(ev), 2)
+
+
+def serie_ev(acoes, estimadas=None, lpa=None, lucro=None, seguinte=None):
+    s = serie(acoes, lpa, lucro)
+    if estimadas:
+        s["acoes_estimadas"] = list(estimadas)
+    if seguinte:
+        s["_lpa_seguinte"] = list(seguinte)
+    return s
+
+
+def tipos(ev):
+    return [(x["tipo"], x.get("fator"), x["ano"], x.get("ano_preco")) for x in ev]
+
+
+class EventosInferidos(unittest.TestCase):
+    """Desdobramento, grupamento e troca de base que a ficha da B3 não lista (eventos_da_empresa)."""
+
+    def test_vivo_desdobramento_que_a_b3_nao_lista(self):
+        anos = [2023, 2024, 2025]
+        s = serie_ev([1652.6e6, 1626.7e6, 3195.6e6])
+        ev = P.eventos_da_empresa(anos, s, {"VIVT3": [53.44, 47.16, 33.10]}, [])
+        self.assertEqual(tipos(ev), [("ajuste", 2.0, 2025, 2025)])
+        self.assertEqual(ev[0]["origem"], "contagem")
+
+    def test_csn_mineracao_troca_de_base_antes_da_abertura(self):
+        anos = [2020, 2021, 2022]
+        s = serie_ev([181.0e6, 5380.4e6, 5485.3e6])
+        ev = P.eventos_da_empresa(anos, s, {"CMIN3": [None, 6.74, 4.08]}, [])
+        self.assertEqual(tipos(ev), [("ajuste", 30.0, 2021, 2021)])
+
+    def test_gps_quebra_de_base_na_abertura(self):
+        anos = [2020, 2021, 2022]
+        s = serie_ev([6.33e6, 739.2e6, 741.6e6])
+        ev = P.eventos_da_empresa(anos, s, {"GGPS3": [None, 14.33, 10.76]}, [])
+        self.assertEqual(tipos(ev), [("base", None, 2021, None)])
+
+    def test_casas_bahia_emissao_com_cotacao_fica(self):
+        # conversão de dívida em 2025: 6,9× mais ações, cotação de pé; diluição de verdade
+        anos = [2024, 2025]
+        s = serie_ev([95.1e6, 653.9e6])
+        self.assertEqual(P.eventos_da_empresa(anos, s, {"BHIA3": [2.83, 3.15]}, []), [])
+
+    def test_tegma_contagem_atrasada_e_cotacao_em_outro_ano(self):
+        # grupamento 4:1 que a cotação mostra em 2023 e a composição do capital só em 2025
+        anos = [2022, 2023, 2024, 2025]
+        s = serie_ev([173.5e6, 173.5e6, 173.5e6, 43.4e6])
+        ev = P.eventos_da_empresa(anos, s, {"TPIS3": [0.90, 4.20, 5.15, 5.37]}, [])
+        self.assertEqual(tipos(ev), [("ajuste", 0.25, 2025, 2023)])
+
+    def test_copel_desdobramento_na_emenda_com_ano_estimado(self):
+        # estimativa pelo LPA 4,5% fora (ON e PN com direitos diferentes); desdobramento de
+        # 2021 já na DFP de 2020, cotação na base nova só no fim de 2021
+        anos = [2019, 2020, 2021]
+        s = serie_ev([286.6e6, 2736.6e6, 2736.6e6], estimadas=[True, False, False])
+        ev = P.eventos_da_empresa(anos, s, {"CPLE3": [69.10, 68.74, 6.12]}, [])
+        self.assertEqual(tipos(ev), [("ajuste", 10.0, 2020, 2021)])
+
+    def test_vale_erro_de_estimativa_nao_mexe_na_cotacao(self):
+        anos = [2009, 2010, 2011]
+        s = serie_ev([10656.6e6, 5312.7e6, 5273.9e6], estimadas=[True, True, True])
+        ev = P.eventos_da_empresa(anos, s, {"VALE3": [49.50, 55.33, 39.45]}, [])
+        self.assertEqual(tipos(ev), [("ajuste", 0.5, 2010, None)])
+
+    def test_magalu_desdobramento_e_emissao_confirmados_pela_cotacao(self):
+        anos = [2018, 2019]
+        s = serie_ev([188.9e6, 1620.1e6], estimadas=[True, True])
+        ev = P.eventos_da_empresa(anos, s, {"MGLU3": [181.07, 47.70]}, [])
+        self.assertEqual(tipos(ev), [("ajuste", 8.0, 2019, 2019)])
+
+    def test_salto_sem_fator_e_sem_cotacao_que_confirme_fica(self):
+        # Gafisa, 2022: 6,6× menos ações (grupamento e emissão); fator nenhum a 8%
+        anos = [2021, 2022]
+        s = serie_ev([337.1e6, 51.1e6])
+        self.assertEqual(P.eventos_da_empresa(anos, s, {"GFSA3": [2.01, 9.90]}, []), [])
+
+    def test_ano_com_evento_da_b3_nao_e_inferido(self):
+        # o que sobra do grupamento da Americanas (22×) é emissão, não desdobramento
+        anos = [2023, 2024]
+        s = serie_ev([902.5e6, 200.2e6])
+        ev = P.eventos_da_empresa(anos, s, {"AMER3": [0.91, 5.15]},
+                                  [{"data": "2024-06-20", "tipo": "grupamento", "fator": 0.01}])
+        self.assertEqual([x["tipo"] for x in ev], ["grupamento"])
+
+    def test_lpa_reapresentado_igual_veta(self):
+        # emissão que dobra a quantidade; a DFP seguinte repete o LPA igual
+        anos = [2022, 2023]
+        s = serie_ev([1000e6, 2000e6], lpa=[1.50, 0.80], seguinte=[1.50, None])
+        self.assertEqual(P.eventos_da_empresa(anos, s, {"XPTO3": [10.0, 5.0]}, []), [])
+
+    def test_lpa_reapresentado_da_o_fator_exato(self):
+        # contagem ×4,886 (1:4 com emissão): sem o LPA, a inferência diria 1:5
+        anos = [2020, 2021]
+        s = serie_ev([382.5e6, 1868.6e6], lpa=[2.20, 3.30], seguinte=[0.55, None])
+        ev = P.eventos_da_empresa(anos, s, {"CSAN3": [77.00, 21.69]}, [])
+        self.assertEqual(tipos(ev), [("desdobramento", 4.0, 2021, 2021)])
+        self.assertEqual(ev[0]["origem"], "lpa")
+
+    def test_quebras_anteriores_e_ajustes_sem_cotacao_saem(self):
+        # antes de abrir capital: quebra em 2011 (37×), 2:1 em 2012 e quebra em 2013 (35×); só a
+        # última quebra conta, e o 2:1 sem cotação não muda mais nada
+        anos = [2010, 2011, 2012, 2013]
+        s = serie_ev([1e6, 37e6, 18.5e6, 650e6], estimadas=[True, True, True, False])
+        ev = P.eventos_da_empresa(anos, s, {}, [])
+        self.assertEqual(tipos(ev), [("base", None, 2013, None)])
+
+    def test_valor_de_mercado_com_contagem_e_cotacao_na_mesma_base(self):
+        # IRB 2022: ações já grupadas (DFP entregue depois do grupamento), cotação ainda não
+        anos = [2021, 2022, 2023]
+        s = {"valor_mercado": [5_046_000, 70_348, 3_623_740]}
+        P.ajustar_valor_mercado(anos, s, [{"tipo": "grupamento", "fator": 1 / 30, "ano": 2022, "ano_preco": 2023}])
+        self.assertEqual(s["valor_mercado"], [5_046_000, 2_110_440, 3_623_740])
+
+
+class EstimativasPeloLpa(unittest.TestCase):
+    def test_escala_do_ano_seguinte(self):
+        # LPA por lote de mil num ano: a estimativa sai mil vezes menor que a do ano seguinte
+        s = {"acoes": [159_700, 158_500_000, 141_000_000], "acoes_estimadas": [True, True, False]}
+        P.ancorar_estimativas(s)
+        self.assertEqual(s["acoes"][0], 159_700_000)
+
+    def test_magalu_desdobramentos_seguidos_nao_sao_escala(self):
+        # 1:8, 1:8 e 1:4 em poucos anos: 300× entre 2016 e 2020, mas nenhum salto de 300× num ano
+        s = {"acoes": [21_800_000, 176_600_000, 1_620_100_000, 6_463_400_000],
+             "acoes_estimadas": [True, True, True, False]}
+        P.ancorar_estimativas(s)
+        self.assertEqual(s["acoes"][0], 21_800_000)
+
+    def test_portobello_ano_isolado_sai(self):
+        anos = [2018, 2019, 2020]
+        s = {"acoes": [158.5e6, 16.0e6, 154.5e6], "acoes_estimadas": [True, True, False]}
+        P.descartar_estimativas_isoladas(anos, s)
+        self.assertEqual(s["acoes"], [158.5e6, None, 154.5e6])
+        self.assertEqual(s["acoes_estimadas"], [True, False, False])
+
+    def test_petrorio_ano_isolado_corrigido_pelo_lpa(self):
+        anos = [2021, 2022, 2023]
+        s = serie([839e6, 491e6, 835e6], lpa=[None, 4.0, None], lucro=[None, 3_375_000, None])
+        s["acoes_corrigidas"] = []
+        P.corrigir_ano_pelo_lpa(anos, s)
+        self.assertEqual(s["acoes"][1], 843_750_000)
+        self.assertEqual(s["acoes_corrigidas"], [2022])
+
+
+def zip_dfp_ano(ano, linhas):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr(f"dfp_cia_aberta_DRE_con_{ano}.csv", "\r\n".join([CAB_DRE] + linhas).encode("latin-1"))
+    buf.seek(0)
+    return zipfile.ZipFile(buf)
+
+
+def linha_lpa(ano_doc, ordem, ano, valor):
+    return (f"X;{ano_doc}-12-31;1;EMPRESA;000001;DF;REAL;MIL;{ordem};{ano}-01-01;{ano}-12-31;"
+            f"3.99.01.01;ON;{valor};S")
+
+
+class LpaReapresentado(unittest.TestCase):
+    def test_guarda_o_lpa_do_ano_anterior_na_dfp_seguinte(self):
+        base = {}
+        P.extrair_ano(zip_dfp_ano(2023, [linha_lpa(2023, "ÚLTIMO", 2023, "1.00000000")]), 2023, {"X"}, base)
+        P.extrair_ano(zip_dfp_ano(2024, [linha_lpa(2024, "ÚLTIMO", 2024, "0.30000000"),
+                                         linha_lpa(2024, "PENÚLTIMO", 2023, "0.25000000")]), 2024, {"X"}, base)
+        self.assertEqual(base["X"][2023]["lpa_on"], 1.0)              # o do próprio ano prevalece
+        self.assertEqual(base["X"][2023]["_lpa_on_seguinte"], 0.25)   # o reapresentado fica à parte
+        self.assertNotIn("_lpa_on_seguinte", base["X"][2024])
 
 
 class CorteDeLiquidez(unittest.TestCase):

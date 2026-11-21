@@ -113,18 +113,38 @@
   }
 
   /** fator que leva a quantidade do fim do exercício k para a base de ações de hoje: produto dos
-   *  desdobramentos, grupamentos e bonificações confirmados que vieram depois (e.eventos_acoes) */
+   *  eventos que vieram depois (e.eventos_acoes: ficha da B3, LPA reapresentado na DFP seguinte ou
+   *  ajuste inferido da contagem). null antes de uma quebra de base (tipo "base"): mudança de base
+   *  sem fator conhecido, como na abertura de capital; esses anos ficam sem valor por ação. */
   function fatorAjuste(e, k) {
     var f = 1, ano = e.anos[k];
-    (e.eventos_acoes || []).forEach(function (ev) { if (ev.ano > ano) f *= ev.fator; });
+    (e.eventos_acoes || []).forEach(function (ev) {
+      if (f != null && ev.ano > ano) f = ev.tipo === "base" ? null : f * ev.fator;
+    });
     return f;
   }
-  var NOME_EVENTO = { desdobramento: ["Desdobramento", "Split"], grupamento: ["Grupamento", "Reverse split"], bonificacao: ["Bonificação", "Bonus shares"] };
-  /** "Desdobramento 1:2" · "Grupamento 10:1" · "Bonificação 10%" */
+  /** o mesmo para a cotação do fim do exercício k: o evento vale a partir de ev.ano_preco, o
+   *  primeiro fim de ano cotado na base nova (pode diferir do ano da contagem); ajuste sem
+   *  ano_preco corrige só a contagem (erro de estimativa, não evento) e não mexe na cotação */
+  function fatorPreco(e, k) {
+    var f = 1, ano = e.anos[k];
+    (e.eventos_acoes || []).forEach(function (ev) {
+      var ap = ev.ano_preco === undefined ? ev.ano : ev.ano_preco;
+      if (ev.tipo !== "base" && ap != null && ap > ano) f *= ev.fator;
+    });
+    return f;
+  }
+  var NOME_EVENTO = { desdobramento: ["Desdobramento", "Split"], grupamento: ["Grupamento", "Reverse split"],
+    bonificacao: ["Bonificação", "Bonus shares"], ajuste: ["Ajuste de base", "Share basis adjustment"] };
+  /** "Desdobramento 1:2" · "Grupamento 10:1" · "Bonificação 10%" · "Ajuste de base 1:3 (inferido)" */
   function textoEvento(ev) {
-    var nome = L(NOME_EVENTO[ev.tipo][0], NOME_EVENTO[ev.tipo][1]), f = ev.fator;
-    if (ev.tipo === "bonificacao") return nome + " " + nf(f - 1 < 0.1 ? 1 : 0).format((f - 1) * 100) + "%";
-    return nome + " " + (f >= 1 ? "1:" + nf(f % 1 ? 2 : 0).format(f) : nf(1 / f % 1 ? 2 : 0).format(1 / f) + ":1");
+    if (ev.tipo === "base") return L("Quebra de base", "Share basis break");
+    var nm = NOME_EVENTO[ev.tipo] || [ev.tipo, ev.tipo], nome = L(nm[0], nm[1]), f = ev.fator, txt;
+    if (ev.tipo === "bonificacao") txt = nome + " " + nf(f - 1 < 0.1 ? 1 : 0).format((f - 1) * 100) + "%";
+    else txt = nome + " " + (f >= 1 ? "1:" + nf(f % 1 ? 2 : 0).format(f) : nf(1 / f % 1 ? 2 : 0).format(1 / f) + ":1");
+    if (ev.origem === "lpa") txt += L(" (pelo LPA reapresentado)", " (from restated EPS)");
+    else if (ev.origem === "contagem") txt += L(" (inferido)", " (inferred)");
+    return txt;
   }
 
   /** séries por ação, ano a ano, na moeda da tela (valores da DFP em R$ mil × 1000 / ações).
@@ -133,7 +153,7 @@
   function porAcaoAnual(e) {
     var s = e.series, bruta = s.acoes;
     var fatores = bruta.map(function (x, k) { return fatorAjuste(e, k); });
-    var ac = bruta.map(function (x, k) { return x ? x * fatores[k] : x; });
+    var ac = bruta.map(function (x, k) { return x && fatores[k] != null ? x * fatores[k] : null; });
     var pa = function (chave) {
       var v = serie(e, chave);
       return v.map(function (x, k) { return x != null && ac[k] ? x * 1000 / ac[k] : null; });
@@ -786,7 +806,7 @@
     var px = precosAno(e, tk);
     if (px) {
       // na base de ações de hoje: desdobramento ou grupamento não viram falsa queda ou alta
-      var pxAj = px.map(function (v, k) { return v == null ? null : v / fatorAjuste(e, k); });
+      var pxAj = px.map(function (v, k) { return v == null ? null : v / fatorPreco(e, k); });
       linhas($("#g-cotacao"), anos, [{ nome: tk, cor: "var(--c1)", v: pxAj.slice(ini) }], porAcao,
         { eixo: function (v) { return nf(v >= 100 ? 0 : 2).format(v); }, limites: null });
     } else {
@@ -827,7 +847,7 @@
       { nome: t("s_dividendos"), cor: "var(--c4)", v: neg(r.s("dividendos_pagos")) },
     ], dinheiro);
 
-    var acoes = e.series.acoes.slice(e.anos.length - anos.length);
+    var acoes = porAcaoAnual(e).acoes.slice(ini);  // base de hoje, como a tabela por ação
     var dvd = r.s("dividendos_pagos");
     barras($("#g-dividendos"), anos, [{ nome: t("s_total_pago"), cor: "var(--c4)", v: dvd }], dinheiro, {
       extra: function (k) {
@@ -850,6 +870,7 @@
         if (varV[k] != null) out.push([L("Variação no ano", "Change in year"), (varV[k] > 0 ? "+" : "") + pct(varV[k], 1)]);
         pa.eventos[ini + k].forEach(function (ev) { out.push([L("Evento", "Event"), textoEvento(ev)]); });
         if (pa.fatores[ini + k] !== 1) out.push([L("Como divulgado", "As reported"), qtd(pa.acoesBrutas[ini + k])]);
+        if (pa.fatores[ini + k] == null) out.push([L("Por ação", "Per share"), L("sem base comparável", "no comparable basis")]);
         if (est[ini + k]) out.push([L("Origem", "Source"), L("estimada pelo LPA", "estimated from EPS")]);
         return out;
       },
@@ -900,7 +921,7 @@
       [L("VPA", "Book value/share"), function (k) { var v = pa.vpa[ini + k]; return cel(v, porAcao(v), 1); }],
       [L("Dividendo/ação", "Dividend/share"), function (k) { var v = pa.dpa[ini + k]; return cel(v, porAcao(v)); }],
       [L("FCL por ação", "FCF per share"), function (k) { var v = pa.fclpa[ini + k]; return cel(v, porAcao(v), 1); }],
-      [L("Cotação ", "Price ") + tk + L(" (ajustada)", " (adjusted)"), function (k) { var v = px && px[ini + k] != null ? px[ini + k] / pa.fatores[ini + k] : null; return cel(v, porAcao(v)); }],
+      [L("Cotação ", "Price ") + tk + L(" (ajustada)", " (adjusted)"), function (k) { var v = px && px[ini + k] != null ? px[ini + k] / fatorPreco(e, ini + k) : null; return cel(v, porAcao(v)); }],
       [L("P/L", "P/E"), function (k) { var v = mult[k].pl; return cel(v, vezes(v)); }, 1],
       [L("P/VP", "P/B"), function (k) { var v = mult[k].pvp; return cel(v, vezes(v)); }, 1],
       [L("Dividend yield", "Dividend yield"), function (k) { var v = mult[k].dy; return cel(v, pct(v, 1)); }, 1],
@@ -908,6 +929,8 @@
     var temAjuste = anos.some(function (a, k) { return pa.fatores[ini + k] !== 1 || pa.eventos[ini + k].length; });
     lin = lin.filter(function (l) { return (l[3] !== "ajuste" || temAjuste) && !(e.financeiro && l[0] === L("FCL por ação", "FCF per share")); });
     var temEst = anos.some(function (a, k) { return est[ini + k]; });
+    var temQuebra = anos.some(function (a, k) { return pa.fatores[ini + k] == null; });
+    var temInferido = (e.eventos_acoes || []).some(function (ev) { return ev.origem && ev.tipo !== "base" && ev.ano > anos[0]; });
     return '<h3 style="margin:22px 0 8px">' + L("Por ação, ano a ano", "Per share, year by year") + "</h3>" +
       '<table class="tabela-dem"><thead><tr><th>' + simbolo() + "</th>" +
       anos.map(function (a) { return "<th>" + a + "</th>"; }).join("") + "</tr></thead><tbody>" +
@@ -916,6 +939,10 @@
       }).join("") + "</tbody></table>" +
       '<p class="aviso">' + esc(L("Ações no fim de cada exercício, sem tesouraria. Valores por ação, variação e cotação usam a quantidade na base de hoje: desdobramentos, grupamentos e bonificações confirmados pela contagem da CVM (datas e fatores da B3) são aplicados aos anos anteriores, para os anos serem comparáveis. Múltiplos usam o valor de mercado no último pregão do ano.",
         "Shares at each fiscal year-end, ex-treasury. Per-share figures, changes and prices use today's share basis: splits, reverse splits and bonus shares confirmed by the CVM count (dates and factors from B3) are applied to earlier years so they are comparable. Multiples use market cap on the year's last trading day.")) +
+      (temInferido ? esc(L(" Eventos que a B3 não lista entram pelo LPA reapresentado na DFP seguinte (exato) ou inferidos da contagem: salto da quantidade por um fator usual (1:2, 1:3, 10:1…) que a cotação não desmente.",
+        " Events B3 does not list come from EPS restated in the following filing (exact) or are inferred from the count: a jump by a usual factor (1:2, 1:3, 10:1…) that the price does not contradict.")) : "") +
+      (temQuebra ? esc(L(" Antes de uma quebra de base (salto da quantidade sem fator conhecido, como na abertura de capital), os valores por ação ficam em branco: não há como pô-los na base de hoje.",
+        " Before a share basis break (a jump in the count with no known factor, as at an IPO), per-share figures are left blank: they cannot be put on today's basis.")) : "") +
       (temEst ? esc(L(" ≈ estimado pelo LPA declarado: a DFP só informa a quantidade de ações a partir de 2020.", " ≈ estimated from reported EPS: annual filings only report the share count from 2020 on.")) : "") + "</p>";
   }
 
