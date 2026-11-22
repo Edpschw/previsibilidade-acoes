@@ -10,7 +10,7 @@
    *  escopo = seletor CSS: o termo só vale dentro dele ("Preço" é pilar no Ranking; "Price" é a
    *  coluna de cotação da lista de ações em inglês) */
   var LISTA = [
-    ["pl", ["P/L", "P/E"],
+    ["pl", ["P/L", "P/E", "P/L (lucro sobre o preço)", "P/E (earnings yield)"],
       ["P/L (preço/lucro)", "Quanto o mercado paga por cada R$ 1 de lucro anual da empresa. Também lido como o número de anos de lucro atual necessários para \"devolver\" o preço.",
         "Menor costuma ser mais barato, mas compare com o próprio setor e com o crescimento: empresa que cresce rápido merece P/L maior. Lucro extraordinário num ano distorce.",
         "5x a 12x com lucro estável (ex.: banco grande a 7x, elétrica a 9x).",
@@ -20,7 +20,7 @@
         "5x to 12x with steady earnings (e.g. a large bank at 7x, a utility at 9x).",
         "Above 25x with no strong growth to justify it; negative = the company lost money."],
       [function (e, i) { return i.pl > 0 ? i.pl : null; }, "x"]],
-    ["pvp", ["P/VP", "P/B"],
+    ["pvp", ["P/VP", "P/B", "P/VP (patrimônio sobre o preço)", "P/B (book yield)"],
       ["P/VP (preço/valor patrimonial)", "Valor de mercado dividido pelo patrimônio contábil: quanto se paga por cada R$ 1 que a empresa tem de patrimônio no balanço.",
         "Abaixo de 1x, a bolsa avalia a empresa por menos que o patrimônio: pode ser pechincha ou sinal de retorno baixo. Leia sempre junto com o ROE.",
         "0,8x a 2x com ROE acima de 15%.",
@@ -127,7 +127,7 @@
         "Price ÷ book value per share = P/B. A rising figure shows the company retains earnings and builds equity.",
         "Growing steadily.",
         "Falling, which points to losses or payouts above earnings."]],
-    ["roe", ["ROE"],
+    ["roe", ["ROE", "ROE (retorno sobre o patrimônio)", "ROE (return on equity)"],
       ["ROE (retorno sobre o patrimônio)", "Lucro da controladora dividido pelo patrimônio da controladora: quanto a empresa ganha por ano com cada R$ 1 dos acionistas.",
         "É a medida-chave de qualidade. Deve superar o custo de oportunidade (a renda fixa no Brasil rende 10% a 15% ao ano). Patrimônio muito pequeno infla o número.",
         "Acima de 15% de forma constante (ex.: bancos grandes perto de 20%).",
@@ -190,7 +190,7 @@
         "Negative means net cash: the company holds more cash than it owes. On its own it says little; compare it with EBITDA.",
         "Negative (net cash) or small relative to EBITDA.",
         "Growing faster than EBITDA for several years."]],
-    ["dlebitda", ["Dív. líq./EBITDA", "Dív.líq./EBITDA", "Net debt/EBITDA"],
+    ["dlebitda", ["Dív. líq./EBITDA", "Dív.líq./EBITDA", "Net debt/EBITDA", "Dívida líquida/EBITDA", "dívida/EBITDA"],
       ["Dívida líquida / EBITDA", "Quantos anos da geração operacional de caixa seriam necessários para pagar toda a dívida líquida.",
         "Menor é mais seguro. Setores com receita previsível (energia, saneamento) aguentam mais dívida. Não se aplica a bancos.",
         "Abaixo de 1,5x; negativo = caixa líquido, ainda melhor.",
@@ -200,7 +200,7 @@
         "Below 1.5x; negative = net cash, even better.",
         "Above 3x: interest weighs on earnings and risk rises if revenue falls; above 4x is a red flag."],
       [function (e, i) { return i.d12 ? i.dlEbitda12 : i.dlEbitda; }, "x"]],
-    ["dlpl", ["Dív. líq./PL", "Net debt/equity"],
+    ["dlpl", ["Dív. líq./PL", "Net debt/equity", "Dívida líquida/patrimônio", "dívida/patrimônio"],
       ["Dívida líquida / patrimônio", "Dívida líquida dividida pelo patrimônio da controladora: quanto do negócio é financiado por credores em vez de acionistas.",
         "Menor é mais conservador. Complementa a Dív. líq./EBITDA quando o EBITDA está deprimido.",
         "Abaixo de 0,5x.", "Acima de 1,5x."],
@@ -344,6 +344,15 @@
       ["Level 1 and Level 2 governance", "B3's intermediate segments. Level 2 allows preferred shares but gives them tag-along and rights close to Novo Mercado; Level 1 mainly requires more disclosure.",
         "In order of minority protection: Novo Mercado > Level 2 > Level 1 > Basic.",
         "Level 2: good protection even with preferred shares.", "Level 1: fewer rights for preferred holders."]],
+    ["basico", ["Básico", "Basic", "Segmento básico", "Basic segment"],
+      ["Segmento básico", "Empresa listada na B3 sem adesão a um segmento especial de governança: cumpre só o que a lei e a CVM exigem.",
+        "É o degrau mais baixo: Novo Mercado > Nível 2 > Nível 1 > Básico. As ações PN costumam não votar, e o tag along é o mínimo legal de 80%, só para as ON.",
+        "Mesmo no básico, histórico de respeito ao minoritário: dividendos regulares e sem diluição.",
+        "Controlador com amplos poderes e ações PN sem voto nem tag along."],
+      ["Basic segment", "A company listed on B3 without joining a special governance segment: it meets only what the law and the CVM (the Brazilian securities regulator) require.",
+        "It is the lowest rung: Novo Mercado > Level 2 > Level 1 > Basic. Preferred shares usually have no vote, and tag-along is the legal minimum of 80%, for common shares only.",
+        "Even in the basic segment, a record of fair treatment of minorities: regular dividends and no dilution.",
+        "A controlling shareholder with sweeping powers, and preferred shares with neither votes nor tag-along."]],
     ["acoes", ["Ações em circulação", "Shares outstanding", "Número de ações", "Share count"],
       ["Ações em circulação", "Quantidade de ações da empresa nas mãos de investidores: todas as emitidas (ON e PN) menos as recompradas e guardadas em tesouraria. Vem do formulário mais recente entregue à CVM.",
         "Valor de mercado = ações × cotação. Lucro e dividendo por ação dividem por esse número. O que importa é a direção ao longo dos anos: menos ações significa uma fatia maior para cada acionista.",
@@ -648,7 +657,7 @@
         "Compare scores within the profile first: a bank's metrics and a retailer's aren't directly comparable.",
         "Among the top of its profile.",
         "Among the bottom of its own profile."], null, ".rk"],
-    ["trava", ["Trava de dívida", "Debt cap"],
+    ["trava", ["Trava de dívida", "Debt cap", "dívida alta", "high debt"],
       ["Trava de dívida", "Dívida líquida/EBITDA máxima que o perfil setorial suporta. Acima dela, a nota fica limitada a 50. Outras travas: recuperação judicial (nota até 15), patrimônio negativo (25) e prejuízo nos últimos 12 meses (40).",
         "Evitam que um preço muito baixo esconda um problema sério (a armadilha de valor).",
         "Dívida abaixo do limite do perfil.",
@@ -693,7 +702,7 @@
         "It combines profitability and dividend policy: high ROE with low payout grows faster. It also feeds the Simulate tab's projection.",
         "Above 10% a year.",
         "Near zero: low ROE, or the company pays out all its earnings."]],
-    ["desalav", ["Desalavancagem (queda da dívida/EBITDA no último ano)", "Deleveraging (drop in net debt/EBITDA over the last year)"],
+    ["desalav", ["Desalavancagem (queda da dívida/EBITDA no último ano)", "Deleveraging (drop in net debt/EBITDA over the last year)", "alavancagem", "leverage"],
       ["Desalavancagem", "Quanto a dívida líquida/EBITDA caiu no último ano.",
         "Dívida caindo libera caixa para dividendos e reduz o risco. Subindo, vale ver o motivo: investimento que vai gerar receita ou caixa sendo queimado.",
         "Queda de meio ponto (0,5x) ou mais.",
@@ -702,7 +711,7 @@
         "Falling debt frees cash for dividends and lowers risk. If it rises, check why: investment that will bring revenue, or cash being burned.",
         "A drop of half a turn (0.5x) or more.",
         "A sharp rise with no investment to explain it."]],
-    ["pvgo", ["Quanto do preço depende de crescimento", "Share of the price that relies on growth"],
+    ["pvgo", ["Quanto do preço depende de crescimento", "Quanto do preço depende de crescimento (informativo)", "Share of the price that relies on growth", "Share of the price that relies on growth (informational)"],
       ["Quanto do preço depende de crescimento", "Parte do valor de mercado que o lucro de hoje, mantido para sempre, não explica: 1 − (lucro ÷ 15%) ÷ valor de mercado, com custo de capital de 15% ao ano. É o valor das oportunidades de crescimento (PVGO).",
         "Alto: o preço já conta com muito crescimento; se ele não vier, a ação cai. Baixo ou zero: o preço não exige crescer.",
         "Abaixo de 30%.",
@@ -711,7 +720,7 @@
         "High: the price already counts on a lot of growth; if it doesn't come, the share falls. Low or zero: the price doesn't require growth.",
         "Below 30%.",
         "Above 70% with uncertain growth."]],
-    ["areceber", ["Proventos aprovados a receber", "Proventos aprovados a receber (informativo)", "Approved payouts still to be paid"],
+    ["areceber", ["Proventos aprovados a receber", "Proventos aprovados a receber (informativo)", "Approved payouts still to be paid", "Approved payouts still to be paid (informational)"],
       ["Proventos aprovados a receber", "Dividendos e JCP já aprovados e ainda não pagos, sobre o valor de mercado de hoje (agenda da B3).",
         "Informativo: não entra na nota. Só recebe quem tinha a ação na data-com, que nestes casos já passou.",
         "Pagamentos regulares já aprovados.",
@@ -754,6 +763,88 @@
       ["Absolute value", "This metric enters the score at its own 0–100 value, not by its rank among stocks.",
         "Applies to the predictability score, which is already on a 0–100 scale.",
         "75 or more.", "Below 50."], null, ".rk"],
+
+    ["roic", ["ROIC", "ROIC (retorno sobre o capital investido)", "ROIC (return on invested capital)"],
+      ["ROIC (retorno sobre o capital investido)", "Lucro operacional depois de impostos (EBIT menos 34% de IR e CSLL) dividido pelo capital investido, que é o patrimônio mais a dívida líquida: quanto o negócio rende sobre todo o dinheiro aplicado nele, de acionistas e de credores.",
+        "Ao contrário do ROE, não sobe só porque a empresa se endividou; por isso compara melhor empresas com estruturas de capital diferentes. Precisa superar o custo do capital. Não se aplica a bancos.",
+        "Acima de 15% de forma constante.",
+        "Abaixo de 10%: o negócio rende menos do que custa o dinheiro investido nele."],
+      ["ROIC (return on invested capital)", "After-tax operating profit (EBIT less Brazil's 34% income tax) divided by invested capital, which is equity plus net debt: what the business earns on all the money put into it, by shareholders and lenders alike.",
+        "Unlike ROE, it doesn't rise just because the company took on debt, so it compares companies with different capital structures better. It must beat the cost of capital. Not meaningful for banks.",
+        "Above 15%, consistently.",
+        "Below 10%: the business earns less than the money invested in it costs."]],
+    ["convcaixa", ["conversão de caixa", "Conversão do lucro em caixa (3 anos)", "cash conversion", "Cash conversion (3 years)"],
+      ["Conversão do lucro em caixa", "Caixa gerado pelas operações dividido pelo lucro líquido, somando os últimos 3 exercícios.",
+        "Mostra se o lucro do balanço vira dinheiro. Abaixo de 1x por vários anos, o lucro pode estar preso em estoques e contas a receber, ou inflado por ganhos que não entram no caixa. Não se aplica a bancos.",
+        "1x ou mais.",
+        "Abaixo de 0,7x por vários anos."],
+      ["Cash conversion of earnings", "Cash from operations divided by net income, summed over the last 3 fiscal years.",
+        "Shows whether reported profit turns into cash. Below 1x for years, earnings may be tied up in inventory and receivables, or inflated by gains that never reach the bank. Not meaningful for banks.",
+        "1x or more.",
+        "Below 0.7x for several years."]],
+    ["plnorm", ["P/L normalizado", "P/L normalizado (margem mediana de 7 anos)", "normalized P/E", "Normalized P/E (7-year median margin)"],
+      ["P/L normalizado", "Preço dividido por um lucro de meio de ciclo: a receita atual vezes a margem líquida mediana dos últimos 7 anos, no lugar do lucro do momento.",
+        "Corrige o P/L de empresas cíclicas: no pico do ciclo o lucro está inflado e o P/L comum parece barato; no fundo, parece caro. Conta na nota dos perfis de commodities e de agronegócio.",
+        "Baixo mesmo com a margem normal: barata também fora do pico do ciclo.",
+        "Muito acima do P/L comum: o lucro de hoje está no pico e o P/L comum engana."],
+      ["Normalized P/E", "Price divided by mid-cycle earnings: current revenue times the median net margin of the last 7 years, instead of today's earnings.",
+        "Corrects the P/E of cyclical companies: at the top of the cycle earnings are inflated and the plain P/E looks cheap; at the bottom, it looks expensive. It counts toward the score in the commodities and agribusiness profiles.",
+        "Low even at a normal margin: cheap outside the peak of the cycle as well.",
+        "Far above the plain P/E: today's earnings are at a peak and the plain P/E is misleading."]],
+    ["fcfyield", ["caixa livre sobre o preço", "Caixa livre sobre o valor de mercado (média de 3 anos)", "free cash flow yield", "Free cash flow yield (3-year average)"],
+      ["Caixa livre sobre o preço", "Fluxo de caixa livre médio dos últimos 3 anos (caixa das operações menos o investimento em ativos) dividido pelo valor de mercado: quanto o negócio gera de caixa por ano para cada R$ 100 pagos pela empresa.",
+        "É o inverso de um preço sobre o caixa livre. Mais difícil de maquiar que o lucro, e a média de 3 anos suaviza anos de investimento pesado. Não se aplica a bancos.",
+        "Acima de 10% ao ano.",
+        "Negativo (a empresa consome caixa) ou abaixo de 3%."],
+      ["Free cash flow yield", "Average free cash flow over the last 3 years (operating cash flow minus capital expenditure) divided by market cap: how much cash the business generates each year for every R$ 100 paid for the company.",
+        "It is the inverse of a price-to-free-cash-flow ratio. Harder to dress up than earnings, and the 3-year average smooths out heavy investment years. Not meaningful for banks.",
+        "Above 10% a year.",
+        "Negative (the company burns cash) or below 3%."]],
+    ["caixaliq", ["caixa líquido", "net cash", /^caixa liquido \([-−]?[\d.,]+x\)$/, /^net cash \([-−]?[\d.,]+x\)$/],
+      ["Caixa líquido", "A empresa tem mais caixa e aplicações do que empréstimos e financiamentos: a dívida líquida é negativa.",
+        "É a posição mais segura: daria para quitar todas as dívidas e ainda sobraria dinheiro. O número entre parênteses, quando aparece, é a dívida líquida/EBITDA: negativo, mede a sobra de caixa em vezes o EBITDA de um ano.",
+        "Caixa líquido com a operação gerando caixa todo ano.",
+        "Caixa parado por anos, rendendo menos que o negócio e sem voltar ao acionista."],
+      ["Net cash", "The company holds more cash and investments than loans and financing: net debt is negative.",
+        "The safest position: it could repay all its debt and still have money left. The figure in brackets, when shown, is net debt/EBITDA: being negative, it measures the surplus cash as a multiple of a year's EBITDA.",
+        "Net cash, with operations generating cash every year.",
+        "Cash sitting idle for years, earning less than the business and never returned to shareholders."]],
+    ["recjud", ["recuperação judicial", "bankruptcy", "bankruptcy protection"],
+      ["Recuperação judicial", "Processo na Justiça em que a empresa que não consegue pagar as dívidas negocia com os credores um plano para continuar operando e evitar a falência.",
+        "O acionista é o último da fila: os planos costumam converter dívida em ações e diluir muito quem já era sócio. No Ranking, a nota fica limitada a 15.",
+        "Plano aprovado e cumprido, com a empresa voltando a gerar caixa.",
+        "Plano que entrega a empresa aos credores, ou que termina em falência."],
+      ["Bankruptcy protection (recuperação judicial)", "A court-supervised process in which a company that can't pay its debts negotiates a plan with creditors to keep operating and avoid liquidation.",
+        "Shareholders are last in line: plans often convert debt into shares and heavily dilute existing holders. In the Ranking, the score is capped at 15.",
+        "A plan approved and carried out, with the company generating cash again.",
+        "A plan that hands the company to its creditors, or one that ends in liquidation."]],
+    ["plneg", ["patrimônio negativo", "negative equity"],
+      ["Patrimônio negativo", "O passivo (tudo o que a empresa deve) é maior que o ativo (tudo o que ela tem): no balanço, não sobra nada para o acionista.",
+        "Costuma vir de prejuízos acumulados. P/VP e dívida/patrimônio perdem o sentido. No Ranking, a nota fica limitada a 25.",
+        "Voltando a ficar positivo com lucros recorrentes.",
+        "Negativo e piorando, com prejuízos seguidos."],
+      ["Negative equity", "Liabilities (everything the company owes) exceed assets (everything it owns): on the balance sheet, nothing is left for shareholders.",
+        "It usually comes from accumulated losses. P/B and net debt/equity stop making sense. In the Ranking, the score is capped at 25.",
+        "Turning positive again on recurring profits.",
+        "Negative and worsening, with losses year after year."]],
+    ["prejuizo", ["prejuízo", "loss"],
+      ["Prejuízo", "Lucro líquido negativo: custos, despesas, juros e impostos superaram a receita no período.",
+        "Sem lucro, o P/L e os outros múltiplos de lucro não se aplicam. Um prejuízo isolado pesa menos que vários seguidos. No Ranking, prejuízo nos últimos 12 meses limita a nota a 40.",
+        "Pontual, com causa conhecida e já revertendo.",
+        "Recorrente, ou consumindo o caixa e o patrimônio."],
+      ["Loss", "Negative net income: costs, expenses, interest and taxes exceeded revenue over the period.",
+        "With no earnings, the P/E and other earnings multiples don't apply. A one-off loss weighs less than several in a row. In the Ranking, a loss over the last 12 months caps the score at 40.",
+        "A one-off with a known cause, already reversing.",
+        "Recurring, or eating into cash and equity."]],
+    ["pesopilar", [/^peso \d+%$/, /^weight \d+%$/],
+      ["Peso do pilar", "Quanto o pilar conta na nota desta empresa. Cada perfil setorial tem os próprios pesos, que somam 100%.",
+        "Mostram o que mais importa em cada tipo de negócio: em tecnologia, o futuro pesa 35%; em transporte, a solidez; em energia e shoppings, o preço. Um pilar sem dados passa o peso para os outros.",
+        "Nota alta nos pilares de maior peso.",
+        "Nota baixa num pilar de peso alto: puxa a nota inteira para baixo."],
+      ["Pillar weight", "How much the pillar counts toward this company's score. Each sector profile has its own weights, adding up to 100%.",
+        "They show what matters most in each kind of business: in technology, outlook weighs 35%; in transport, strength; in utilities and malls, price. A pillar with no data passes its weight to the others.",
+        "High marks on the most heavily weighted pillars.",
+        "A low mark on a heavily weighted pillar: it drags the whole score down."], null, ".rk"],
 
     // ------------------------------------------------------------ aba Simular
     ["retornototal", ["Retorno total", "Total return"],
@@ -868,10 +959,14 @@
 
   // ---------------------------------------------------------------- busca pelo texto
 
-  function norm(s) {
+  /** caixa baixa, sem acento nem espaço extra */
+  function leve(s) {
     return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
-      .replace(/[↓▲↗→]/g, "").replace(/\s+/g, " ").trim()
-      .replace(/\s*(\(12 meses\)|\(ttm\)|12m|12 meses|ttm|, 12 months|, trailing 12 months)$/, "")
+      .replace(/[↓▲↗→]/g, "").replace(/\s+/g, " ").trim();
+  }
+  /** além disso, sem sufixo de período ("12m", "TTM") nem ":" no fim */
+  function norm(s) {
+    return leve(s).replace(/\s*(\(12 meses\)|\(ttm\)|12m|12 meses|ttm|, 12 months|, trailing 12 months)$/, "")
       .replace(/[:·]$/, "").trim();
   }
   var PORNOME = {}, REGEX = [], PORID = {};
@@ -882,12 +977,16 @@
       else (PORNOME[norm(n)] = PORNOME[norm(n)] || []).push(t[0]);
     });
   });
-  /** termo do texto: com escopo, só dentro dele (e ele vence o termo sem escopo de mesmo nome) */
+  /** termo do texto: com escopo, só dentro dele (e ele vence o termo sem escopo de mesmo nome).
+   *  Nomes exatos valem até LONGO caracteres (há nomes longos de indicadores); padrões, só até CURTO */
+  var CURTO = 48, LONGO = 64;
   function achar(txt, el) {
-    if (!txt || txt.length > 48) return null;
+    if (!txt || txt.length > LONGO) return null;
     var n = norm(txt), ids = (PORNOME[n] || []).slice();
-    if (/^adr( .*)?$/.test(n)) ids.push("adr");
-    for (var k = 0; k < REGEX.length; k++) if (REGEX[k][0].test(n)) ids.push(REGEX[k][1]);
+    if (txt.length <= CURTO) {
+      if (/^adr( .*)?$/.test(n)) ids.push("adr");
+      for (var k = 0; k < REGEX.length; k++) if (REGEX[k][0].test(n)) ids.push(REGEX[k][1]);
+    }
     var cabe = function (id) { var esc = PORID[id][5]; return esc && el && el.closest(esc); };
     var livre = function (id) { return !PORID[id][5]; };
     return ids.filter(cabe)[0] || ids.filter(livre)[0] || null;
@@ -901,7 +1000,7 @@
       var el = els[k];
       if (el.hasAttribute("data-termo") || el.children.length > 3) continue;
       var txt = el.textContent;
-      if (!txt || txt.length > 48) continue;
+      if (!txt || txt.length > LONGO) continue;
       var id = achar(txt, el);
       if (!id || el.querySelector("[data-termo]") || el.closest(FORA)) continue;
       if (el.tagName === "A" && el.getAttribute("href")) continue;
@@ -942,12 +1041,15 @@
     var en = X && X.estado.lingua === "en", d = en ? t[3] : t[2];
     var L = function (pt, ing) { return en ? ing : pt; };
     var m = mediana(id), calc = el.getAttribute("data-calc");
+    // o title some quando só repete o texto ou um dos nomes do termo ("Dividend yield (12 meses)" fica: diz o período)
+    if (calc && (leve(calc) === leve(el.textContent) || (PORNOME[leve(calc)] || []).indexOf(id) >= 0)) calc = null;
+    var selo = el.matches(".rk-selo, .selo-h");  // selo: o title fala da empresa, não de um número
     return "<b>" + esc(d[0]) + "</b><p>" + esc(d[1]) + "</p>" +
       '<p class="td-ler"><i>' + L("Como ler", "How to read it") + "</i> " + esc(d[2]) + "</p>" +
       '<div class="td-faixas"><div class="td-bom"><i>' + L("Bom", "Good") + "</i>" + esc(d[3]) + "</div>" +
       '<div class="td-ruim"><i>' + L("Ruim", "Bad") + "</i>" + esc(d[4]) + "</div></div>" +
       (m ? '<p class="td-ref">' + L("Hoje, mediana das ", "Today's median across ") + m.n + L(" ações líquidas: ", " liquid stocks: ") + "<b>" + fmt(m.v, t[4][1]) + "</b></p>" : "") +
-      (calc ? '<p class="td-ref">' + L("Neste número: ", "This figure: ") + esc(calc) + "</p>" : "") +
+      (calc ? '<p class="td-ref">' + (selo ? L("Nesta empresa: ", "For this company: ") : L("Neste número: ", "This figure: ")) + esc(calc) + "</p>" : "") +
       '<p class="td-aviso">' + L("Faixas de referência gerais; compare sempre com o setor. Não é recomendação.", "General reference ranges; always compare within the sector. Not a recommendation.") + "</p>";
   }
   function mostrar(el) {

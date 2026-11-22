@@ -775,7 +775,7 @@
           return '<li><span class="rk-m-nome" title="' + esc(T(mt.nome)) + '">' + esc(T(mt.curto)) + '</span><span class="rk-m-v num">' + esc(mostra(mt, i.v, e)) +
             '</span><span class="rk-m-ref mudo" title="' + esc(ref) + '">' + esc(ref) + '</span><span class="rk-m-n num"><i style="width:' + Math.round(i.nota) + '%;background:' + corNota(i.nota) + '"></i><b>' + Math.round(i.nota) + "</b></span></li>";
         }).join("");
-        return '<div class="rk-pilar"><h4>' + esc(T(pl.nome)) + ' <span class="mudo">' + esc(L("peso ", "weight ")) + r.perfil.pesos[pl.id] + "%</span>" +
+        return '<div class="rk-pilar"><h4><span>' + esc(T(pl.nome)) + '</span> <span class="mudo">' + esc(L("peso ", "weight ")) + r.perfil.pesos[pl.id] + "%</span>" +
           '<b class="num" style="color:' + (x ? corNota(x.nota) : "var(--muted)") + '">' + (x ? Math.round(x.nota) : "–") + "</b></h4>" +
           (linhas ? "<ul>" + linhas + "</ul>" : '<p class="mudo">' + esc(L("Sem dados para este pilar; o peso vai para os outros.", "No data for this pillar; its weight goes to the others.")) + "</p>") + "</div>";
       }).join("") + "</div>";
