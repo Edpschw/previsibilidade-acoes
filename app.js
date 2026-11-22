@@ -1122,7 +1122,8 @@
     espiao = null;
     if (window.RealTermsTeia) window.RealTermsTeia.parar();
     var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "comparar" || alvo === "teia" || alvo === "mapa" ? "teia" :
-      alvo === "agenda" ? "agenda" : alvo === "ranking" ? "ranking" : alvo === "simular" ? "simular" : "empresa";
+      alvo === "agenda" ? "agenda" : alvo === "ranking" ? "ranking" : alvo === "simular" ? "simular" :
+      alvo === "curso" ? "inicio" : "empresa";  // #/curso/7 abre a aula 7 do curso da página inicial
     $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
     document.body.setAttribute("data-pagina", pagina);
     if (pagina === "inicio" && window.RealTermsInicio) window.RealTermsInicio.render($("#app"));
@@ -1209,6 +1210,8 @@
     dinheiro: dinheiro, porAcao: porAcao, pct: pct, vezes: vezes, nf: nf, data: data, esc: esc,
     nomeCurto: nomeCurto, setor: setor, setorChave: setorChave, visiveis: visiveis, setorAtivo: setorAtivo, definirSetor: definirSetor, score: score, nivelScore: nivelScore, indicadores: indicadores,
     linhas: linhas, observarSecoes: observarSecoes, componentes: componentes,
+    // séries para o curso da página inicial (inicio.js)
+    serie: serie, porAcaoAnual: porAcaoAnual, qtd: qtd, multiplos: multiplos, precosAno: precosAno, cotacaoDe: cotacaoDe,
   };
 
   iniciar();
