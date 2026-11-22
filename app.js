@@ -959,7 +959,8 @@
     return { lo: lo, hi: hi, ticks: ticks };
   }
 
-  function base(el, anos, todos, fmtEixo) {
+  /** rotX(rótulo, k): texto do eixo x (vazio pula); sem ele, o eixo mostra os rótulos espaçados */
+  function base(el, anos, todos, fmtEixo, rotX) {
     var w = Math.max(280, el.clientWidth), h = ALTURA;
     var vals = todos.filter(function (v) { return v != null && isFinite(v); });
     var min = Math.min(0, Math.min.apply(null, vals.length ? vals : [0]));
@@ -976,7 +977,8 @@
           '<text class="eixo" x="' + (M.l - 8) + '" y="' + (y(tk) + 4) + '" text-anchor="end">' + fmtEixo(tk) + "</text>";
       }).join("") +
       anos.map(function (a, k) {
-        return k % passoRot === (anos.length - 1) % passoRot ? '<text class="eixo" x="' + x(k) + '" y="' + (h - 6) + '" text-anchor="middle">' + a + "</text>" : "";
+        var txt = rotX ? rotX(a, k) : k % passoRot === (anos.length - 1) % passoRot ? a : "";
+        return txt ? '<text class="eixo" x="' + x(k) + '" y="' + (h - 6) + '" text-anchor="middle">' + txt + "</text>" : "";
       }).join("");
     return { w: w, h: h, x: x, y: y, bw: bw, svg: svg, ih: ih };
   }
@@ -1043,8 +1045,17 @@
     var corta = function (v) { return v == null || !lim ? v : Math.max(lim[0], Math.min(lim[1], v)); };
     var todos = [].concat.apply([], series.map(function (s) { return s.v; })).map(corta);
     if (!todos.some(function (v) { return v != null; })) { el.innerHTML = '<p class="mudo">' + t("sem_dados") + "</p>"; return; }
-    var g = base(el, anos, todos, opts.eixo || function (v) { return nf(0).format(v * 100) + "%"; });
+    var g = base(el, anos, todos, opts.eixo || function (v) { return nf(0).format(v * 100) + "%"; }, opts.rotX);
     var corpo = focoRect(g);
+    // opts.faixas: [{ de, ate, cor }] área entre duas séries (leque de cenários do simulador)
+    (opts.faixas || []).forEach(function (f) {
+      var pts = [];
+      f.de.forEach(function (v, k) { if (v != null && f.ate[k] != null) pts.push([g.x(k), g.y(corta(f.ate[k])), g.y(corta(v))]); });
+      if (pts.length < 2) return;
+      corpo += '<path d="M' + pts.map(function (p) { return p[0].toFixed(1) + " " + p[1].toFixed(1); }).join("L") +
+        "L" + pts.slice().reverse().map(function (p) { return p[0].toFixed(1) + " " + p[2].toFixed(1); }).join("L") +
+        'Z" fill="' + f.cor + '" fill-opacity="0.12" stroke="none"/>';
+    });
     series.forEach(function (s) {
       var d = "", aberto = false;
       s.v.forEach(function (v, k) {
@@ -1052,7 +1063,8 @@
         var vv = corta(v);
         d += (aberto ? "L" : "M") + g.x(k).toFixed(1) + " " + g.y(vv).toFixed(1);
         aberto = true;
-        corpo += '<circle cx="' + g.x(k) + '" cy="' + g.y(vv) + '" r="2.6" fill="' + s.cor + '"/>';
+        // opts.pontos === false: série longa (mensal de 15 anos), só a linha
+        if (opts.pontos !== false) corpo += '<circle cx="' + g.x(k) + '" cy="' + g.y(vv) + '" r="2.6" fill="' + s.cor + '"/>';
       });
       corpo += '<path d="' + d + '" fill="none" stroke="' + s.cor + '" stroke-width="2.2" stroke-linejoin="round"/>';
     });
@@ -1102,7 +1114,7 @@
 
   // ---------------------------------------------------------------- roteamento e controles
 
-  /** "#/" início · "#/acoes" lista de ações · "#/ranking/PETR4" ranking por fundamentos · "#/comparar/PETR4,VALE3" comparar (#/teia e #/mapa antigos caem nela) · "#/PETR4" empresa */
+  /** "#/" início · "#/acoes" lista de ações · "#/ranking/PETR4" ranking por fundamentos · "#/comparar/PETR4,VALE3" comparar (#/teia e #/mapa antigos caem nela) · "#/simular/PETR4,VALE3/2020-01-02/10000" simulador · "#/PETR4" empresa */
   function rota() {
     var m = location.hash.match(/^#\/([A-Za-z0-9]+)/);
     var alvo = m ? m[1] : "";
@@ -1110,7 +1122,7 @@
     espiao = null;
     if (window.RealTermsTeia) window.RealTermsTeia.parar();
     var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "comparar" || alvo === "teia" || alvo === "mapa" ? "teia" :
-      alvo === "agenda" ? "agenda" : alvo === "ranking" ? "ranking" : "empresa";
+      alvo === "agenda" ? "agenda" : alvo === "ranking" ? "ranking" : alvo === "simular" ? "simular" : "empresa";
     $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
     document.body.setAttribute("data-pagina", pagina);
     if (pagina === "inicio" && window.RealTermsInicio) window.RealTermsInicio.render($("#app"));
@@ -1118,6 +1130,7 @@
     else if (pagina === "teia") { if (window.RealTermsTeia) window.RealTermsTeia.render($("#app")); }
     else if (pagina === "agenda") { if (window.RealTermsAgenda) window.RealTermsAgenda.render($("#app")); }
     else if (pagina === "ranking") { if (window.RealTermsRanking) window.RealTermsRanking.render($("#app")); }
+    else if (pagina === "simular") { if (window.RealTermsSimular) window.RealTermsSimular.render($("#app")); }
     else telaEmpresa(alvo.toUpperCase());
   }
 

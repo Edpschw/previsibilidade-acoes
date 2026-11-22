@@ -645,3 +645,53 @@ abbr[data-termo] { text-decoration: underline dotted; }
 .termo-dica .td-ruim i { color: var(--neg); }
 .termo-dica .td-ref { font-size: 12.5px; }
 .termo-dica .td-aviso { color: var(--muted); font-size: 11.5px; margin: 0; }
+
+/* ---------------------------------------------------------------- simulador (#/simular) */
+.sim-cab h1 { margin: 14px 0 8px; font-size: clamp(26px, 3.6vw, 38px); letter-spacing: -.03em; }
+.sim-cab p { max-width: 780px; line-height: 1.6; margin: 0 0 16px; }
+.sim-entrada { display: grid; gap: 16px; margin-bottom: 16px; }
+.sim-campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sim-rot { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.sim-campo-acoes { gap: 8px; }
+.sim-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 30px; }
+.sim-chips .chip { cursor: pointer; }
+.sim-chip { display: inline-flex; align-items: center; gap: 4px; }
+.sim-chip button { border: 0; background: transparent; color: inherit; font: inherit; font-size: 15px; line-height: 1; padding: 0 2px; cursor: pointer; }
+.sim-busca { max-width: 420px; flex: 0 0 auto; }
+.sim-linha { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; }
+.sim-linha input[type="date"], .sim-linha input[type="number"], .sim-linha select {
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; }
+.sim-linha input[type="number"] { width: 150px; }
+.sim-linha .pilulas { align-self: flex-start; }
+.sim-opcoes { gap: 4px; font-size: 14px; }
+.sim-opcoes label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.sim-bloco h2 { margin: 0 0 4px; font-size: 20px; }
+.sim-bloco h3 { margin: 22px 0 8px; font-size: 15px; }
+.sim-sub { margin: 0 0 14px; font-size: 14px; line-height: 1.5; }
+.sim-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.sim-kpi { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); min-width: 0; }
+.sim-kpi-rot { font-size: 12px; color: var(--muted); }
+.sim-kpi b { font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.sim-kpi b.pos { color: var(--pos); }
+.sim-kpi b.neg { color: var(--neg); }
+.sim-kpi small, .sim-cenario small { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.sim-graf { margin: 6px 0 14px; }
+.sim-tabela td small { font-size: 11.5px; line-height: 1.35; display: inline-block; max-width: 260px; white-space: normal; }
+.sim-tabela td a { color: inherit; }
+.sim-pres td.num { vertical-align: top; }
+.sim-cenarios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+.sim-cenario { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); border-top: 3px solid var(--c1); background: var(--surface-2); }
+.sim-cenario b { font-size: 21px; font-variant-numeric: tabular-nums; }
+.sim-cenario.sim-p10 { border-top-color: var(--neg); }
+.sim-cenario.sim-p90 { border-top-color: var(--pos); }
+.sim-probs { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; margin: 0 0 6px; }
+.sim-probs b { font-variant-numeric: tabular-nums; }
+.sim-lista { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.55; max-width: 860px; }
+.sim-lista li + li { margin-top: 4px; }
+@media (max-width: 640px) {
+  .sim-cenarios { grid-template-columns: 1fr; }
+  .sim-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sim-kpi b { font-size: 17px; }
+  .sim-linha input[type="number"] { width: 100%; }
+  .sim-linha .sim-campo { flex: 1 1 140px; }
+}
