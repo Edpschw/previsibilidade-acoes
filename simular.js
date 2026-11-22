@@ -134,7 +134,7 @@
       }
     }
     for (var i = i0; i <= fim; i++) {
-      // pagamento em dia sem pregão do papel: reinveste no último fechamento antes dele
+      // pagamento em dia sem pregão do papel: reinveste no primeiro fechamento depois dele (o dinheiro só chega no pagamento)
       processar(s.datas[i], s.precos[i]);
       if (i === fim || s.datas[i + 1].slice(0, 7) !== s.datas[i].slice(0, 7) || i === i0) {
         mensal.push({ d: s.datas[i], v: acoes * s.precos[i] + caixa + pendente, vR: acoesR * s.precos[i] + pendenteR });
