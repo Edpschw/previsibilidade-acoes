@@ -184,13 +184,14 @@ def cabeca(titulo, descricao, url, extra=""):
 <link rel="icon" href="{{raiz}}favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="{{raiz}}icon-180.png">
 <link rel="stylesheet" href="{{raiz}}{versao('style.css')}">
+<link rel="alternate" type="application/rss+xml" title="Real Terms Weekly" href="{{raiz}}semana/feed.xml">
 <script>try{{var t=localStorage.getItem("realterms-tema");if(t)document.documentElement.setAttribute("data-theme",t)}}catch(e){{}}</script>
 {extra}
 </head>
 <body>
 <header class="topo"><div class="topo-in">
   <a class="marca" href="{{raiz}}" aria-label="Real Terms"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="18" width="6" height="10" rx="1.5"/><rect x="13" y="11" width="6" height="17" rx="1.5"/><rect x="22" y="4" width="6" height="24" rx="1.5"/></svg><span class="marca-nome"><b>Real</b> Terms</span></a>
-  <nav class="nav-principal" aria-label="Main navigation"><a href="{{raiz}}">Home</a><a href="{{raiz}}acao/">Companies</a><a href="{{raiz}}#/comparar">Compare</a></nav>
+  <nav class="nav-principal" aria-label="Main navigation"><a href="{{raiz}}">Home</a><a href="{{raiz}}acao/">Companies</a><a href="{{raiz}}#/comparar">Compare</a><a href="{{raiz}}semana/">Weekly</a></nav>
 </div></header>
 <main class="conteudo">
 """
@@ -307,6 +308,11 @@ def main():
 
     hoje = date.today().isoformat()
     urls = [f"{SITE_URL}/", f"{SITE_URL}/acao/"] + [f"{SITE_URL}/acao/{t}/" for t in sorted(vivos)]
+    # edições do resumo semanal (scripts/resumo_semanal.py roda antes deste no CI)
+    semana = RAIZ / "semana"
+    if (semana / "index.html").exists():
+        urls += [f"{SITE_URL}/semana/"] + [f"{SITE_URL}/semana/{p.name}/" for p in sorted(semana.iterdir(), reverse=True)
+                                          if p.is_dir() and (p / "index.html").exists()]
     (RAIZ / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
         "".join(f"  <url><loc>{u}</loc><lastmod>{hoje}</lastmod></url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")

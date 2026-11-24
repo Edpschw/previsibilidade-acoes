@@ -1,0 +1,254 @@
+{
+ "data": "2026-11-20",
+ "numero": 1,
+ "semana_txt": "Week of November 16–20, 2026",
+ "gerado_em": "2026-11-21 17:49",
+ "publicado_em": "2026-11-23T23:36-03:00",
+ "pregao": "2026-11-19",
+ "cambio": {
+  "de": 5.6518,
+  "para": 5.8889,
+  "data": "2026-11-19",
+  "real": -0.040262
+ },
+ "ptax_hoje": {
+  "data": "2026-11-19",
+  "valor": 5.8889
+ },
+ "universo": {
+  "n": 188,
+  "sobe": 40,
+  "desce": 145,
+  "mediana_brl": -0.035145,
+  "mediana_usd": -0.073991
+ },
+ "movimentos": {
+  "topo": [
+   {
+    "t": "PCAR3",
+    "pagina": "PCAR3",
+    "nome": "Cia Brasileira de Distribuicao",
+    "preco": 3.23,
+    "data": "2026-11-19",
+    "brl": 0.261719,
+    "usd": 0.210919
+   },
+   {
+    "t": "AZEV3",
+    "pagina": "AZEV3",
+    "nome": "Azevedo e Travassos",
+    "preco": 10.51,
+    "data": "2026-11-19",
+    "brl": 0.136216,
+    "usd": 0.09047
+   },
+   {
+    "t": "QUAL3",
+    "pagina": "QUAL3",
+    "nome": "Qualicorp Consultoria e Corretora de Seguros",
+    "preco": 1.84,
+    "data": "2026-11-19",
+    "brl": 0.135802,
+    "usd": 0.090073
+   },
+   {
+    "t": "LIGT3",
+    "pagina": "LIGT3",
+    "nome": "Light",
+    "preco": 3.06,
+    "data": "2026-11-19",
+    "brl": 0.120879,
+    "usd": 0.07575
+   },
+   {
+    "t": "BEEF3",
+    "pagina": "BEEF3",
+    "nome": "Minerva",
+    "preco": 3.73,
+    "data": "2026-11-19",
+    "brl": 0.093842,
+    "usd": 0.049801
+   }
+  ],
+  "fim": [
+   {
+    "t": "HBRE3",
+    "pagina": "HBRE3",
+    "nome": "Hbr Realty Empreendimentos Imobiliários",
+    "preco": 1.22,
+    "data": "2026-11-19",
+    "brl": -0.164384,
+    "usd": -0.198027
+   },
+   {
+    "t": "AZUL3",
+    "pagina": "AZUL3",
+    "nome": "Azul",
+    "preco": 10.6,
+    "data": "2026-11-19",
+    "brl": -0.175097,
+    "usd": -0.20831
+   },
+   {
+    "t": "SBFG3",
+    "pagina": "SBFG3",
+    "nome": "Grupo Sbf",
+    "preco": 4.0,
+    "data": "2026-11-19",
+    "brl": -0.175258,
+    "usd": -0.208464
+   },
+   {
+    "t": "HBOR3",
+    "pagina": "HBOR3",
+    "nome": "Helbor Empreendimentos",
+    "preco": 0.93,
+    "data": "2026-11-19",
+    "brl": -0.198276,
+    "usd": -0.230555
+   },
+   {
+    "t": "PMAM3",
+    "pagina": "PMAM3",
+    "nome": "Paranapanema",
+    "preco": 0.2,
+    "data": "2026-11-19",
+    "brl": -0.259259,
+    "usd": -0.289083
+   }
+  ]
+ },
+ "proventos": {
+  "semana": [
+   "2026-11-23",
+   "2026-11-27"
+  ],
+  "direito": {
+   "itens": [],
+   "total": 0
+  },
+  "pagamentos": {
+   "itens": [
+    {
+     "t": "BRAP4",
+     "pagina": "BRAP4",
+     "nome": "Bradespar",
+     "tipo": "jcp",
+     "valor": 0.64380151,
+     "usd": 0.109325,
+     "yield": 0.03883,
+     "com": "2026-11-11",
+     "pag": "2026-11-23",
+     "outros": [
+      "BRAP3"
+     ]
+    },
+    {
+     "t": "DEXP3",
+     "pagina": "DEXP3",
+     "nome": "Dexxos Participações",
+     "tipo": "dividendo",
+     "valor": 0.16707696,
+     "usd": 0.028372,
+     "yield": 0.025049,
+     "com": "2026-11-13",
+     "pag": "2026-11-26",
+     "outros": [
+      "DEXP4"
+     ]
+    },
+    {
+     "t": "PETR4",
+     "pagina": "PETR4",
+     "nome": "Petroleo Brasileiro",
+     "tipo": "jcp",
+     "valor": 0.67407131,
+     "usd": 0.114465,
+     "yield": 0.015797,
+     "com": "2026-08-21",
+     "pag": "2026-11-23",
+     "outros": [
+      "PETR3"
+     ]
+    },
+    {
+     "t": "MTRE3",
+     "pagina": "MTRE3",
+     "nome": "Mitre Realty Empreendimentos e Participações",
+     "tipo": "dividendo",
+     "valor": 0.03781618,
+     "usd": 0.006422,
+     "yield": 0.012318,
+     "com": "2026-11-13",
+     "pag": "2026-11-27",
+     "outros": []
+    },
+    {
+     "t": "BRAP4",
+     "pagina": "BRAP4",
+     "nome": "Bradespar",
+     "tipo": "dividendo",
+     "valor": 0.19970986,
+     "usd": 0.033913,
+     "yield": 0.012045,
+     "com": "2026-11-11",
+     "pag": "2026-11-23",
+     "outros": [
+      "BRAP3"
+     ]
+    },
+    {
+     "t": "BRBI11",
+     "pagina": "BRBI11",
+     "nome": "Brbi Br Partners",
+     "tipo": "dividendo",
+     "valor": 0.12,
+     "usd": 0.020377,
+     "yield": 0.011928,
+     "com": "2026-11-12",
+     "pag": "2026-11-26",
+     "outros": []
+    },
+    {
+     "t": "TAEE11",
+     "pagina": "TAEE11",
+     "nome": "Transmissora Aliança de Energia Elétrica",
+     "tipo": "jcp",
+     "valor": 0.35947458,
+     "usd": 0.061043,
+     "yield": 0.008949,
+     "com": "2026-08-14",
+     "pag": "2026-11-26",
+     "outros": [
+      "TAEE3",
+      "TAEE4"
+     ]
+    },
+    {
+     "t": "TAEE11",
+     "pagina": "TAEE11",
+     "nome": "Transmissora Aliança de Energia Elétrica",
+     "tipo": "dividendo",
+     "valor": 0.24076375,
+     "usd": 0.040884,
+     "yield": 0.005994,
+     "com": "2026-08-14",
+     "pag": "2026-11-26",
+     "outros": [
+      "TAEE3",
+      "TAEE4"
+     ]
+    }
+   ],
+   "total": 8
+  }
+ },
+ "mudancas": null,
+ "aula": {
+  "n": 1,
+  "total": 18,
+  "palavra": "COMPANY",
+  "pergunta": "What is a company?"
+ },
+ "frase": "The real fell 4.0% against the dollar; 40 of 188 stocks gained in reais; 8 dividend payments are due next week."
+}

@@ -1,5 +1,6 @@
 # Atualiza a base todo dia útil depois do fechamento da B3 e publica no GitHub Pages.
-# Ordem: processa → histórico da aba Simular → testa → audita com trava → resume mudanças → commita (o Pages publica o commit)
+# Ordem: processa → histórico da aba Simular → resumo semanal → páginas e sitemap → testa → audita com trava
+# → resume mudanças → commita (o Pages publica o commit)
 # → carrega a mesma base no Postgres (só se o segredo DATABASE_URL existir).
 # Se a trava ou os testes falharem, nada é commitado e um issue avisa.
 name: Atualizar base
@@ -61,6 +62,12 @@ jobs:
         continue-on-error: true
         run: python3 scripts/historico.py
 
+      # Resumo semanal em inglês (semana/ e semana/feed.xml): a edição da sexta sai uma vez, na primeira
+      # execução com o pregão de sexta na base (ou de sábado até terça); nos outros dias o script só redesenha
+      # as páginas. Antes das páginas indexáveis, que põem as edições no sitemap.
+      - name: Resumo semanal
+        run: python3 scripts/resumo_semanal.py
+
       - name: Páginas indexáveis e sitemap
         run: python3 scripts/gerar_paginas.py
 
@@ -77,7 +84,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/empresas.js data/agenda.js data/historico index.html auditoria.md auditoria.json auditoria_resumo.json acao sitemap.xml robots.txt
+          git add data/empresas.js data/agenda.js data/historico index.html auditoria.md auditoria.json auditoria_resumo.json acao semana sitemap.xml robots.txt
           if git diff --cached --quiet; then echo "sem mudanças"; exit 0; fi
           git commit -m "Atualiza base ($(date -u +%F))"
           git push

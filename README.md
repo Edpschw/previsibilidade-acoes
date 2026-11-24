@@ -27,7 +27,7 @@ A CVM regera os ZIPs dos últimos anos quando há reapresentação. Use `python3
 | `docs/arquitetura-comercial.md` | Proposta de arquitetura para vender acesso: formato da base (bruto → staging → Postgres), modelo de dados, API, planos, bloqueios jurídicos e fases. |
 | `docs/metodologia-simulacao.md` | Metodologia do simulador: dados e tratamento, regras da simulação do passado (proventos, reinvestimento, IR do JCP, CDI e IPCA), modelo de blocos do retorno de referência, volatilidade e correlações, cenários e probabilidades, limites e referências. |
 | `docs/metodologia-ranking.md` | Análise teórica do que olhar antes de comprar uma ação, setor a setor, e a metodologia completa da nota da aba Ranking: pilares, indicadores e fórmulas, indicadores futuros, perfis setoriais com pesos e travas, exemplos trabalhados, limites e referências. |
-| `tests/` | `test_regras.py` (regras com dados sintéticos), `test_historico.py` (histórico diário com dados sintéticos), `test_simular.py` (contas do simulador em `simular_contas.js`; precisa do Node), `test_dados.py` (invariantes da base gerada) e `test_base.py` (base em Postgres; precisa de `DATABASE_URL_TESTE`). `python3 -m unittest discover -s tests` |
+| `tests/` | `test_regras.py` (regras com dados sintéticos), `test_historico.py` (histórico diário com dados sintéticos), `test_simular.py` (contas do simulador em `simular_contas.js`; precisa do Node), `test_semana.py` (resumo semanal com dados sintéticos e invariantes das edições publicadas), `test_dados.py` (invariantes da base gerada) e `test_base.py` (base em Postgres; precisa de `DATABASE_URL_TESTE`). `python3 -m unittest discover -s tests` |
 | `db/schema.sql` | Esquema da base em PostgreSQL (histórico por intervalo de cargas, retratos diários, catálogo de métricas). |
 | `scripts/carregar_base.py` | Carrega `data/empresas.js` no Postgres numa transação, remonta a base a partir do banco e compara campo a campo; se divergir, desfaz tudo. |
 | `requirements.txt` | Única dependência externa: `psycopg` (só para a base em Postgres; o processamento continua só com a biblioteca padrão). |
@@ -44,6 +44,7 @@ A CVM regera os ZIPs dos últimos anos quando há reapresentação. Use `python3
 | `simular.js` | Aba Simular (`#/simular/PETR4,VALE3/2020-01-02/10000`): compra de uma ou mais ações num dia ou ano, com valorização, desdobramentos, dividendos e JCP (com ou sem reinvestimento e IR) até o último pregão, contra o CDI e o IPCA; projeção de 5 anos da carteira de hoje em três cenários (percentis 10, 50 e 90), com retorno de referência pelos fundamentos (dividend yield sustentável + crescimento do lucro por ação + reprecificação parcial do P/L), volatilidade e correlações semanais de 3 anos e os pressupostos por ação à mostra. Detalhes em `docs/metodologia-simulacao.md`. Não é recomendação. |
 | `termos.js` | Glossário PT/EN com dica ao passar o mouse (no celular, ao tocar): o que o termo é, como ler, exemplo de valor bom e ruim e a mediana atual das ações líquidas. Os termos são achados pelo texto depois de cada renderização (`MutationObserver` em `#app`); termo novo é uma linha em `LISTA`, com os nomes em PT e EN (texto exato ou expressão regular, para rótulos com números como "Desdobramento 1:2"). Termo que só vale numa aba leva um seletor de escopo: "Price" é o pilar no Ranking e a cotação na lista de ações. Cobre indicadores, demonstrações, eventos de ações, a nota e os pilares do Ranking e os termos do Simular. |
 | `scripts/gerar_paginas.py` | Páginas estáticas indexáveis por empresa (`acao/PETR4/`), índice por setor (`acao/`), `sitemap.xml` e `robots.txt`, em inglês, com título, descrição, Open Graph e schema.org. Roda todo dia no Actions. O endereço público fica em `SITE_URL`. |
+| `scripts/resumo_semanal.py` | Resumo semanal em inglês (Real Terms Weekly) em `semana/`: uma edição por sexta (`semana/2026-11-20/`), o arquivo com a mais recente (`semana/index.html`) e o feed RSS 2.0 (`semana/feed.xml`) com cada edição completa em HTML de e-mail, para um serviço de newsletter mandar sozinho. Cada edição traz o câmbio da semana, quantas ações subiram e caíram, as cinco maiores altas e quedas em dólares, os proventos da semana seguinte, o que mudou desde a edição anterior (proventos anunciados, balanços entregues, índice que mudou 3 pontos ou mais, quem entrou ou saiu da base) e uma aula do curso. O conteúdo fica em `resumo.json` e o retrato da base, em `estado.json`, que a edição seguinte compara; as páginas e o feed são redesenhados a partir deles. A edição sai uma vez, na primeira execução que já tem o fechamento de sexta na base ou, sem ele, de sábado até a terça (o agendamento do GitHub atrasa umas cinco horas: a execução de quinta à noite roda na madrugada de sexta); `--data AAAA-MM-DD` gera uma sexta específica e `--refazer` refaz a que já existe. |
 | `scripts/gerar_imagens.swift` | Gera `og.png` (imagem de compartilhamento 1200×630) e os ícones `icon-180.png`/`icon-512.png` com AppKit: `swift scripts/gerar_imagens.swift`. `favicon.svg` e `manifest.webmanifest` são escritos à mão. |
 | `i18n.js` | Textos da interface em português e inglês (seletor PT/EN no topo; o padrão segue o idioma do navegador). Setor em inglês vem da B3; controle, segmento e país têm tradução em `I18N_MAPAS`. |
 
@@ -55,13 +56,14 @@ O GitHub Actions roda `.github/workflows/atualizar.yml` em todo dia útil, às 2
 
 1. `processar.py` baixa só o que falta ou venceu: pregões novos todo dia; fichas e lista da B3, DFP e ITR recentes a cada 7 dias. As fontes ficam no cache do Actions.
 2. `historico.py` atualiza o histórico diário da aba Simular. Se falhar, a base sai do mesmo jeito, com o histórico da véspera, e um issue avisa.
-3. `gerar_paginas.py` reescreve as páginas indexáveis (`acao/`) e o sitemap.
-4. Testes de regressão.
-5. `auditar.py --externo --trava`: se a cobertura cair abaixo de 97%, a base encolher mais de 5% ou surgirem mais de 5 ocorrências graves novas, o job falha e nada é publicado.
-6. `mudancas.py` resume o que mudou desde o último commit.
-7. Commit de `data/empresas.js`, `data/historico/`, `index.html`, das páginas indexáveis e da auditoria; o GitHub Pages publica o commit.
-8. Um issue avisa quando há mudanças relevantes ou quando a atualização falha (o GitHub manda por e-mail).
-9. Se o segredo `DATABASE_URL` existir, `carregar_base.py` grava a mesma base no Postgres. Se a carga falhar, o site já foi publicado e um issue próprio avisa; nada fica gravado pela metade.
+3. `resumo_semanal.py` publica a edição da semana do resumo em inglês quando o pregão de sexta entra na base (ou de sábado até a terça, se ele não vier); nos outros dias só redesenha `semana/`.
+4. `gerar_paginas.py` reescreve as páginas indexáveis (`acao/`) e o sitemap, com as edições do resumo.
+5. Testes de regressão.
+6. `auditar.py --externo --trava`: se a cobertura cair abaixo de 97%, a base encolher mais de 5% ou surgirem mais de 5 ocorrências graves novas, o job falha e nada é publicado.
+7. `mudancas.py` resume o que mudou desde o último commit.
+8. Commit de `data/empresas.js`, `data/historico/`, `index.html`, das páginas indexáveis, de `semana/` e da auditoria; o GitHub Pages publica o commit.
+9. Um issue avisa quando há mudanças relevantes ou quando a atualização falha (o GitHub manda por e-mail).
+10. Se o segredo `DATABASE_URL` existir, `carregar_base.py` grava a mesma base no Postgres. Se a carga falhar, o site já foi publicado e um issue próprio avisa; nada fica gravado pela metade.
 
 Os dados trimestrais (ITR) entram nos indicadores de 12 meses: último exercício + acumulado do ano − acumulado do mesmo período do ano anterior.
 
