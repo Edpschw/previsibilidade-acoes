@@ -1,9 +1,9 @@
 {
- "gerado_em": "2026-11-21 17:49",
+ "gerado_em": "2026-11-24 07:00",
  "empresas": 189,
  "cobertura": 1.0,
  "emissores_negociados": 302,
- "cotacoes_em": "2026-11-19",
+ "cotacoes_em": "2026-11-23",
  "graves": [
   "AZUL3|LPA divergente",
   "ENEV3|LPA divergente",
@@ -12,7 +12,7 @@
  ],
  "por_severidade": {
   "info": 141,
-  "baixa": 91,
+  "baixa": 92,
   "média": 33,
   "alta": 4
  }

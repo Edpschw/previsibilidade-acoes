@@ -1,13 +1,13 @@
 # Auditoria da base
 
-Gerada em 21/11/2026 sobre `data/empresas.js` de 2026-11-21 17:49 (balanços até 2025, cotações até 2026-11-19). Refaça com `python3 scripts/auditar.py --externo`.
+Gerada em 24/11/2026 sobre `data/empresas.js` de 2026-11-24 07:00 (balanços até 2025, cotações até 2026-11-23). Refaça com `python3 scripts/auditar.py --externo`.
 
 ## 1. Cobertura
 
 | Etapa | Quantidade |
 |---|---|
 | Emissores com ação ON/PN/unit negociada na B3 nos últimos 21 pregões (raiz do ticker) | 302 |
-| Tickers de ação negociados nesse período | 389 |
+| Tickers de ação negociados nesse período | 390 |
 | Emissores de ações na lista oficial da B3 (tipo 1) | 566 |
 | Companhias ativas na CVM com ação na B3 (FCA + lista da B3) | 345 |
 | Empresas na base | 189 |
@@ -51,7 +51,7 @@ nenhuma
 | baixa | salto de ações | 10 |
 | baixa | LPA com sinal trocado na DRE | 9 |
 | baixa | controladora × consolidado | 9 |
-| baixa | preço mudou de escala | 6 |
+| baixa | preço mudou de escala | 7 |
 | baixa | sem últimos 12 meses | 4 |
 | baixa | ITR atrasado | 3 |
 | baixa | fluxo de caixa não fecha | 3 |
@@ -74,14 +74,14 @@ nenhuma
 | ENEV3 | ENEVA | alta | LPA divergente | 2025: calculado R$ 0.60 × declarado R$ 1.00 (razão 0.60) |
 | HBRE3 | HBR Realty Empreendimentos Imobiliários | alta | LPA divergente | 2025: calculado R$ 0.27 × declarado R$ 0.94 (razão 0.28) |
 | TFCO4 | TRACK & FIELD CO | alta | LPA divergente | 2025: calculado R$ 0.15 × declarado R$ 0.09 (razão 1.61) |
-| DIRR3 | DIRECIONAL ENGENHARIA | média | DY acima de 30% | 32% (dividendo extraordinário ou valor de mercado subestimado) |
-| LAVV3 | Lavvi Empreendimentos Imobiliários | média | DY acima de 30% | 30% (dividendo extraordinário ou valor de mercado subestimado) |
-| POMO4 | MARCOPOLO | média | DY acima de 30% | 32% (dividendo extraordinário ou valor de mercado subestimado) |
+| DIRR3 | DIRECIONAL ENGENHARIA | média | DY acima de 30% | 31% (dividendo extraordinário ou valor de mercado subestimado) |
+| LAVV3 | Lavvi Empreendimentos Imobiliários | média | DY acima de 30% | 31% (dividendo extraordinário ou valor de mercado subestimado) |
+| POMO4 | MARCOPOLO | média | DY acima de 30% | 33% (dividendo extraordinário ou valor de mercado subestimado) |
 | RIAA3 | GUARARAPES CONFECCOES | média | DY acima de 30% | 39% (dividendo extraordinário ou valor de mercado subestimado) |
-| SYNE3 | SYN PROP & TECH | média | DY acima de 30% | 32% (dividendo extraordinário ou valor de mercado subestimado) |
+| SYNE3 | SYN PROP & TECH | média | DY acima de 30% | 33% (dividendo extraordinário ou valor de mercado subestimado) |
 | HBSA3 | HIDROVIAS DO BRASIL | média | LPA com sinal trocado na DRE | 2025: lucro -140,918 mas LPA declarado +0.05 (erro de preenchimento da empresa) |
 | OBTC3 | ORANJEBTC | média | LPA com sinal trocado na DRE | 2025: lucro -469,986 mas LPA declarado +2.79 (erro de preenchimento da empresa) |
-| DXCO3 | DEXCO | média | P/L extremo | 3586.1x |
+| DXCO3 | DEXCO | média | P/L extremo | 3578.4x |
 | GFSA3 | GAFISA | média | P/VP extremo | 0.02x |
 | AUAU3 | União Pet Participações | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 2.11× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | AZEV3 | AZEVEDO E TRAVASSOS | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 0.19× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
@@ -114,9 +114,9 @@ As de severidade baixa e informativas ficam em `auditoria.json`.
 
 | Ticker | Cotação base | Cotação brapi | Valor de mercado base | brapi | Diferença |
 |---|---|---|---|---|---|
-| PETR4 | 42.67 | 42.67 | 594.3 bi | 588.5 bi | +1.0% |
-| VALE3 | 58.48 | 58.48 | 243.8 bi | 233.1 bi | +4.6% |
-| ITUB4 | 40.07 | 40.07 | 466.3 bi | 465.3 bi | +0.2% |
-| MGLU3 | 8.2 | 8.2 | 6.4 bi | 5.8 bi | +9.9% |
+| PETR4 | 41.3 | 41.3 | 574.9 bi | 588.5 bi | -2.3% |
+| VALE3 | 58.41 | 58.41 | 243.5 bi | 233.1 bi | +4.5% |
+| ITUB4 | 39.73 | 39.73 | 459.4 bi | 465.3 bi | -1.3% |
+| MGLU3 | 8.99 | 8.99 | 7.0 bi | 5.8 bi | +20.5% |
 
 A base usa a quantidade de ações atual informada pela B3, menos as ações em tesouraria do último balanço (mesmo critério do LPA). Fontes de mercado variam: algumas usam o total emitido, outras uma contagem defasada. A cotação é o teste mais direto, e deve bater exatamente.
