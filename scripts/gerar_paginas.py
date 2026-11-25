@@ -26,6 +26,9 @@ AGENDA = RAIZ / "data" / "agenda.js"
 SAIDA = RAIZ / "acao"
 SITE_URL = os.environ.get("SITE_URL", "https://edpschw.github.io/previsibilidade-acoes").rstrip("/")
 MARCA = "<!-- gerado por scripts/gerar_paginas.py -->"
+# Nome da newsletter no Buttondown (buttondown.com/<nome>), que entra no endereço do formulário de
+# inscrição do resumo semanal. Vazio: as páginas ficam sem formulário e mostram só o RSS.
+BUTTONDOWN = ""
 
 
 def carregar():
@@ -159,6 +162,32 @@ def setor(e):
 
 # ---------------------------------------------------------------- HTML
 
+def form_assinatura(origem):
+    """Formulário de inscrição no resumo semanal, em HTML puro, sem script. O navegador vai para a página
+    do Buttondown, que confirma a inscrição. 'origem' fica nos dados do inscrito, para saber que página
+    converte. Sem BUTTONDOWN, devolve vazio."""
+    if not BUTTONDOWN:
+        return ""
+    campo = f"assinar-{origem}"
+    return (f'<form class="assinar" action="https://buttondown.com/api/emails/embed-subscribe/{esc(BUTTONDOWN)}" method="post">'
+            f'<label for="{campo}">Get Real Terms Weekly by email</label>'
+            f'<div class="assinar-linha"><input type="email" name="email" id="{campo}" required placeholder="you@example.com" autocomplete="email">'
+            '<input type="hidden" name="embed" value="1">'
+            f'<input type="hidden" name="metadata__origem" value="{esc(origem)}">'
+            '<button type="submit" class="botao">Subscribe</button></div>'
+            '<p class="mudo">Free. One email a week, after Friday\'s close. Unsubscribe anytime; sent through Buttondown.</p></form>')
+
+
+def bloco_assinatura(origem, raiz):
+    """cartão com o formulário, para o fim das páginas de empresa"""
+    form = form_assinatura(origem)
+    if not form:
+        return ""
+    return (f'<section class="cartao" style="margin-top:16px"><h2>Every week, in one email</h2>'
+            f'<p class="mudo" style="margin:0">The real against the dollar, the biggest moves of Brazilian stocks, upcoming '
+            f'dividends and new filings. <a href="{raiz}semana/">See the latest issue</a>.</p>{form}</section>')
+
+
 def versao(asset):
     m = re.search(re.escape(asset) + r"\?v=([0-9a-f]+)", (RAIZ / "index.html").read_text(encoding="utf-8"))
     return f"{asset}?v={m.group(1)}" if m else asset
@@ -263,6 +292,7 @@ def pagina_empresa(e, d):
 <section class="cartao" style="margin-top:16px"><h2>Last years (R$)</h2>
 <div class="tabela-wrap"><table><thead><tr><th>Year</th><th>Revenue</th><th>Net income</th><th>Dividends paid</th></tr></thead><tbody>{"".join(linhas_anos)}</tbody></table></div></section>
 {f'<section class="cartao" style="margin-top:16px"><h2>Upcoming payments</h2><div class="tabela-wrap"><table><thead><tr><th>Ticker</th><th>Type</th><th>Per share</th><th>Yield</th><th>Record date</th><th>Payment</th></tr></thead><tbody>{agenda}</tbody></table></div></section>' if agenda else ''}
+{bloco_assinatura("empresa", "../../")}
 """
     return (cabeca(titulo, descricao, url, extra) + corpo + RODAPE).replace("{raiz}", "../../").replace("{data}", esc(d["gerado_em"][:10]))
 

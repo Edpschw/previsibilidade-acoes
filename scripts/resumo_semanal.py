@@ -12,6 +12,12 @@ as edições no sitemap. Escreve:
     semana/<sexta>/index.html    a edição, no visual das páginas de empresa
     semana/index.html            a edição mais recente e o arquivo
     semana/feed.xml              RSS 2.0 com as últimas edições completas, em HTML de e-mail
+    semana/<sexta>/envio.json    registro do envio pelo Buttondown (com --enviar)
+
+Envio por e-mail (--enviar, passo do CI depois da publicação): cria a edição mais recente no Buttondown
+pela API, como rascunho enquanto ENVIO_AUTOMATICO for False, ou já mandando aos inscritos. Precisa do
+segredo BUTTONDOWN_API_KEY. Manda uma vez só: envio.json e a busca pelo assunto no Buttondown impedem a
+repetição. O formulário de inscrição das páginas usa BUTTONDOWN, em scripts/gerar_paginas.py.
 
 Quando sai: a edição leva a data da sexta da semana e sai uma vez, na primeira execução que já tem o
 fechamento de sexta na base ou, se ele não vier (feriado, arquivo da B3 atrasado), de sábado até a terça
@@ -30,8 +36,12 @@ O que entra, tudo com dados que o site já tem:
 
 import argparse
 import json
+import os
 import re
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 from bisect import bisect_right
 from datetime import date, datetime, timedelta, timezone
 from email.utils import format_datetime
@@ -67,6 +77,11 @@ TRIMESTRE = {3: "Q1", 6: "Q2", 9: "Q3", 12: "Q4"}
 # virada de sinal do lucro, sem variação percentual: posição na ordem do melhor para o pior
 VIRADA = {"back to profit": 1e6, "loss narrowed": 0.0, "loss unchanged": 0.0, "loss widened": -1e6 + 1, "to a loss": -1e6}
 EDICAO = re.compile(r"\d{4}-\d{2}-\d{2}")
+API_BUTTONDOWN = "https://api.buttondown.com/v1"
+VERSAO_API = "2026-11-10"   # versão fixa da API do Buttondown: o formato das respostas não muda sem aviso
+# False: a edição entra como rascunho no Buttondown, para conferir antes de mandar (as primeiras edições).
+# True: sai para os inscritos assim que o CI gera a edição.
+ENVIO_AUTOMATICO = False
 # no site, ".stat span" (rótulo do quadro de números) pintaria de cinza o sinal da variação
 ESTILO_PAGINA = ("<style>.stat b span{font-size:inherit}.stat b .pos{color:var(--pos)}"
                  ".stat b .neg{color:var(--neg)}.stat b .mudo{color:var(--muted)}</style>")
@@ -620,7 +635,8 @@ def pagina_edicao(r):
     E = Estilo(False, raiz)
     url = f"{G.SITE_URL}/semana/{r['data']}/"
     corpo = ('<a class="voltar" href="../">← All issues</a>' + conteudo(r, E) +
-             E.secao("Every week", E.p(f"{esc(DESCRICAO)} {E.link('semana/feed.xml', 'Follow by RSS')}.")))
+             E.secao("Every week", E.p(f"{esc(DESCRICAO)} {E.link('semana/feed.xml', 'Follow by RSS')}.") +
+                     G.form_assinatura("edicao")))
     return (G.cabeca(f"{r['semana_txt']} · {TITULO}", r["frase"], url, ESTILO_PAGINA) + corpo + G.RODAPE) \
         .replace("{raiz}", raiz).replace("{data}", esc(r["gerado_em"][:10]))
 
@@ -629,7 +645,7 @@ def pagina_arquivo(eds):
     raiz = "../"
     E = Estilo(False, raiz)
     intro = (f'<section class="intro"><h1>{TITULO}</h1><p>{esc(DESCRICAO)} '
-             f'{E.link("semana/feed.xml", "Follow by RSS")} or read the latest issue below.</p></section>')
+             f'{E.link("semana/feed.xml", "Follow by RSS")} or read the latest issue below.</p>{G.form_assinatura("arquivo")}</section>')
     if eds:
         itens = "".join(f'<li>{E.link("semana/" + r["data"] + "/", esc(r["semana_txt"]))} <span class="mudo">· Issue {r["numero"]}</span></li>'
                         for r in eds)
@@ -665,6 +681,75 @@ def feed(eds):
             f'  <atom:link href="{G.SITE_URL}/semana/feed.xml" rel="self" type="application/rss+xml"/>\n'
             f"  <description>{xesc(DESCRICAO)}</description>\n"
             "  <language>en</language>\n" + ultima + "".join(itens) + "</channel>\n</rss>\n")
+
+
+# ---------------------------------------------------------------- envio pelo Buttondown
+
+def assunto(r):
+    """assunto do e-mail; único por edição, o que também serve para achar uma edição já enviada"""
+    return f"{TITULO}: {r['semana_txt']}"
+
+
+def http_buttondown(metodo, caminho, chave, corpo=None):
+    """chamada à API do Buttondown → (status HTTP, JSON da resposta ou None)"""
+    req = urllib.request.Request(API_BUTTONDOWN + caminho, method=metodo,
+                                 data=json.dumps(corpo).encode() if corpo is not None else None,
+                                 headers={"Authorization": f"Token {chave}", "Content-Type": "application/json",
+                                          "Accept": "application/json", "X-API-Version": VERSAO_API,
+                                          "User-Agent": "real-terms-weekly"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            texto = resp.read()
+            return resp.status, (json.loads(texto) if texto else None)
+    except urllib.error.HTTPError as erro:
+        texto = erro.read()
+        try:
+            return erro.code, (json.loads(texto) if texto else None)
+        except ValueError:
+            return erro.code, {"detail": texto[:300].decode("utf-8", "replace")}
+
+
+def gravar_envio(caminho, email, titulo):
+    email = email or {}
+    caminho.write_text(json.dumps({"servico": "buttondown", "id": email.get("id"), "status": email.get("status"),
+                                   "assunto": titulo, "em": datetime.now(FUSO).isoformat(timespec="minutes")},
+                                  ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
+
+def enviar(chave, hoje, http=http_buttondown, automatico=None):
+    """Manda a edição mais recente pelo Buttondown, uma vez só, e grava semana/<sexta>/envio.json.
+    Não manda quando: a edição saiu antes da janela (de sexta até terça); já existe envio.json; ou o
+    Buttondown já tem um e-mail com o mesmo assunto (o registro local pode não ter chegado ao git).
+    Devolve (resultado, mensagem); o resultado é "enviado", "rascunho", "registrado" ou "nada"."""
+    automatico = ENVIO_AUTOMATICO if automatico is None else automatico
+    eds = edicoes()
+    if not eds:
+        return "nada", "nenhuma edição em semana/"
+    r = eds[0]
+    F = date.fromisoformat(r["data"])
+    registro = SAIDA / r["data"] / "envio.json"
+    if registro.exists():
+        return "nada", f"a edição de {F} já foi para o Buttondown"
+    if (hoje - F).days > JANELA_DIAS:
+        return "nada", f"a edição de {F} é antiga para mandar agora"
+    titulo = assunto(r)
+    st, pagina = http("GET", "/emails?" + urllib.parse.urlencode({"subject": titulo}), chave)
+    if st != 200:
+        raise RuntimeError(f"Buttondown: a lista de e-mails respondeu {st}: {pagina}")
+    iguais = [e for e in (pagina or {}).get("results", []) if e.get("subject") == titulo and e.get("status") != "deleted"]
+    if iguais:
+        gravar_envio(registro, iguais[0], titulo)
+        return "registrado", f"o Buttondown já tinha a edição de {F} ({iguais[0].get('status')}); só registrei"
+    corpo = {"subject": titulo, "body": html_email(r), "status": "about_to_send" if automatico else "draft",
+             "description": r["frase"], "canonical_url": f"{G.SITE_URL}/semana/{r['data']}/",
+             "secondary_id": r["numero"], "metadata": {"real_terms_edicao": r["data"]}}
+    st, email = http("POST", "/emails", chave, corpo)
+    if st not in (200, 201):
+        raise RuntimeError(f"Buttondown: criar o e-mail respondeu {st}: {email}")
+    gravar_envio(registro, email, titulo)
+    if automatico:
+        return "enviado", f"edição de {F} enviada aos inscritos"
+    return "rascunho", f"edição de {F} criada como rascunho no Buttondown"
 
 
 # ---------------------------------------------------------------- arquivos
@@ -717,8 +802,18 @@ def main():
     ap = argparse.ArgumentParser(description="Resumo semanal em inglês (semana/ e semana/feed.xml)")
     ap.add_argument("--data", help="sexta da edição (AAAA-MM-DD); gera mesmo fora da janela de sexta a segunda")
     ap.add_argument("--refazer", action="store_true", help="refaz a edição se ela já existe")
+    ap.add_argument("--enviar", action="store_true",
+                    help="manda a edição mais recente pelo Buttondown (precisa de BUTTONDOWN_API_KEY no ambiente)")
     a = ap.parse_args()
     hoje = datetime.now(FUSO).date()
+    if a.enviar:
+        chave = os.environ.get("BUTTONDOWN_API_KEY", "").strip()
+        resultado, msg = enviar(chave, hoje) if chave else ("nada", "sem BUTTONDOWN_API_KEY: nada a enviar")
+        print(msg)
+        if os.environ.get("GITHUB_OUTPUT"):  # o passo seguinte do CI abre um aviso quando sai um rascunho
+            with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+                f.write(f"resultado={resultado}\n")
+        return
     F = date.fromisoformat(a.data) if a.data else sexta(hoje)
     if F.weekday() != 4:
         sys.exit(f"{F} não é sexta-feira")

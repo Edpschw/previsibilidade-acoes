@@ -297,6 +297,15 @@ tbody tr:last-child td { border-bottom: 0; }
 .botao { display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 999px; font-weight: 650; font-size: 15px; background: var(--accent); color: var(--on-accent); text-decoration: none; box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent), 0 8px 30px -10px var(--accent); }
 .botao:hover { text-decoration: none; filter: brightness(1.08); }
 .botao.sec { background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--border); }
+
+/* inscrição no resumo semanal (páginas estáticas: semana/ e acao/) */
+.assinar { margin-top: 14px; }
+.assinar label { display: block; font-weight: 650; margin-bottom: 8px; }
+.assinar-linha { display: flex; flex-wrap: wrap; gap: 8px; }
+.assinar input[type="email"] { flex: 1 1 220px; min-width: 0; padding: 10px 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 15px; }
+.assinar input[type="email"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.assinar button.botao { border: 0; cursor: pointer; font-family: inherit; }
+.assinar p { margin: 8px 0 0; font-size: 13px; }
 .olho { display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--muted); padding: 5px 12px 5px 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
 .olho .capitulo { margin-right: 8px; }
 .pequeno { font-size: 12.5px; }

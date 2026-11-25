@@ -6,10 +6,12 @@
 import json
 import re
 import sys
+import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import resumo_semanal as S  # noqa: E402
@@ -185,6 +187,131 @@ class Edicao(unittest.TestCase):
         self.assertEqual(item.find("guid").text, item.find("link").text)
         self.assertIn("Nome &lt;com&gt; ]]&gt; &amp; sinais", item.find(CONTEUDO).text)  # escapado: não quebra o XML
         datetime.strptime(item.find("pubDate").text, "%a, %d %b %Y %H:%M:%S %z")
+
+
+class Inscricao(unittest.TestCase):
+    """formulário do Buttondown nas páginas estáticas: só com o nome da newsletter, em HTML puro"""
+
+    def setUp(self):
+        self.antes = S.G.BUTTONDOWN
+
+    def tearDown(self):
+        S.G.BUTTONDOWN = self.antes
+
+    def test_sem_nome_nao_ha_formulario(self):
+        S.G.BUTTONDOWN = ""
+        self.assertEqual(S.G.form_assinatura("empresa"), "")
+        self.assertEqual(S.G.bloco_assinatura("empresa", "../../"), "")
+
+    def test_formulario_em_html_puro(self):
+        S.G.BUTTONDOWN = "realterms"
+        f = S.G.form_assinatura("empresa")
+        self.assertIn('action="https://buttondown.com/api/emails/embed-subscribe/realterms" method="post"', f)
+        self.assertIn('name="email"', f)
+        self.assertIn('name="embed" value="1"', f)
+        self.assertIn('name="metadata__origem" value="empresa"', f)
+        self.assertNotIn("<script", f)
+        self.assertNotIn("onsubmit", f)
+
+
+class FakeButtondown:
+    """faz o papel da API: lista os e-mails já criados e aceita (ou recusa) a criação"""
+
+    def __init__(self, existentes=(), status_criar=201):
+        self.existentes, self.status_criar, self.chamadas = list(existentes), status_criar, []
+
+    def __call__(self, metodo, caminho, chave, corpo=None):
+        self.chamadas.append((metodo, caminho, corpo))
+        if metodo == "GET":
+            return 200, {"results": self.existentes, "next": None}
+        if self.status_criar >= 400:
+            return self.status_criar, {"code": "email_invalid", "detail": "recusado"}
+        return self.status_criar, {"id": "em_novo", "status": corpo["status"], "subject": corpo["subject"]}
+
+
+class EnvioButtondown(unittest.TestCase):
+    """envio da edição mais recente: rascunho por padrão, uma vez só, nunca uma edição velha"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.saida = mock.patch.object(S, "SAIDA", Path(self.tmp.name))
+        self.saida.start()
+        d = base([empresa("c1", "AAA3", 11.0), empresa("c2", "BBB3", 18.0)])
+        self.r, _ = S.montar(d, {}, INDICES, SEXTA, None, 1, hist=HIST.get, lista_aulas=AULAS, agora=AGORA)
+        (S.SAIDA / "2026-11-20").mkdir()
+        (S.SAIDA / "2026-11-20" / "resumo.json").write_text(json.dumps(self.r), encoding="utf-8")
+        self.registro = S.SAIDA / "2026-11-20" / "envio.json"
+
+    def tearDown(self):
+        self.saida.stop()
+        self.tmp.cleanup()
+
+    def test_rascunho_por_padrao(self):
+        api = FakeButtondown()
+        resultado, _ = S.enviar("chave", date(2026, 11, 21), http=api, automatico=False)
+        self.assertEqual(resultado, "rascunho")
+        (m1, c1, _), (m2, c2, corpo) = api.chamadas
+        self.assertEqual((m1, m2, c2), ("GET", "POST", "/emails"))
+        self.assertIn("subject=Real+Terms+Weekly", c1)
+        self.assertEqual(corpo["status"], "draft")
+        self.assertEqual(corpo["subject"], "Real Terms Weekly: Week of November 16–20, 2026")
+        self.assertTrue(corpo["canonical_url"].endswith("/semana/2026-11-20/"))
+        self.assertEqual(corpo["secondary_id"], 1)
+        self.assertTrue(corpo["body"].startswith("<div"))
+        self.assertEqual(json.loads(self.registro.read_text())["id"], "em_novo")
+
+    def test_automatico_manda_na_hora(self):
+        api = FakeButtondown()
+        self.assertEqual(S.enviar("chave", date(2026, 11, 21), http=api, automatico=True)[0], "enviado")
+        self.assertEqual(api.chamadas[-1][2]["status"], "about_to_send")
+
+    def test_nao_manda_duas_vezes(self):
+        S.enviar("chave", date(2026, 11, 21), http=FakeButtondown(), automatico=True)
+        api = FakeButtondown()
+        self.assertEqual(S.enviar("chave", date(2026, 11, 22), http=api, automatico=True)[0], "nada")
+        self.assertEqual(api.chamadas, [])
+
+    def test_ja_no_buttondown_so_registra(self):
+        # o envio saiu, mas o commit do registro falhou: a busca pelo assunto evita mandar de novo
+        api = FakeButtondown(existentes=[{"id": "em_antigo", "status": "sent", "subject": S.assunto(self.r)}])
+        self.assertEqual(S.enviar("chave", date(2026, 11, 23), http=api, automatico=True)[0], "registrado")
+        self.assertEqual([m for m, _, _ in api.chamadas], ["GET"])
+        self.assertEqual(json.loads(self.registro.read_text())["id"], "em_antigo")
+
+    def test_edicao_velha_nao_sai(self):
+        api = FakeButtondown()
+        self.assertEqual(S.enviar("chave", date(2026, 11, 25), http=api, automatico=True)[0], "nada")
+        self.assertEqual(api.chamadas, [])
+
+    def test_recusa_da_api_falha_sem_registrar(self):
+        with self.assertRaises(RuntimeError):
+            S.enviar("chave", date(2026, 11, 21), http=FakeButtondown(status_criar=400), automatico=True)
+        self.assertFalse(self.registro.exists())
+
+    def test_chamada_http(self):
+        visto = {}
+
+        class Resposta:
+            status = 200
+
+            def read(self):
+                return b'{"results": []}'
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *erro):
+                return False
+
+        def urlopen(req, timeout=None):
+            visto.update(url=req.full_url, metodo=req.get_method(), auth=req.get_header("Authorization"),
+                         versao=req.get_header("X-api-version"))
+            return Resposta()
+
+        with mock.patch.object(S.urllib.request, "urlopen", urlopen):
+            self.assertEqual(S.http_buttondown("GET", "/emails?subject=x", "chave-teste"), (200, {"results": []}))
+        self.assertEqual(visto, {"url": "https://api.buttondown.com/v1/emails?subject=x", "metodo": "GET",
+                                 "auth": "Token chave-teste", "versao": S.VERSAO_API})
 
 
 class CursoDaPaginaInicial(unittest.TestCase):
