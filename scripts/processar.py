@@ -1159,14 +1159,19 @@ def ler_cotahist(caminho, tickers=None):
     return out
 
 
-def baixar_dia(dia: date):
-    """Arquivo diário da B3; None se não houve pregão (ou a B3 ainda não publicou)."""
+def baixar_dia(dia: date, insistir=False):
+    """Arquivo diário da B3; None se não houve pregão (ou a B3 ainda não publicou).
+
+    Um 404 vira marca (.404) e o dia não é pedido de novo depois de uma semana. Com insistir=True a
+    marca é ignorada: a B3 às vezes responde 404 para um arquivo que existe, e no fim do ano isso fazia
+    a base guardar o fechamento do pregão anterior ao último (achado pelo cruzamento preço de fim de
+    exercício × histórico diário, em scripts/qualidade.py: 2020 e 2024)."""
     nome = f"COTAHIST_D{dia:%d%m%Y}.ZIP"
     destino = FONTES / "cotahist" / nome
     marca = destino.with_suffix(".404")
     if destino.exists():
         return destino
-    if marca.exists() and (date.today() - dia).days > 7:
+    if marca.exists() and (date.today() - dia).days > 7 and not insistir:
         return None
     try:
         return baixar(URL_COTA.format(nome=nome), destino)
@@ -1201,7 +1206,7 @@ def carregar_cotacoes(tickers):
         dia, arquivos = date(ano, 12, 31), 0
         while arquivos < 5 and dia.month == 12 and dia.day > 10:
             if dia.weekday() < 5:
-                caminho = baixar_dia(dia)
+                caminho = baixar_dia(dia, insistir=True)  # o último pregão do ano não pode faltar
                 if caminho:
                     for t, v in ler_cotahist(caminho, tickers).items():
                         achados.setdefault(t, v)

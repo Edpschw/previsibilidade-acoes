@@ -76,6 +76,8 @@ jobs:
       - name: Testes
         run: python3 -m unittest discover -s tests -v
 
+      # Auditoria: cobertura, regras de plausibilidade e cruzamentos entre fontes (scripts/qualidade.py),
+      # que geram data/qualidade.js para a aba Qualidade (#/qualidade).
       - name: Auditoria com trava de qualidade
         run: python3 scripts/auditar.py --externo --trava
 
@@ -87,7 +89,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/empresas.js data/agenda.js data/historico index.html auditoria.md auditoria.json auditoria_resumo.json acao resumo sitemap.xml robots.txt
+          git add data/empresas.js data/agenda.js data/historico data/qualidade.js data/qualidade_historico.json index.html auditoria.md auditoria.json auditoria_resumo.json acao resumo sitemap.xml robots.txt
           if git diff --cached --quiet; then echo "sem mudanças"; exit 0; fi
           git commit -m "Atualiza base ($(date -u +%F))"
           git push

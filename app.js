@@ -1123,6 +1123,7 @@
     if (window.RealTermsTeia) window.RealTermsTeia.parar();
     var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "comparar" || alvo === "teia" || alvo === "mapa" ? "teia" :
       alvo === "agenda" ? "agenda" : alvo === "ranking" ? "ranking" : alvo === "simular" ? "simular" :
+      alvo === "qualidade" ? "qualidade" :
       alvo === "curso" ? "inicio" : "empresa";  // #/curso/7 abre a aula 7 do curso da página inicial
     $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
     document.body.setAttribute("data-pagina", pagina);
@@ -1132,6 +1133,7 @@
     else if (pagina === "agenda") { if (window.RealTermsAgenda) window.RealTermsAgenda.render($("#app")); }
     else if (pagina === "ranking") { if (window.RealTermsRanking) window.RealTermsRanking.render($("#app")); }
     else if (pagina === "simular") { if (window.RealTermsSimular) window.RealTermsSimular.render($("#app")); }
+    else if (pagina === "qualidade") { if (window.RealTermsQualidade) window.RealTermsQualidade.render($("#app")); }
     else telaEmpresa(alvo.toUpperCase());
   }
 

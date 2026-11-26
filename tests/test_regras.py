@@ -8,10 +8,12 @@ não desfaça a correção sem ninguém perceber.
 
 import io
 import sys
+import tempfile
 import unittest
 import zipfile
 from datetime import date
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import processar as P  # noqa: E402
@@ -426,6 +428,30 @@ class LpaReapresentado(unittest.TestCase):
         self.assertEqual(base["X"][2023]["lpa_on"], 1.0)              # o do próprio ano prevalece
         self.assertEqual(base["X"][2023]["_lpa_on_seguinte"], 0.25)   # o reapresentado fica à parte
         self.assertNotIn("_lpa_on_seguinte", base["X"][2024])
+
+
+class UltimoPregaoDoAno(unittest.TestCase):
+    """Caso real: a B3 respondeu 404 a COTAHIST_D30122024 no CI, a marca .404 ficou e a base guardou o
+    fechamento de 27/12/2024 como o do ano (ABCB4 R$ 20,75 em vez de R$ 19,31; o mesmo em 2020).
+    Achado pelo cruzamento preço de fim de exercício × histórico diário (scripts/qualidade.py)."""
+
+    def test_marca_de_404_nao_barra_o_ultimo_pregao(self):
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(P, "FONTES", Path(tmp)):
+            marca = Path(tmp) / "cotahist" / "COTAHIST_D30122024.404"
+            marca.parent.mkdir(parents=True)
+            marca.touch()
+            pedidos = []
+
+            def baixar(url, destino):
+                pedidos.append(url)
+                destino.write_bytes(b"zip")
+                return destino
+
+            with mock.patch.object(P, "baixar", baixar):
+                self.assertIsNone(P.baixar_dia(date(2024, 12, 30)))               # uso comum: a marca vale
+                self.assertEqual(pedidos, [])
+                self.assertTrue(P.baixar_dia(date(2024, 12, 30), insistir=True))  # fim de ano: pede de novo
+                self.assertEqual(len(pedidos), 1)
 
 
 class CorteDeLiquidez(unittest.TestCase):

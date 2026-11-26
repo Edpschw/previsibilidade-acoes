@@ -356,6 +356,17 @@ def main():
         "graves": sorted(f"{a['ticker']}|{a['regra']}" for a in achados if a["sev"] == "alta"),
         "por_severidade": dict(Counter(a["sev"] for a in achados)),
     }
+    # cruzamentos entre fontes e dados da aba Qualidade (data/qualidade.js)
+    import qualidade as Q
+    Q.gerar(d, achados, {
+        "pregoes": n_pregoes, "emissores_negociados": len(raizes_b3), "acima_corte": len(raizes_liq),
+        "na_base": len(raizes_base & raizes_liq), "cobertura": resumo["cobertura"], "empresas": len(empresas),
+        "lista_b3": sum(1 for r in lista_b3 if r.get("type") == "1"), "cvm_ativas": len(cad),
+        "fora": [{"t": t, "nome": r["nome"], "volume": round(r["volume"]), "motivo": m} for t, r, m in fora],
+        "sem_negocio": [e["ticker"] for e in sem_negocio],
+        "referencias": [list(r) for r in REFERENCIAS],
+    }, [dict(zip(("t", "preco_base", "preco_ext", "vm_base", "vm_ext", "dif"), x)) for x in externo])
+
     anterior = json.loads(RESUMO.read_text(encoding="utf-8")) if RESUMO.exists() else None
     problemas = trava(resumo, anterior) if "--trava" in sys.argv else []
     if not problemas:
