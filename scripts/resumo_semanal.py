@@ -709,6 +709,14 @@ def http_buttondown(metodo, caminho, chave, corpo=None):
             return erro.code, {"detail": texto[:300].decode("utf-8", "replace")}
 
 
+def conferir_chave(chave, http=http_buttondown):
+    """Leitura simples com a chave, a cada execução do CI: uma chave recusada vira erro (e um issue)
+    no mesmo dia, e não só quando houver edição para mandar."""
+    st, corpo = http("GET", "/emails?" + urllib.parse.urlencode({"page": 1}), chave)
+    if st != 200:
+        raise RuntimeError(f"Buttondown respondeu {st} ao conferir a chave: {corpo}")
+
+
 def gravar_envio(caminho, email, titulo):
     email = email or {}
     caminho.write_text(json.dumps({"servico": "buttondown", "id": email.get("id"), "status": email.get("status"),
@@ -808,6 +816,9 @@ def main():
     hoje = datetime.now(FUSO).date()
     if a.enviar:
         chave = os.environ.get("BUTTONDOWN_API_KEY", "").strip()
+        if chave:
+            conferir_chave(chave)
+            print("chave do Buttondown conferida")
         resultado, msg = enviar(chave, hoje) if chave else ("nada", "sem BUTTONDOWN_API_KEY: nada a enviar")
         print(msg)
         if os.environ.get("GITHUB_OUTPUT"):  # o passo seguinte do CI abre um aviso quando sai um rascunho

@@ -288,6 +288,11 @@ class EnvioButtondown(unittest.TestCase):
             S.enviar("chave", date(2026, 11, 21), http=FakeButtondown(status_criar=400), automatico=True)
         self.assertFalse(self.registro.exists())
 
+    def test_chave_recusada_vira_erro(self):
+        S.conferir_chave("chave", http=lambda *a: (200, {"results": []}))
+        with self.assertRaises(RuntimeError):
+            S.conferir_chave("chave", http=lambda *a: (401, {"detail": "Invalid token."}))
+
     def test_chamada_http(self):
         visto = {}
 
