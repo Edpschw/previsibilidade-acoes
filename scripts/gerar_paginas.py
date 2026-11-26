@@ -28,7 +28,7 @@ SITE_URL = os.environ.get("SITE_URL", "https://edpschw.github.io/previsibilidade
 MARCA = "<!-- gerado por scripts/gerar_paginas.py -->"
 # Nome da newsletter no Buttondown (buttondown.com/<nome>), que entra no endereço do formulário de
 # inscrição do resumo semanal. Vazio: as páginas ficam sem formulário e mostram só o RSS.
-BUTTONDOWN = ""
+BUTTONDOWN = "RealTerms"
 
 
 def carregar():
