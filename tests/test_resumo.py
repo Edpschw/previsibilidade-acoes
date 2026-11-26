@@ -1,6 +1,6 @@
-"""Resumo semanal (scripts/resumo_semanal.py): regras com dados sintéticos e invariantes das edições publicadas.
+"""Resumo diário (scripts/resumo.py): regras com dados sintéticos e invariantes das edições publicadas.
 
-    python3 -m unittest tests.test_semana -v
+    python3 -m unittest tests.test_resumo -v
 """
 
 import json
@@ -14,7 +14,7 @@ from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-import resumo_semanal as S  # noqa: E402
+import resumo as S  # noqa: E402
 
 CONTEUDO = "{http://purl.org/rss/1.0/modules/content/}encoded"
 AGORA = datetime(2026, 11, 20, 20, 30, tzinfo=timezone(timedelta(hours=-3)))
@@ -50,20 +50,20 @@ AULAS = [("LEARN", "From the basics"), ("COMPANY", "What is a company?"), ("SHAR
 
 
 class Datas(unittest.TestCase):
-    def test_sexta_da_semana(self):
-        self.assertEqual(S.sexta(date(2026, 11, 20)), SEXTA)               # a própria sexta
-        self.assertEqual(S.sexta(date(2026, 11, 23)), SEXTA)               # segunda: a sexta anterior
-        self.assertEqual(S.sexta(date(2026, 11, 19)), date(2026, 11, 13))  # quinta: a da semana passada
+    def test_proximo_dia_util(self):
+        self.assertEqual(S.proximo_dia_util(date(2026, 11, 26)), date(2026, 11, 27))   # quinta → sexta
+        self.assertEqual(S.proximo_dia_util(SEXTA), date(2026, 11, 23))                # sexta → segunda
 
-    def test_sai_uma_vez_com_o_pregao_de_sexta(self):
-        sexta, quinta = date(2026, 11, 20), "2026-11-19"
-        # a execução das 20h17 de quinta roda na madrugada de sexta (atraso do GitHub): sem o pregão de sexta, espera
-        self.assertFalse(S.deve_gerar(sexta, existe=False, cotacoes_em=quinta))
-        self.assertTrue(S.deve_gerar(sexta, existe=False, cotacoes_em="2026-11-20"))
-        self.assertTrue(S.deve_gerar(date(2026, 11, 21), existe=False, cotacoes_em=quinta))   # sábado: feriado na sexta
-        self.assertTrue(S.deve_gerar(date(2026, 11, 24), existe=False, cotacoes_em=quinta))   # terça: última chance
-        self.assertFalse(S.deve_gerar(date(2026, 11, 25), existe=False, cotacoes_em=quinta))  # quarta: não sai atrasada
-        self.assertFalse(S.deve_gerar(date(2026, 11, 21), existe=True, cotacoes_em=quinta))
+    def test_uma_edicao_por_pregao(self):
+        quarta = date(2026, 11, 25)
+        # o pregão de quarta sai na madrugada de quinta (atraso do agendamento do GitHub)
+        self.assertTrue(S.deve_gerar(date(2026, 11, 26), existe=False, pregao=quarta))
+        self.assertTrue(S.deve_gerar(date(2026, 11, 29), existe=False, pregao=quarta))   # até 4 dias depois
+        self.assertFalse(S.deve_gerar(date(2026, 11, 30), existe=False, pregao=quarta))  # não sai atrasada
+        self.assertFalse(S.deve_gerar(date(2026, 11, 26), existe=True, pregao=quarta))
+
+    def test_data_longa(self):
+        self.assertEqual(S.data_longa(date(2026, 11, 25)), "Wednesday, November 25, 2026")
 
     def test_intervalo_da_semana(self):
         self.assertEqual(S.intervalo(date(2026, 11, 16), SEXTA), "November 16–20, 2026")
@@ -120,8 +120,8 @@ class Edicao(unittest.TestCase):
             "c2": [{"t": "BBB3", "tipo": "jcp", "valor": 0.4, "com": "2026-10-01", "pag": "2026-11-25"},
                    {"t": "BBB4", "tipo": "jcp", "valor": 0.44, "com": "2026-10-01", "pag": "2026-11-25"},
                    {"t": "BBB3", "tipo": "dividendo", "valor": 2.0, "com": "2026-10-01", "pag": "2026-11-26"}]}
-        cls.r, cls.estado = S.montar(cls.d, cls.agenda, INDICES, SEXTA, cls.anterior, numero=3, hist=HIST.get,
-                                     lista_aulas=AULAS, agora=AGORA)
+        cls.r, cls.estado = S.montar(cls.d, cls.agenda, INDICES, SEXTA, cls.anterior, numero=3, tipo="semana",
+                                     hist=HIST.get, lista_aulas=AULAS, agora=AGORA)
 
     def test_cambio_e_movimentos_em_dolar(self):
         self.assertAlmostEqual(self.r["cambio"]["real"], 0.10)
@@ -189,6 +189,47 @@ class Edicao(unittest.TestCase):
         datetime.strptime(item.find("pubDate").text, "%a, %d %b %Y %H:%M:%S %z")
 
 
+class EdicaoDiaria(unittest.TestCase):
+    """o pregão de sexta: variação contra quinta, proventos de segunda (o pregão seguinte)"""
+
+    @classmethod
+    def setUpClass(cls):
+        hist_dia = {"AAA3": hist([("2026-11-18", 10.0), ("2026-11-19", 10.5), ("2026-11-20", 10.0)]),
+                    "BBB3": hist([("2026-11-19", 20.0), ("2026-11-20", 21.0)]),
+                    "CCC3": hist([("2026-11-18", 5.0), ("2026-11-19", 5.0)])}      # não negociou na sexta
+        indices = {"ptax": {"d0": "2026-11-19", "dd": [1], "v": [5.0, 5.1]}}       # o real caiu na sexta
+        d = base([empresa("c1", "AAA3", 10.0), empresa("c2", "BBB3", 21.0), empresa("c3", "CCC3", 5.0)])
+        agenda = {"c1": [{"t": "AAA3", "tipo": "dividendo", "valor": 0.3, "com": "2026-11-23", "pag": "2026-12-10"},
+                         {"t": "AAA3", "tipo": "jcp", "valor": 0.2, "com": "2026-11-24", "pag": "2026-12-10"}],
+                  "c2": [{"t": "BBB3", "tipo": "jcp", "valor": 0.4, "com": "2026-10-01", "pag": "2026-11-23"}]}
+        cls.r, _ = S.montar(d, agenda, indices, SEXTA, None, 2, hist=hist_dia.get, lista_aulas=AULAS, agora=AGORA)
+
+    def test_titulo_e_tipo(self):
+        self.assertEqual((self.r["tipo"], self.r["titulo"]), ("dia", "Friday, November 20, 2026"))
+        self.assertEqual(S.assunto(self.r), "Real Terms Daily: Friday, November 20, 2026")
+
+    def test_variacao_do_dia(self):
+        mov = self.r["movimentos"]["topo"]
+        self.assertEqual([x["t"] for x in mov], ["BBB3", "AAA3"])     # CCC3 não negociou na sexta
+        self.assertAlmostEqual(mov[0]["brl"], 0.05)
+        self.assertAlmostEqual(mov[1]["brl"], 10.0 / 10.5 - 1, places=6)
+        self.assertAlmostEqual(self.r["cambio"]["real"], 5.0 / 5.1 - 1, places=6)
+
+    def test_proventos_do_pregao_seguinte(self):
+        pv = self.r["proventos"]
+        self.assertEqual(pv["semana"], ["2026-11-21", "2026-11-23"])   # sexta → segunda
+        self.assertEqual([x["t"] for x in pv["direito"]["itens"]], ["AAA3"])
+        self.assertEqual([x["t"] for x in pv["pagamentos"]["itens"]], ["BBB3"])
+        self.assertIn("in the next session", self.r["frase"])
+
+    def test_rotulos_do_dia(self):
+        pagina = S.pagina_edicao(self.r)
+        for rotulo in ("The day in numbers", "Day in R$", "Dividends in the next session (Mon, Nov 23)",
+                       "against the previous session's close", "Every trading day"):
+            self.assertIn(rotulo, pagina)
+        self.assertNotIn("Week", pagina.split("<main", 1)[1].replace("Weekly", ""))
+
+
 class Inscricao(unittest.TestCase):
     """formulário do Buttondown nas páginas estáticas: só com o nome da newsletter, em HTML puro"""
 
@@ -252,10 +293,10 @@ class EnvioButtondown(unittest.TestCase):
         self.assertEqual(resultado, "rascunho")
         (m1, c1, _), (m2, c2, corpo) = api.chamadas
         self.assertEqual((m1, m2, c2), ("GET", "POST", "/emails"))
-        self.assertIn("subject=Real+Terms+Weekly", c1)
+        self.assertIn("subject=Real+Terms+Daily", c1)
         self.assertEqual(corpo["status"], "draft")
-        self.assertEqual(corpo["subject"], "Real Terms Weekly: Week of November 16–20, 2026")
-        self.assertTrue(corpo["canonical_url"].endswith("/semana/2026-11-20/"))
+        self.assertEqual(corpo["subject"], "Real Terms Daily: Friday, November 20, 2026")
+        self.assertTrue(corpo["canonical_url"].endswith("/resumo/2026-11-20/"))
         self.assertEqual(corpo["secondary_id"], 1)
         self.assertTrue(corpo["body"].startswith("<div"))
         self.assertEqual(json.loads(self.registro.read_text())["id"], "em_novo")
@@ -329,11 +370,12 @@ class CursoDaPaginaInicial(unittest.TestCase):
 
 @unittest.skipUnless((S.SAIDA / "feed.xml").exists(), "sem edições publicadas")
 class EdicoesPublicadas(unittest.TestCase):
-    def test_edicoes_em_sextas_numeradas_em_ordem(self):
+    def test_edicoes_em_dias_uteis_numeradas_em_ordem(self):
         eds = sorted(S.edicoes(), key=lambda r: r["data"])
         self.assertTrue(eds)
         for k, r in enumerate(eds, 1):
-            self.assertEqual(date.fromisoformat(r["data"]).weekday(), 4, r["data"])
+            dia = date.fromisoformat(r["data"]).weekday()
+            self.assertEqual(dia, 4, r["data"]) if S.semanal(r) else self.assertLess(dia, 5, r["data"])
             self.assertEqual(r["numero"], k)
             self.assertTrue((S.SAIDA / r["data"] / "index.html").exists())
             self.assertTrue((S.SAIDA / r["data"] / "estado.json").exists())

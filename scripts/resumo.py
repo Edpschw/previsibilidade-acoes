@@ -1,37 +1,41 @@
-"""Resumo semanal em inglês (Real Terms Weekly): uma edição por semana, no site e num feed RSS que um
-serviço de e-mail pode ler para mandar a newsletter.
+"""Resumo diário em inglês (Real Terms Daily): uma edição por pregão, no site, num feed RSS e por e-mail
+(Buttondown).
 
-    python3 scripts/resumo_semanal.py                     # no CI, todo dia útil
-    python3 scripts/resumo_semanal.py --data 2026-11-20   # gera a edição dessa sexta (--refazer se já existe)
+    python3 scripts/resumo.py                      # no CI, todo dia útil
+    python3 scripts/resumo.py --data 2026-11-25    # gera a edição desse pregão (--refazer se já existe)
+    python3 scripts/resumo.py --enviar             # manda a edição mais recente pelo Buttondown
 
 Roda depois de scripts/processar.py e scripts/historico.py e antes de scripts/gerar_paginas.py, que põe
 as edições no sitemap. Escreve:
 
-    semana/<sexta>/resumo.json   conteúdo da edição; fica como foi publicado
-    semana/<sexta>/estado.json   retrato da base no dia, que a edição seguinte usa para achar o que mudou
-    semana/<sexta>/index.html    a edição, no visual das páginas de empresa
-    semana/index.html            a edição mais recente e o arquivo
-    semana/feed.xml              RSS 2.0 com as últimas edições completas, em HTML de e-mail
-    semana/<sexta>/envio.json    registro do envio pelo Buttondown (com --enviar)
+    resumo/<pregão>/resumo.json   conteúdo da edição; fica como foi publicado
+    resumo/<pregão>/estado.json   retrato da base no dia, que a edição seguinte usa para achar o que mudou
+    resumo/<pregão>/index.html    a edição, no visual das páginas de empresa
+    resumo/<pregão>/envio.json    registro do envio pelo Buttondown (com --enviar)
+    resumo/index.html             a edição mais recente e o arquivo
+    resumo/feed.xml               RSS 2.0 com as últimas edições completas, em HTML de e-mail
+
+Quando sai: uma edição por pregão, com a data do último pregão da base (cotacoes_em), na primeira
+execução que o traz. O agendamento do GitHub atrasa umas cinco horas: o pregão de quarta sai na
+madrugada de quinta. Pregão de mais de JANELA_DIAS atrás não ganha edição atrasada, e sem o fechamento do
+dia no histórico diário (data/historico) a edição espera a execução seguinte. Nos outros casos o script
+só redesenha as páginas e o feed a partir dos resumo.json guardados.
+
+A primeira edição (2026-11-20) é semanal, sem "tipo" no resumo.json: a newsletter começou semanal e
+virou diária. Ela continua desenhada com os rótulos de semana.
+
+O que entra, tudo com dados que o site já tem:
+  - câmbio do dia (PTAX) e quantas ações subiram e caíram, com a mediana em reais e em dólares;
+  - as cinco maiores altas e as cinco maiores quedas em dólares, do melhor para o pior;
+  - proventos do pregão seguinte (último dia com direito e pagamentos), do maior para o menor yield;
+  - desde a edição anterior: proventos anunciados, balanços entregues à CVM, índice de previsibilidade
+    que mudou 3 pontos ou mais, empresas que entraram ou saíram da base;
+  - uma aula do curso da página inicial por edição, em ordem.
 
 Envio por e-mail (--enviar, passo do CI depois da publicação): cria a edição mais recente no Buttondown
 pela API, como rascunho enquanto ENVIO_AUTOMATICO for False, ou já mandando aos inscritos. Precisa do
 segredo BUTTONDOWN_API_KEY. Manda uma vez só: envio.json e a busca pelo assunto no Buttondown impedem a
 repetição. O formulário de inscrição das páginas usa BUTTONDOWN, em scripts/gerar_paginas.py.
-
-Quando sai: a edição leva a data da sexta da semana e sai uma vez, na primeira execução que já tem o
-fechamento de sexta na base ou, se ele não vier (feriado, arquivo da B3 atrasado), de sábado até a terça
-seguinte. A data do relógio sozinha não basta: o agendamento do GitHub atrasa umas cinco horas, e a
-execução das 20h17 de quinta roda na madrugada de sexta, ainda sem o pregão de sexta. Fora dessa janela,
-ou com a edição já feita, o script só redesenha as páginas e o feed a partir dos resumo.json guardados.
-
-O que entra, tudo com dados que o site já tem:
-  - câmbio da semana (PTAX) e quantas ações subiram e caíram, com a mediana em reais e em dólares;
-  - as cinco maiores altas e as cinco maiores quedas em dólares, do melhor para o pior;
-  - proventos da semana seguinte (último dia com direito e pagamentos), do maior para o menor yield;
-  - desde a edição anterior: proventos anunciados, balanços entregues à CVM, índice de previsibilidade
-    que mudou 3 pontos ou mais, empresas que entraram ou saíram da base;
-  - uma aula do curso da página inicial por edição, em ordem.
 """
 
 import argparse
@@ -53,25 +57,26 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gerar_paginas as G  # noqa: E402  (cabeçalho, rodapé, formatos e endereço do site)
 
 RAIZ = Path(__file__).resolve().parent.parent
-SAIDA = RAIZ / "semana"
+SAIDA = RAIZ / "resumo"
 BASE = RAIZ / "data" / "empresas.js"
 AGENDA = RAIZ / "data" / "agenda.js"
 HIST = RAIZ / "data" / "historico"
 INICIO_JS = RAIZ / "inicio.js"
 
 FUSO = timezone(timedelta(hours=-3))  # Brasília, sem horário de verão desde 2019
-JANELA_DIAS = 4       # a edição da sexta ainda sai até a terça (a execução de segunda roda na madrugada de terça)
+JANELA_DIAS = 4       # a edição de um pregão ainda sai até 4 dias depois (a de sexta, até a terça)
 N_MOVIMENTOS = 5      # maiores altas e maiores quedas
 LIMIAR_INDICE = 3     # pontos no índice de previsibilidade
 MAX_LISTA = 12        # linhas das tabelas de mudanças: metade do topo, metade do fim
 MAX_PROVENTOS = 15    # linhas das tabelas de proventos, do maior yield para o menor
-ITENS_FEED = 12
-TITULO = "Real Terms Weekly"
-DESCRICAO = ("A free weekly summary of Brazilian stocks for international investors: the real against the "
-             "dollar, the biggest moves, upcoming dividends, new filings and one lesson.")
+ITENS_FEED = 20
+TITULO = "Real Terms Daily"
+DESCRICAO = ("A free daily summary of Brazilian stocks for international investors, after each trading session: "
+             "the real against the dollar, the biggest moves, dividends, new filings and one lesson.")
 MESES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
          "November", "December"]
 DIAS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+DIAS_LONGOS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 TIPOS = {"dividendo": "Dividend", "jcp": "JCP", "rendimento": "Distribution"}
 TRIMESTRE = {3: "Q1", 6: "Q2", 9: "Q3", 12: "Q4"}
 # virada de sinal do lucro, sem variação percentual: posição na ordem do melhor para o pior
@@ -131,7 +136,7 @@ def no_dia(ds, vs, dia):
 def variacao(h, ini, fim, desde):
     """Fechamento do último pregão até 'fim' contra o do último até 'ini', ajustado pelos desdobramentos,
     grupamentos e bonificações com data no meio (quem tinha uma ação passa a ter 'fator' ações).
-    None se o papel não negociou de 'desde' em diante (suspenso ou sem pregão na semana)."""
+    None se o papel não negociou de 'desde' em diante (suspenso ou sem pregão no período)."""
     ds, ps = datas(h), precos(h)
     a, b = no_dia(ds, ps, ini), no_dia(ds, ps, fim)
     if not a or not b or b[0] < desde or b[0] <= a[0]:
@@ -153,19 +158,34 @@ def aulas():
 
 # ---------------------------------------------------------------- datas
 
-def sexta(dia):
-    """sexta-feira mais recente até 'dia' (a própria, se for sexta)"""
-    return dia - timedelta(days=(dia.weekday() - 4) % 7)
+def proximo_dia_util(d):
+    """dia seguinte, pulando o fim de semana (feriados da B3 não entram: a agenda não tem datas neles)"""
+    d += timedelta(days=1)
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d
 
 
-def deve_gerar(hoje, existe, cotacoes_em):
-    """A edição da sexta sai uma vez: na sexta, só se o fechamento de sexta já está na base
-    (cotacoes_em); de sábado até a terça, de qualquer jeito."""
-    F = sexta(hoje)
-    dias = (hoje - F).days
-    if existe or dias > JANELA_DIAS:
-        return False
-    return dias >= 1 or (cotacoes_em or "") >= F.isoformat()
+def deve_gerar(hoje, existe, pregao):
+    """a edição de um pregão sai uma vez, até JANELA_DIAS depois dele"""
+    return not existe and 0 <= (hoje - pregao).days <= JANELA_DIAS
+
+
+def periodo(F, tipo):
+    """(data da base de comparação, primeiro dia do período, janela dos proventos) de uma edição"""
+    if tipo == "semana":
+        return F - timedelta(days=7), F - timedelta(days=4), (F + timedelta(days=3), F + timedelta(days=7))
+    return F - timedelta(days=1), F, (F + timedelta(days=1), proximo_dia_util(F))
+
+
+def semanal(r):
+    """a primeira edição foi semanal e não tem "tipo" no resumo.json"""
+    return r.get("tipo", "semana") == "semana"
+
+
+def titulo_edicao(r):
+    """'Wednesday, November 25, 2026' ou, na edição semanal, 'Week of November 16–20, 2026'"""
+    return r.get("titulo") or r["semana_txt"]
 
 
 def _d(d):
@@ -180,6 +200,10 @@ def dia_curto(d, ano_ref=None):
 def dia_semana(d):
     d = _d(d)
     return f"{DIAS[d.weekday()]}, {dia_curto(d)}"
+
+
+def data_longa(d):
+    return f"{DIAS_LONGOS[d.weekday()]}, {MESES[d.month - 1]} {d.day}, {d.year}"
 
 
 def intervalo(ini, fim):
@@ -210,7 +234,7 @@ def por_yield(p):
 
 
 def retrato(d, agenda, F):
-    """o que a edição seguinte precisa para saber o que mudou na semana"""
+    """o que a edição seguinte precisa para saber o que mudou desde esta"""
     emp = {}
     for e in d["empresas"]:
         t = e.get("ttm") or {}
@@ -222,7 +246,7 @@ def retrato(d, agenda, F):
             "empresas": emp, "proventos": sorted(chave_provento(x) for lst in agenda.values() for x in lst)}
 
 
-def balanco(b, periodo, rec, ll):
+def balanco(b, periodo_txt, rec, ll):
     """linha de balanço novo: valores de agora e variação contra o retrato anterior"""
     def var(antes, agora):
         return round(agora / antes - 1, 6) if antes and agora is not None and antes > 0 and agora > 0 else None
@@ -236,7 +260,7 @@ def balanco(b, periodo, rec, ll):
             return "to a loss"
         return "loss narrowed" if agora > antes else "loss widened" if agora < antes else "loss unchanged"
 
-    return {"t": b["t"], "pagina": b["t"], "nome": b["nome"], "periodo": periodo,
+    return {"t": b["t"], "pagina": b["t"], "nome": b["nome"], "periodo": periodo_txt,
             "rec": rec[1], "rec_var": var(*rec), "ll": ll[1], "ll_var": var(*ll), "ll_txt": virada(*ll)}
 
 
@@ -269,8 +293,9 @@ def comparar(ant, atual):
 
 
 def frase(r):
-    """uma linha com o essencial da semana (abre a edição e vai na descrição do RSS)"""
+    """uma linha com o essencial do período (abre a edição, vai na descrição do RSS e do e-mail)"""
     partes, c, u = [], r.get("cambio"), r.get("universo")
+    quando = "next week" if semanal(r) else "in the next session"
     if c:
         partes.append(f"the real {'rose' if c['real'] >= 0 else 'fell'} {abs(c['real']) * 100:.1f}% against the dollar")
     if u and u["n"]:
@@ -278,24 +303,23 @@ def frase(r):
     pv = r["proventos"]
     nd, npg = pv["direito"]["total"], pv["pagamentos"]["total"]
     if nd:
-        partes.append(f"{nd} {'dividend has its' if nd == 1 else 'dividends have their'} last day with rights next week")
+        partes.append(f"{nd} {'dividend has its' if nd == 1 else 'dividends have their'} last day with rights {quando}")
     if npg:
-        partes.append(f"{npg} dividend {'payment is' if npg == 1 else 'payments are'} due next week")
+        partes.append(f"{npg} dividend {'payment is' if npg == 1 else 'payments are'} due {quando}")
     m = r.get("mudancas")
     if m and m["balancos"]["total"]:
         n = m["balancos"]["total"]
         partes.append(f"{n} {'company' if n == 1 else 'companies'} filed results")
     if not partes:
-        return "A weekly summary of Brazilian stocks."
+        return "A summary of Brazilian stocks."
     texto = "; ".join(partes)
     return texto[0].upper() + texto[1:] + "."
 
 
-def montar(d, agenda, indices, F, anterior, numero, hist=ler_hist, lista_aulas=None, agora=None):
-    """Conteúdo da edição da sexta F e o retrato que a próxima edição vai comparar.
-    'anterior' é o estado.json da edição anterior (None na primeira)."""
-    seg = F - timedelta(days=4)
-    prox = (F + timedelta(days=3), F + timedelta(days=7))
+def montar(d, agenda, indices, F, anterior, numero, tipo="dia", hist=ler_hist, lista_aulas=None, agora=None):
+    """Conteúdo da edição do pregão F (ou da semana que termina em F, com tipo "semana") e o retrato que a
+    próxima edição vai comparar. 'anterior' é o estado.json da edição anterior (None na primeira)."""
+    base_cmp, inicio, prox = periodo(F, tipo)
     ptax = (indices or {}).get("ptax")
     px = (datas(ptax), ptax["v"]) if ptax else None
 
@@ -303,16 +327,16 @@ def montar(d, agenda, indices, F, anterior, numero, hist=ler_hist, lista_aulas=N
         r = no_dia(*px, dia) if px else None
         return r[1] if r else None
 
-    # câmbio e movimentos da semana (último fechamento da semana contra o da semana anterior)
+    # câmbio e movimentos: último fechamento do período contra o último antes dele
     cambio = None
     if px:
-        a, b = no_dia(*px, F - timedelta(days=7)), no_dia(*px, F)
+        a, b = no_dia(*px, base_cmp), no_dia(*px, F)
         if a and b and b[0] > a[0]:
             cambio = {"de": a[1], "para": b[1], "data": b[0].isoformat(), "real": round(a[1] / b[1] - 1, 6)}
     linhas = []
     for e in d["empresas"]:
         h = hist(e["ticker"])
-        v = variacao(h, F - timedelta(days=7), F, seg) if h else None
+        v = variacao(h, base_cmp, F, inicio) if h else None
         if not v:
             continue
         p0, p1 = ptax_em(v["de"][0]), ptax_em(v["ate"][0])
@@ -359,10 +383,10 @@ def montar(d, agenda, indices, F, anterior, numero, hist=ler_hist, lista_aulas=N
         itens.sort(key=por_yield)
         return {"itens": itens[:MAX_PROVENTOS], "total": len(itens)}
 
-    na_semana = lambda s: bool(s) and prox[0].isoformat() <= s <= prox[1].isoformat()
+    na_janela = lambda s: bool(s) and prox[0].isoformat() <= s <= prox[1].isoformat()
     proventos = {"semana": [prox[0].isoformat(), prox[1].isoformat()],
-                 "direito": selecionar(lambda x: na_semana(x["com"])),
-                 "pagamentos": selecionar(lambda x: na_semana(x.get("pag")))}
+                 "direito": selecionar(lambda x: na_janela(x["com"])),
+                 "pagamentos": selecionar(lambda x: na_janela(x.get("pag")))}
 
     estado = retrato(d, agenda, F)
     mudancas = None
@@ -377,7 +401,8 @@ def montar(d, agenda, indices, F, anterior, numero, hist=ler_hist, lista_aulas=N
         n = (numero - 1) % (len(lista) - 1) + 1
         aula = {"n": n, "total": len(lista) - 1, "palavra": lista[n][0], "pergunta": lista[n][1]}
 
-    r = {"data": F.isoformat(), "numero": numero, "semana_txt": "Week of " + intervalo(seg, F),
+    titulo = {"semana_txt": "Week of " + intervalo(inicio, F)} if tipo == "semana" else {"tipo": tipo, "titulo": data_longa(F)}
+    r = {"data": F.isoformat(), "numero": numero, **titulo,
          "gerado_em": d["gerado_em"], "publicado_em": (agora or datetime.now(FUSO)).isoformat(timespec="minutes"),
          "pregao": max((x["data"] for x in linhas), default=None), "cambio": cambio,
          "ptax_hoje": hoje_ptax or None, "universo": universo, "movimentos": {"topo": topo, "fim": fim},
@@ -477,9 +502,9 @@ def bloco_cabecalho(r, E, nivel=1):
     h = f"h{nivel}"
     if E.email:
         return (f'<p style="margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:{E.MUDO}">{esc(rotulo)}</p>'
-                f'<h1 style="font-size:24px;line-height:1.25;margin:6px 0 10px;color:{E.TEXTO}">{esc(r["semana_txt"])}</h1>' + E.p(esc(r["frase"])))
+                f'<h1 style="font-size:24px;line-height:1.25;margin:6px 0 10px;color:{E.TEXTO}">{esc(titulo_edicao(r))}</h1>' + E.p(esc(r["frase"])))
     return (f'<section class="intro"><p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase">{esc(rotulo)}</p>'
-            f'<{h}>{esc(r["semana_txt"])}</{h}><p>{esc(r["frase"])}</p></section>')
+            f'<{h}>{esc(titulo_edicao(r))}</{h}><p>{esc(r["frase"])}</p></section>')
 
 
 def bloco_numeros(r, E):
@@ -493,23 +518,25 @@ def bloco_numeros(r, E):
         return ""
     nota = []
     if r.get("pregao"):
-        nota.append(f"Closing prices of {dia_semana(r['pregao'])} against the previous week's close")
+        nota.append(f"Closing prices of {dia_semana(r['pregao'])} against the previous {'week' if semanal(r) else 'session'}'s close")
     if c:
         nota.append(f"PTAX rate of {dia_semana(c['data'])}; a positive change means the real gained")
     if u:
         nota.append(f"{u['n']} stocks, the main ticker of each company; median move in reais {E.sinal(u['mediana_brl'])}")
-    return E.secao("The week in numbers", E.numeros(pares) + E.p(". ".join(nota) + ".", mudo=True))
+    return E.secao("The week in numbers" if semanal(r) else "The day in numbers",
+                   E.numeros(pares) + E.p(". ".join(nota) + ".", mudo=True))
 
 
 def bloco_movimentos(r, E):
     m = r["movimentos"]
     if not m["topo"]:
         return ""
+    per = "Week" if semanal(r) else "Day"
     linha = lambda x: [E.empresa(x), f"R$ {x['preco']:,.2f}", E.sinal(x["brl"]), E.sinal(x["usd"])]
     linhas = [linha(x) for x in m["topo"]] + ([None] + [linha(x) for x in m["fim"]] if m["fim"] else [])
     nota = ("The five best and the five worst, from best to worst. " if m["fim"] else "From best to worst. ") + \
         "Price change, adjusted for splits; dividends are not included."
-    return E.secao("Biggest moves, in US$", E.tabela(["Company", "Close", "Week in R$", "Week in US$"], linhas, num=(1, 2, 3)) +
+    return E.secao("Biggest moves, in US$", E.tabela(["Company", "Close", f"{per} in R$", f"{per} in US$"], linhas, num=(1, 2, 3)) +
                    E.p(nota, mudo=True))
 
 
@@ -553,7 +580,8 @@ def bloco_proventos(r, E):
         partes.append(E.sub("Payments") + tabela_proventos(pv["pagamentos"], E, ano, False) +
                       _mais(pv["pagamentos"], E, "payments"))
     if not partes:
-        partes.append(E.p("No dividend dates or payments scheduled for next week so far."))
+        partes.append(E.p("No dividend dates or payments scheduled for " +
+                          ("next week" if semanal(r) else "the next session") + " so far."))
     data_ptax = (r.get("ptax_hoje") or {}).get("data")
     partes.append(E.p(
         "Gross amounts per share" + (f", in dollars at the PTAX rate of {dia_curto(data_ptax)}" if data_ptax else "") +
@@ -562,7 +590,9 @@ def bloco_proventos(r, E):
         "non-residents: 10% on dividends since January 2026, and a higher rate on JCP (interest on equity, a payout "
         "the company deducts from its taxable income) that depends on your country's tax treaty. " +
         E.link("#/agenda", "Full dividend calendar →"), mudo=True))
-    return E.secao(f"Dividends next week ({intervalo(ini, fim)})", "".join(partes))
+    if semanal(r):
+        return E.secao(f"Dividends next week ({intervalo(ini, fim)})", "".join(partes))
+    return E.secao(f"Dividends in the next session ({dia_semana(fim)})", "".join(partes))
 
 
 def bloco_mudancas(r, E):
@@ -601,7 +631,7 @@ def bloco_mudancas(r, E):
         partes.append(E.sub("Coverage") + E.p(" · ".join(itens)) +
                       E.p("Real Terms covers stocks that trade at least R$ 1 million a day on average.", mudo=True))
     if not partes:
-        partes.append(E.p("No new dividend announcements, filings or score changes this week.", mudo=True))
+        partes.append(E.p("No new dividend announcements, filings or score changes since the last issue.", mudo=True))
     return E.secao("Since the last issue", "".join(partes))
 
 
@@ -619,11 +649,11 @@ def conteudo(r, E, nivel=1):
 
 
 def html_email(r):
-    """a edição em HTML de e-mail: vai no RSS, de onde um serviço de newsletter a manda"""
+    """a edição em HTML de e-mail: vai no RSS e no Buttondown"""
     E = Estilo(True, G.SITE_URL + "/")
-    web = f"semana/{r['data']}/"
+    web = f"resumo/{r['data']}/"
     rodape = (f'<hr style="border:0;border-top:1px solid {E.LINHA};margin:32px 0 12px">' +
-              E.p(f'{E.link(web, "Read on the web")} · {E.link("semana/", "All issues")} · {E.link("", "Real Terms")}', mudo=True) +
+              E.p(f'{E.link(web, "Read on the web")} · {E.link("resumo/", "All issues")} · {E.link("", "Real Terms")}', mudo=True) +
               E.p("A data tool, not investment advice. Sources: CVM open-data portal (company filings), B3 (prices and "
                   "corporate actions) and the Central Bank of Brazil (PTAX).", mudo=True))
     return ('<div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;'
@@ -633,11 +663,11 @@ def html_email(r):
 def pagina_edicao(r):
     raiz = "../../"
     E = Estilo(False, raiz)
-    url = f"{G.SITE_URL}/semana/{r['data']}/"
+    url = f"{G.SITE_URL}/resumo/{r['data']}/"
     corpo = ('<a class="voltar" href="../">← All issues</a>' + conteudo(r, E) +
-             E.secao("Every week", E.p(f"{esc(DESCRICAO)} {E.link('semana/feed.xml', 'Follow by RSS')}.") +
+             E.secao("Every trading day", E.p(f"{esc(DESCRICAO)} {E.link('resumo/feed.xml', 'Follow by RSS')}.") +
                      G.form_assinatura("edicao")))
-    return (G.cabeca(f"{r['semana_txt']} · {TITULO}", r["frase"], url, ESTILO_PAGINA) + corpo + G.RODAPE) \
+    return (G.cabeca(f"{titulo_edicao(r)} · {TITULO}", r["frase"], url, ESTILO_PAGINA) + corpo + G.RODAPE) \
         .replace("{raiz}", raiz).replace("{data}", esc(r["gerado_em"][:10]))
 
 
@@ -645,27 +675,27 @@ def pagina_arquivo(eds):
     raiz = "../"
     E = Estilo(False, raiz)
     intro = (f'<section class="intro"><h1>{TITULO}</h1><p>{esc(DESCRICAO)} '
-             f'{E.link("semana/feed.xml", "Follow by RSS")} or read the latest issue below.</p>{G.form_assinatura("arquivo")}</section>')
+             f'{E.link("resumo/feed.xml", "Follow by RSS")} or read the latest issue below.</p>{G.form_assinatura("arquivo")}</section>')
     if eds:
-        itens = "".join(f'<li>{E.link("semana/" + r["data"] + "/", esc(r["semana_txt"]))} <span class="mudo">· Issue {r["numero"]}</span></li>'
+        itens = "".join(f'<li>{E.link("resumo/" + r["data"] + "/", esc(titulo_edicao(r)))} <span class="mudo">· Issue {r["numero"]}</span></li>'
                         for r in eds)
         corpo = (intro + conteudo(eds[0], E, nivel=2) +
                  E.secao("All issues", f'<ul style="margin:10px 0 0;padding-left:18px;line-height:1.8">{itens}</ul>'))
         data = eds[0]["gerado_em"][:10]
     else:
-        corpo, data = intro + E.secao("Coming soon", E.p("The first issue comes out on Friday.")), ""
-    return (G.cabeca(f"{TITULO}: Brazilian stocks every week", DESCRICAO, f"{G.SITE_URL}/semana/", ESTILO_PAGINA) + corpo + G.RODAPE) \
-        .replace("{raiz}", raiz).replace("{data}", esc(data))
+        corpo, data = intro + E.secao("Coming soon", E.p("The first issue comes out after the next trading session.")), ""
+    return (G.cabeca(f"{TITULO}: Brazilian stocks every trading day", DESCRICAO, f"{G.SITE_URL}/resumo/", ESTILO_PAGINA) +
+            corpo + G.RODAPE).replace("{raiz}", raiz).replace("{data}", esc(data))
 
 
 def feed(eds):
-    """RSS 2.0; o guid é o endereço da edição, então um serviço de e-mail manda cada uma uma vez só"""
+    """RSS 2.0; o guid é o endereço da edição, então quem lê o feed recebe cada uma uma vez só"""
     itens = []
     for r in eds[:ITENS_FEED]:
-        url = f"{G.SITE_URL}/semana/{r['data']}/"
+        url = f"{G.SITE_URL}/resumo/{r['data']}/"
         corpo = html_email(r).replace("]]>", "]]]]><![CDATA[>")
         itens.append("  <item>\n"
-                     f"    <title>{xesc(r['semana_txt'] + ' · ' + TITULO)}</title>\n"
+                     f"    <title>{xesc(titulo_edicao(r) + ' · ' + TITULO)}</title>\n"
                      f"    <link>{url}</link>\n"
                      f'    <guid isPermaLink="true">{url}</guid>\n'
                      f"    <pubDate>{format_datetime(datetime.fromisoformat(r['publicado_em']))}</pubDate>\n"
@@ -677,8 +707,8 @@ def feed(eds):
             '<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">\n'
             "<channel>\n"
             f"  <title>{TITULO}</title>\n"
-            f"  <link>{G.SITE_URL}/semana/</link>\n"
-            f'  <atom:link href="{G.SITE_URL}/semana/feed.xml" rel="self" type="application/rss+xml"/>\n'
+            f"  <link>{G.SITE_URL}/resumo/</link>\n"
+            f'  <atom:link href="{G.SITE_URL}/resumo/feed.xml" rel="self" type="application/rss+xml"/>\n'
             f"  <description>{xesc(DESCRICAO)}</description>\n"
             "  <language>en</language>\n" + ultima + "".join(itens) + "</channel>\n</rss>\n")
 
@@ -687,7 +717,7 @@ def feed(eds):
 
 def assunto(r):
     """assunto do e-mail; único por edição, o que também serve para achar uma edição já enviada"""
-    return f"{TITULO}: {r['semana_txt']}"
+    return f"{TITULO}: {titulo_edicao(r)}"
 
 
 def http_buttondown(metodo, caminho, chave, corpo=None):
@@ -696,7 +726,7 @@ def http_buttondown(metodo, caminho, chave, corpo=None):
                                  data=json.dumps(corpo).encode() if corpo is not None else None,
                                  headers={"Authorization": f"Token {chave}", "Content-Type": "application/json",
                                           "Accept": "application/json", "X-API-Version": VERSAO_API,
-                                          "User-Agent": "real-terms-weekly"})
+                                          "User-Agent": "real-terms-daily"})
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             texto = resp.read()
@@ -725,14 +755,14 @@ def gravar_envio(caminho, email, titulo):
 
 
 def enviar(chave, hoje, http=http_buttondown, automatico=None):
-    """Manda a edição mais recente pelo Buttondown, uma vez só, e grava semana/<sexta>/envio.json.
-    Não manda quando: a edição saiu antes da janela (de sexta até terça); já existe envio.json; ou o
-    Buttondown já tem um e-mail com o mesmo assunto (o registro local pode não ter chegado ao git).
+    """Manda a edição mais recente pelo Buttondown, uma vez só, e grava resumo/<pregão>/envio.json.
+    Não manda quando: a edição tem mais de JANELA_DIAS; já existe envio.json; ou o Buttondown já tem um
+    e-mail com o mesmo assunto (o registro local pode não ter chegado ao git).
     Devolve (resultado, mensagem); o resultado é "enviado", "rascunho", "registrado" ou "nada"."""
     automatico = ENVIO_AUTOMATICO if automatico is None else automatico
     eds = edicoes()
     if not eds:
-        return "nada", "nenhuma edição em semana/"
+        return "nada", "nenhuma edição em resumo/"
     r = eds[0]
     F = date.fromisoformat(r["data"])
     registro = SAIDA / r["data"] / "envio.json"
@@ -749,7 +779,7 @@ def enviar(chave, hoje, http=http_buttondown, automatico=None):
         gravar_envio(registro, iguais[0], titulo)
         return "registrado", f"o Buttondown já tinha a edição de {F} ({iguais[0].get('status')}); só registrei"
     corpo = {"subject": titulo, "body": html_email(r), "status": "about_to_send" if automatico else "draft",
-             "description": r["frase"], "canonical_url": f"{G.SITE_URL}/semana/{r['data']}/",
+             "description": r["frase"], "canonical_url": f"{G.SITE_URL}/resumo/{r['data']}/",
              "secondary_id": r["numero"], "metadata": {"real_terms_edicao": r["data"]}}
     st, email = http("POST", "/emails", chave, corpo)
     if st not in (200, 201):
@@ -781,11 +811,16 @@ def estado_anterior(F):
 
 
 def gerar(F):
+    """Monta e grava a edição do pregão F. Sem o fechamento de F no histórico diário, não grava nada
+    (devolve None) e a edição espera a execução seguinte."""
     d, agenda = ler_js(BASE), (ler_js(AGENDA)["empresas"] if AGENDA.exists() else {})
     pasta = SAIDA / F.isoformat()
     velho = json.loads((pasta / "resumo.json").read_text(encoding="utf-8")) if (pasta / "resumo.json").exists() else None
     numero = velho["numero"] if velho else 1 + sum(1 for r in edicoes() if r["data"] < F.isoformat())
-    r, estado = montar(d, agenda, ler_hist("_indices"), F, estado_anterior(F), numero)
+    tipo = velho.get("tipo", "semana") if velho else "dia"
+    r, estado = montar(d, agenda, ler_hist("_indices"), F, estado_anterior(F), numero, tipo=tipo)
+    if tipo == "dia" and r["pregao"] != F.isoformat():
+        return None
     if velho:  # refeita: mantém a data de publicação, para o RSS não tratar como edição nova
         r["publicado_em"] = velho["publicado_em"]
     pasta.mkdir(parents=True, exist_ok=True)
@@ -807,8 +842,8 @@ def desenhar():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Resumo semanal em inglês (semana/ e semana/feed.xml)")
-    ap.add_argument("--data", help="sexta da edição (AAAA-MM-DD); gera mesmo fora da janela de sexta a segunda")
+    ap = argparse.ArgumentParser(description="Resumo diário em inglês (resumo/ e resumo/feed.xml)")
+    ap.add_argument("--data", help="pregão da edição (AAAA-MM-DD), em geral o último da base; gera mesmo fora da janela")
     ap.add_argument("--refazer", action="store_true", help="refaz a edição se ela já existe")
     ap.add_argument("--enviar", action="store_true",
                     help="manda a edição mais recente pelo Buttondown (precisa de BUTTONDOWN_API_KEY no ambiente)")
@@ -825,20 +860,20 @@ def main():
             with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
                 f.write(f"resultado={resultado}\n")
         return
-    F = date.fromisoformat(a.data) if a.data else sexta(hoje)
-    if F.weekday() != 4:
-        sys.exit(f"{F} não é sexta-feira")
+    F = date.fromisoformat(a.data or ler_js(BASE)["cotacoes_em"])
+    if F.weekday() >= 5:
+        sys.exit(f"{F} cai no fim de semana; não há pregão")
     existe = (SAIDA / F.isoformat() / "resumo.json").exists()
-    cotacoes_em = ler_js(BASE).get("cotacoes_em")
-    if (a.data and (not existe or a.refazer)) or (not a.data and (deve_gerar(hoje, existe, cotacoes_em) or (existe and a.refazer))):
+    if (a.data and (not existe or a.refazer)) or (not a.data and (deve_gerar(hoje, existe, F) or (existe and a.refazer))):
         r = gerar(F)
-        print(f"edição {r['numero']} ({F}) gerada: {r['frase']}")
+        print(f"edição {r['numero']} ({F}) gerada: {r['frase']}" if r else
+              f"o histórico diário ainda não tem o pregão de {F}; a edição fica para a próxima execução")
     elif existe:
         print(f"edição de {F} já existe; só redesenho as páginas")
     else:
-        print(f"fora da janela da edição de {F}; só redesenho as páginas")
+        print(f"o pregão de {F} é antigo para ganhar edição; só redesenho as páginas")
     eds = desenhar()
-    print(f"{len(eds)} edições em semana/ · feed com {min(len(eds), ITENS_FEED)}")
+    print(f"{len(eds)} edições em resumo/ · feed com {min(len(eds), ITENS_FEED)}")
 
 
 if __name__ == "__main__":

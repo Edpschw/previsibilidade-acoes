@@ -1,0 +1,282 @@
+{
+ "data": "2026-11-24",
+ "numero": 2,
+ "tipo": "dia",
+ "titulo": "Tuesday, November 24, 2026",
+ "gerado_em": "2026-11-25 05:31",
+ "publicado_em": "2026-11-25T23:54-03:00",
+ "pregao": "2026-11-24",
+ "cambio": {
+  "de": 5.9708,
+  "para": 5.8573,
+  "data": "2026-11-24",
+  "real": 0.019378
+ },
+ "ptax_hoje": {
+  "data": "2026-11-24",
+  "valor": 5.8573
+ },
+ "universo": {
+  "n": 189,
+  "sobe": 93,
+  "desce": 91,
+  "mediana_brl": 0.0,
+  "mediana_usd": 0.019378
+ },
+ "movimentos": {
+  "topo": [
+   {
+    "t": "AZEV3",
+    "pagina": "AZEV3",
+    "nome": "Azevedo e Travassos",
+    "preco": 14.01,
+    "data": "2026-11-24",
+    "brl": 0.172385,
+    "usd": 0.195103
+   },
+   {
+    "t": "TPIS3",
+    "pagina": "TPIS3",
+    "nome": "Tpi - Triunfo Particip. e Invest.",
+    "preco": 13.15,
+    "data": "2026-11-24",
+    "brl": 0.099498,
+    "usd": 0.120804
+   },
+   {
+    "t": "CSED3",
+    "pagina": "CSED3",
+    "nome": "Cruzeiro do Sul Educacional",
+    "preco": 3.57,
+    "data": "2026-11-24",
+    "brl": 0.075301,
+    "usd": 0.096138
+   },
+   {
+    "t": "DASA3",
+    "pagina": "DASA3",
+    "nome": "Diagnosticos da America",
+    "preco": 3.41,
+    "data": "2026-11-24",
+    "brl": 0.065625,
+    "usd": 0.086274
+   },
+   {
+    "t": "COGN3",
+    "pagina": "COGN3",
+    "nome": "Cogna Educação",
+    "preco": 1.65,
+    "data": "2026-11-24",
+    "brl": 0.057692,
+    "usd": 0.078188
+   }
+  ],
+  "fim": [
+   {
+    "t": "EVEN3",
+    "pagina": "EVEN3",
+    "nome": "Even Construtora e Incorporadora",
+    "preco": 3.23,
+    "data": "2026-11-24",
+    "brl": -0.084986,
+    "usd": -0.067255
+   },
+   {
+    "t": "PCAR3",
+    "pagina": "PCAR3",
+    "nome": "Cia Brasileira de Distribuicao",
+    "preco": 3.27,
+    "data": "2026-11-24",
+    "brl": -0.091667,
+    "usd": -0.074065
+   },
+   {
+    "t": "MDIA3",
+    "pagina": "MDIA3",
+    "nome": "M.Dias Branco",
+    "preco": 15.05,
+    "data": "2026-11-24",
+    "brl": -0.093373,
+    "usd": -0.075805
+   },
+   {
+    "t": "PMAM3",
+    "pagina": "PMAM3",
+    "nome": "Paranapanema",
+    "preco": 0.17,
+    "data": "2026-11-24",
+    "brl": -0.105263,
+    "usd": -0.087925
+   },
+   {
+    "t": "BRKM5",
+    "pagina": "BRKM5",
+    "nome": "Braskem",
+    "preco": 2.5,
+    "data": "2026-11-24",
+    "brl": -0.140893,
+    "usd": -0.124246
+   }
+  ]
+ },
+ "proventos": {
+  "semana": [
+   "2026-11-25",
+   "2026-11-25"
+  ],
+  "direito": {
+   "itens": [],
+   "total": 0
+  },
+  "pagamentos": {
+   "itens": [],
+   "total": 0
+  }
+ },
+ "mudancas": {
+  "desde": "2026-11-20",
+  "balancos": {
+   "topo": [
+    {
+     "t": "MTRE3",
+     "pagina": "MTRE3",
+     "nome": "Mitre Realty Empreendimentos e Participações",
+     "periodo": "Q3 2026",
+     "rec": 1185584,
+     "rec_var": 0.063491,
+     "ll": 114134,
+     "ll_var": 0.152869,
+     "ll_txt": null
+    },
+    {
+     "t": "AZEV3",
+     "pagina": "AZEV3",
+     "nome": "Azevedo e Travassos",
+     "periodo": "Q3 2026",
+     "rec": 638630,
+     "rec_var": 0.161357,
+     "ll": -353687,
+     "ll_var": null,
+     "ll_txt": "loss narrowed"
+    }
+   ],
+   "fim": [],
+   "total": 2
+  },
+  "indice": {
+   "topo": [],
+   "fim": [],
+   "total": 0
+  },
+  "entraram": [],
+  "sairam": [],
+  "anunciados": {
+   "itens": [
+    {
+     "t": "VTRU3",
+     "pagina": "VTRU3",
+     "nome": "Vitru Educação",
+     "tipo": "dividendo",
+     "valor": 0.53320249,
+     "usd": 0.091032,
+     "yield": 0.038498,
+     "com": "2026-11-18",
+     "pag": "2026-11-30",
+     "outros": []
+    },
+    {
+     "t": "UGPA3",
+     "pagina": "UGPA3",
+     "nome": "Ultrapar Participacoes",
+     "tipo": "dividendo",
+     "valor": 1.0,
+     "usd": 0.170727,
+     "yield": 0.033091,
+     "com": "2026-11-23",
+     "pag": "2026-12-03",
+     "outros": []
+    },
+    {
+     "t": "PASS3",
+     "pagina": "PASS3",
+     "nome": "Compass Gás e Energia",
+     "tipo": "dividendo",
+     "valor": 0.69583307,
+     "usd": 0.118798,
+     "yield": 0.031259,
+     "com": "2026-11-17",
+     "pag": "2026-12-31",
+     "outros": []
+    },
+    {
+     "t": "SBSP3",
+     "pagina": "SBSP3",
+     "nome": "Cia Saneamento Basico Est Sao Paulo",
+     "tipo": "jcp",
+     "valor": 0.74985577,
+     "usd": 0.128021,
+     "yield": 0.026905,
+     "com": "2026-11-10",
+     "pag": "2027-04-30",
+     "outros": []
+    },
+    {
+     "t": "BMGB4",
+     "pagina": "BMGB4",
+     "nome": "Banco Bmg",
+     "tipo": "jcp",
+     "valor": 0.1,
+     "usd": 0.017073,
+     "yield": 0.020534,
+     "com": "2026-11-23",
+     "pag": "2026-12-04",
+     "outros": []
+    },
+    {
+     "t": "ALOS3",
+     "pagina": "ALOS3",
+     "nome": "Allos",
+     "tipo": "dividendo",
+     "valor": 0.29191864,
+     "usd": 0.049838,
+     "yield": 0.011302,
+     "com": "2026-11-19",
+     "pag": "2026-12-02",
+     "outros": []
+    },
+    {
+     "t": "BMOB3",
+     "pagina": "BMOB3",
+     "nome": "Bemobi Mobile Tech",
+     "tipo": "jcp",
+     "valor": 0.19178292,
+     "usd": 0.032743,
+     "yield": 0.007711,
+     "com": "2026-11-17",
+     "pag": "2026-11-30",
+     "outros": []
+    },
+    {
+     "t": "MDIA3",
+     "pagina": "MDIA3",
+     "nome": "M.Dias Branco",
+     "tipo": "dividendo",
+     "valor": 0.03,
+     "usd": 0.005122,
+     "yield": 0.001993,
+     "com": "2026-11-19",
+     "pag": "2026-11-30",
+     "outros": []
+    }
+   ],
+   "total": 8
+  }
+ },
+ "aula": {
+  "n": 2,
+  "total": 18,
+  "palavra": "SHARE",
+  "pergunta": "What is a share?"
+ },
+ "frase": "The real rose 1.9% against the dollar; 93 of 189 stocks gained in reais; 2 companies filed results."
+}

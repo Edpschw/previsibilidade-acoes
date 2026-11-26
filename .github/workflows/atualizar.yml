@@ -1,8 +1,8 @@
 # Atualiza a base todo dia útil depois do fechamento da B3 e publica no GitHub Pages.
-# Ordem: processa → histórico da aba Simular → resumo semanal → páginas e sitemap → testa → audita com trava
+# Ordem: processa → histórico da aba Simular → resumo diário → páginas e sitemap → testa → audita com trava
 # → resume mudanças → commita (o Pages publica o commit)
 # → carrega a mesma base no Postgres (só se o segredo DATABASE_URL existir)
-# → manda a edição nova do resumo semanal pelo Buttondown (só se o segredo BUTTONDOWN_API_KEY existir).
+# → manda a edição nova do resumo diário pelo Buttondown (só se o segredo BUTTONDOWN_API_KEY existir).
 # Se a trava ou os testes falharem, nada é commitado e um issue avisa.
 name: Atualizar base
 
@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 60
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}           # base de produção (opcional)
-      BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}  # envio do resumo semanal por e-mail (opcional)
+      BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}  # envio do resumo diário por e-mail (opcional)
       DATABASE_URL_TESTE: postgresql://postgres:teste@localhost:5432/postgres
     # Postgres descartável para os testes da base (tests/test_base.py)
     services:
@@ -64,11 +64,11 @@ jobs:
         continue-on-error: true
         run: python3 scripts/historico.py
 
-      # Resumo semanal em inglês (semana/ e semana/feed.xml): a edição da sexta sai uma vez, na primeira
-      # execução com o pregão de sexta na base (ou de sábado até terça); nos outros dias o script só redesenha
-      # as páginas. Antes das páginas indexáveis, que põem as edições no sitemap.
-      - name: Resumo semanal
-        run: python3 scripts/resumo_semanal.py
+      # Resumo diário em inglês (resumo/ e resumo/feed.xml): uma edição por pregão, na primeira execução
+      # que traz o pregão novo; se nada mudou, o script só redesenha as páginas. Antes das páginas
+      # indexáveis, que põem as edições no sitemap.
+      - name: Resumo diário
+        run: python3 scripts/resumo.py
 
       - name: Páginas indexáveis e sitemap
         run: python3 scripts/gerar_paginas.py
@@ -87,7 +87,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/empresas.js data/agenda.js data/historico index.html auditoria.md auditoria.json auditoria_resumo.json acao semana sitemap.xml robots.txt
+          git add data/empresas.js data/agenda.js data/historico index.html auditoria.md auditoria.json auditoria_resumo.json acao resumo sitemap.xml robots.txt
           if git diff --cached --quiet; then echo "sem mudanças"; exit 0; fi
           git commit -m "Atualiza base ($(date -u +%F))"
           git push
@@ -123,20 +123,20 @@ jobs:
           gh issue create --title "Real Terms: carga no Postgres falhou ($(date -u +%d/%m/%Y))" \
             --body "O site foi publicado normalmente; a carga no Postgres foi desfeita e nada foi gravado nela. Detalhes: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
-      # Resumo semanal por e-mail: cria a edição nova no Buttondown (rascunho ou envio, conforme
-      # ENVIO_AUTOMATICO em scripts/resumo_semanal.py), uma vez só, e commita o registro
-      # (semana/<sexta>/envio.json). Só roda com o segredo BUTTONDOWN_API_KEY. Depois da publicação,
+      # Resumo diário por e-mail: cria a edição nova no Buttondown (rascunho ou envio, conforme
+      # ENVIO_AUTOMATICO em scripts/resumo.py), uma vez só, e commita o registro
+      # (resumo/<pregão>/envio.json). Só roda com o segredo BUTTONDOWN_API_KEY. Depois da publicação,
       # para os links do e-mail já funcionarem, e mesmo se a carga no Postgres falhar; se o envio
       # falhar, o site já está no ar e um issue avisa.
-      - name: Resumo semanal por e-mail (Buttondown)
+      - name: Resumo diário por e-mail (Buttondown)
         id: newsletter
         if: ${{ !cancelled() && steps.publicar.outcome == 'success' && env.BUTTONDOWN_API_KEY != '' }}
         continue-on-error: true
         run: |
-          python3 scripts/resumo_semanal.py --enviar
-          git add semana
+          python3 scripts/resumo.py --enviar
+          git add resumo
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Registra envio do resumo semanal ($(date -u +%F))"
+          git commit -m "Registra envio do resumo diário ($(date -u +%F))"
           git pull --rebase -q
           git push
 
@@ -145,15 +145,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue create --title "Real Terms: resumo semanal pronto no Buttondown ($(date -u +%d/%m/%Y))" \
-            --body "A edição nova entrou como rascunho no Buttondown. Confira a aparência e mande pelo próprio Buttondown. Quando estiver tudo certo, ENVIO_AUTOMATICO = True em scripts/resumo_semanal.py passa a mandar sozinho."
+          gh issue create --title "Real Terms: resumo diário pronto no Buttondown ($(date -u +%d/%m/%Y))" \
+            --body "A edição nova entrou como rascunho no Buttondown. Confira a aparência e mande pelo próprio Buttondown. Quando estiver tudo certo, ENVIO_AUTOMATICO = True em scripts/resumo.py passa a mandar sozinho."
 
       - name: Avisar falha no envio do resumo
         if: ${{ !cancelled() && steps.newsletter.outcome == 'failure' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue create --title "Real Terms: envio do resumo semanal falhou ($(date -u +%d/%m/%Y))" \
+          gh issue create --title "Real Terms: envio do resumo diário falhou ($(date -u +%d/%m/%Y))" \
             --body "O site e a edição foram publicados normalmente; o e-mail não saiu. Detalhes: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
       - name: Avisar falha

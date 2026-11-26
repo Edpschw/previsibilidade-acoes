@@ -90,7 +90,7 @@ window.I18N = {
     metodo_titulo: "Metodologia e limitações",
     rodape_fontes: "<strong>Fontes:</strong> demonstrações financeiras padronizadas (DFP), informações trimestrais (ITR) e formulário cadastral (FCA) da CVM, dados abertos; cotações e fichas de emissores da B3; dólar pela PTAX de venda do Banco Central (média do ano para resultados, último dia útil para balanço).",
     rodape_aviso: "Ferramenta de dados, não recomendação de investimento. Os números vêm como as empresas os entregaram à CVM e podem conter reapresentações ou erros de preenchimento.",
-    rodape_semana: "Toda semana, em inglês: <a href='semana/'>Real Terms Weekly</a>, com câmbio, maiores altas e quedas, proventos e balanços novos (<a href='semana/feed.xml'>RSS</a>).",
+    rodape_resumo: "Todo dia útil, em inglês: <a href='resumo/'>Real Terms Daily</a>, com câmbio, maiores altas e quedas, proventos e balanços novos (<a href='resumo/feed.xml'>RSS</a>).",
     rodape_gerado: "Base gerada em {0}. PTAX média de {1}: R$ {2} por US$.",
   },
   en: {
@@ -174,7 +174,7 @@ window.I18N = {
     metodo_titulo: "Methodology and limitations",
     rodape_fontes: "<strong>Sources:</strong> standardized annual (DFP) and quarterly (ITR) financial statements and registration forms (FCA) from the CVM open-data portal; prices and issuer records from B3; USD at the Central Bank's PTAX selling rate (yearly average for income and cash flow, last business day for the balance sheet).",
     rodape_aviso: "A data tool, not investment advice. Figures are as companies filed them with the CVM and may include restatements or filing errors.",
-    rodape_semana: "Every week: <a href='semana/'>Real Terms Weekly</a>, with the real against the dollar, the biggest moves, dividends and new filings (<a href='semana/feed.xml'>RSS</a>).",
+    rodape_resumo: "Every trading day: <a href='resumo/'>Real Terms Daily</a>, with the real against the dollar, the biggest moves, dividends and new filings (<a href='resumo/feed.xml'>RSS</a>).",
     rodape_gerado: "Data built on {0}. Average PTAX in {1}: R$ {2} per US$.",
   },
 };

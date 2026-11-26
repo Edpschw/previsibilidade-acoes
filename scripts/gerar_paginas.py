@@ -27,7 +27,7 @@ SAIDA = RAIZ / "acao"
 SITE_URL = os.environ.get("SITE_URL", "https://edpschw.github.io/previsibilidade-acoes").rstrip("/")
 MARCA = "<!-- gerado por scripts/gerar_paginas.py -->"
 # Nome da newsletter no Buttondown (buttondown.com/<nome>), que entra no endereço do formulário de
-# inscrição do resumo semanal. Vazio: as páginas ficam sem formulário e mostram só o RSS.
+# inscrição do resumo diário. Vazio: as páginas ficam sem formulário e mostram só o RSS.
 BUTTONDOWN = "RealTerms"
 
 
@@ -163,19 +163,19 @@ def setor(e):
 # ---------------------------------------------------------------- HTML
 
 def form_assinatura(origem):
-    """Formulário de inscrição no resumo semanal, em HTML puro, sem script. O navegador vai para a página
+    """Formulário de inscrição no resumo diário, em HTML puro, sem script. O navegador vai para a página
     do Buttondown, que confirma a inscrição. 'origem' fica nos dados do inscrito, para saber que página
     converte. Sem BUTTONDOWN, devolve vazio."""
     if not BUTTONDOWN:
         return ""
     campo = f"assinar-{origem}"
     return (f'<form class="assinar" action="https://buttondown.com/api/emails/embed-subscribe/{esc(BUTTONDOWN)}" method="post">'
-            f'<label for="{campo}">Get Real Terms Weekly by email</label>'
+            f'<label for="{campo}">Get Real Terms Daily by email</label>'
             f'<div class="assinar-linha"><input type="email" name="email" id="{campo}" required placeholder="you@example.com" autocomplete="email">'
             '<input type="hidden" name="embed" value="1">'
             f'<input type="hidden" name="metadata__origem" value="{esc(origem)}">'
             '<button type="submit" class="botao">Subscribe</button></div>'
-            '<p class="mudo">Free. One email a week, after Friday\'s close. Unsubscribe anytime; sent through Buttondown.</p></form>')
+            '<p class="mudo">Free. One email per trading day, after the close. Unsubscribe anytime; sent through Buttondown.</p></form>')
 
 
 def bloco_assinatura(origem, raiz):
@@ -183,9 +183,9 @@ def bloco_assinatura(origem, raiz):
     form = form_assinatura(origem)
     if not form:
         return ""
-    return (f'<section class="cartao" style="margin-top:16px"><h2>Every week, in one email</h2>'
-            f'<p class="mudo" style="margin:0">The real against the dollar, the biggest moves of Brazilian stocks, upcoming '
-            f'dividends and new filings. <a href="{raiz}semana/">See the latest issue</a>.</p>{form}</section>')
+    return (f'<section class="cartao" style="margin-top:16px"><h2>Every trading day, in one email</h2>'
+            f'<p class="mudo" style="margin:0">The real against the dollar, the day\'s biggest moves of Brazilian stocks, '
+            f'dividends and new filings. <a href="{raiz}resumo/">See the latest issue</a>.</p>{form}</section>')
 
 
 def versao(asset):
@@ -213,14 +213,14 @@ def cabeca(titulo, descricao, url, extra=""):
 <link rel="icon" href="{{raiz}}favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="{{raiz}}icon-180.png">
 <link rel="stylesheet" href="{{raiz}}{versao('style.css')}">
-<link rel="alternate" type="application/rss+xml" title="Real Terms Weekly" href="{{raiz}}semana/feed.xml">
+<link rel="alternate" type="application/rss+xml" title="Real Terms Daily" href="{{raiz}}resumo/feed.xml">
 <script>try{{var t=localStorage.getItem("realterms-tema");if(t)document.documentElement.setAttribute("data-theme",t)}}catch(e){{}}</script>
 {extra}
 </head>
 <body>
 <header class="topo"><div class="topo-in">
   <a class="marca" href="{{raiz}}" aria-label="Real Terms"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="18" width="6" height="10" rx="1.5"/><rect x="13" y="11" width="6" height="17" rx="1.5"/><rect x="22" y="4" width="6" height="24" rx="1.5"/></svg><span class="marca-nome"><b>Real</b> Terms</span></a>
-  <nav class="nav-principal" aria-label="Main navigation"><a href="{{raiz}}">Home</a><a href="{{raiz}}acao/">Companies</a><a href="{{raiz}}#/comparar">Compare</a><a href="{{raiz}}semana/">Weekly</a></nav>
+  <nav class="nav-principal" aria-label="Main navigation"><a href="{{raiz}}">Home</a><a href="{{raiz}}acao/">Companies</a><a href="{{raiz}}#/comparar">Compare</a><a href="{{raiz}}resumo/">Daily</a></nav>
 </div></header>
 <main class="conteudo">
 """
@@ -338,10 +338,10 @@ def main():
 
     hoje = date.today().isoformat()
     urls = [f"{SITE_URL}/", f"{SITE_URL}/acao/"] + [f"{SITE_URL}/acao/{t}/" for t in sorted(vivos)]
-    # edições do resumo semanal (scripts/resumo_semanal.py roda antes deste no CI)
-    semana = RAIZ / "semana"
-    if (semana / "index.html").exists():
-        urls += [f"{SITE_URL}/semana/"] + [f"{SITE_URL}/semana/{p.name}/" for p in sorted(semana.iterdir(), reverse=True)
+    # edições do resumo diário (scripts/resumo.py roda antes deste no CI)
+    resumo = RAIZ / "resumo"
+    if (resumo / "index.html").exists():
+        urls += [f"{SITE_URL}/resumo/"] + [f"{SITE_URL}/resumo/{p.name}/" for p in sorted(resumo.iterdir(), reverse=True)
                                           if p.is_dir() and (p / "index.html").exists()]
     (RAIZ / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
