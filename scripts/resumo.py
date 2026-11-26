@@ -84,9 +84,9 @@ VIRADA = {"back to profit": 1e6, "loss narrowed": 0.0, "loss unchanged": 0.0, "l
 EDICAO = re.compile(r"\d{4}-\d{2}-\d{2}")
 API_BUTTONDOWN = "https://api.buttondown.com/v1"
 VERSAO_API = "2026-11-10"   # versão fixa da API do Buttondown: o formato das respostas não muda sem aviso
-# False: a edição entra como rascunho no Buttondown, para conferir antes de mandar (as primeiras edições).
-# True: sai para os inscritos assim que o CI gera a edição.
-ENVIO_AUTOMATICO = False
+# True: sai para os inscritos assim que o CI gera a edição (ligado em 26/11/2026, depois de conferida a
+# edição de 25/11). False: entra como rascunho no Buttondown, para conferir antes de mandar.
+ENVIO_AUTOMATICO = True
 # no site, ".stat span" (rótulo do quadro de números) pintaria de cinza o sinal da variação
 ESTILO_PAGINA = ("<style>.stat b span{font-size:inherit}.stat b .pos{color:var(--pos)}"
                  ".stat b .neg{color:var(--neg)}.stat b .mudo{color:var(--muted)}</style>")
