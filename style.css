@@ -306,6 +306,12 @@ tbody tr:last-child td { border-bottom: 0; }
 .assinar input[type="email"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .assinar button.botao { border: 0; cursor: pointer; font-family: inherit; }
 .assinar p { margin: 8px 0 0; font-size: 13px; }
+/* no site interativo: no rodapé de todas as abas */
+.rodape .assinar { max-width: 640px; margin: 0 0 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.rodape .assinar label { color: var(--text); font-size: 14px; font-weight: 500; }
+.rodape .assinar input[type="email"] { padding: 8px 14px; font-size: 14px; }
+.rodape .assinar .botao { padding: 8px 18px; font-size: 14px; box-shadow: none; }
+.rodape .assinar p { font-size: 12.5px; }
 .olho { display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--muted); padding: 5px 12px 5px 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
 .olho .capitulo { margin-right: 8px; }
 .pequeno { font-size: 12.5px; }

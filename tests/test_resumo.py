@@ -244,6 +244,19 @@ class Inscricao(unittest.TestCase):
         self.assertEqual(S.G.form_assinatura("empresa"), "")
         self.assertEqual(S.G.bloco_assinatura("empresa", "../../"), "")
 
+    def test_formulario_do_site_usa_a_mesma_newsletter(self):
+        # o rodapé do site interativo (e a cópia na página da empresa) e as páginas estáticas apontam para a mesma
+        raiz = Path(__file__).resolve().parent.parent
+        html = (raiz / "index.html").read_text(encoding="utf-8")
+        form = re.search(r'<form class="assinar[^"]*" action="([^"]+)"[\s\S]*?</form>', html)
+        self.assertIsNotNone(form)
+        self.assertEqual(form.group(1), f"https://buttondown.com/api/emails/embed-subscribe/{S.G.BUTTONDOWN}")
+        for campo in ('name="email"', 'name="embed" value="1"', 'name="metadata__origem"'):
+            self.assertIn(campo, form.group(0))
+        i18n = (raiz / "i18n.js").read_text(encoding="utf-8")
+        for chave in ("assinar_rotulo", "assinar_ph", "assinar_botao", "assinar_nota"):
+            self.assertEqual(i18n.count(chave + ":"), 2, chave)   # português e inglês
+
     def test_formulario_em_html_puro(self):
         S.G.BUTTONDOWN = "realterms"
         f = S.G.form_assinatura("empresa")

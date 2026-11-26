@@ -21,7 +21,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="alternate" type="application/rss+xml" title="Real Terms Daily" href="resumo/feed.xml">
 <meta name="theme-color" content="#0b1117">
-<link rel="stylesheet" href="style.css?v=36ba96cdad">
+<link rel="stylesheet" href="style.css?v=a8aee0a00e">
 </head>
 <body>
 <header class="topo">
@@ -75,9 +75,20 @@
 
 <footer class="rodape">
   <div class="rodape-in">
+    <!-- inscrição no Real Terms Daily (Buttondown, newsletter RealTerms; o mesmo nome de BUTTONDOWN em scripts/gerar_paginas.py).
+         Formulário puro, sem script: abre a confirmação do Buttondown em outra aba. -->
+    <form class="assinar assinar-rodape" action="https://buttondown.com/api/emails/embed-subscribe/RealTerms" method="post" target="_blank" rel="noopener">
+      <label for="assinar-site" data-i18n-html="assinar_rotulo"></label>
+      <div class="assinar-linha">
+        <input type="email" name="email" id="assinar-site" required autocomplete="email" placeholder="you@example.com" data-i18n-ph="assinar_ph">
+        <input type="hidden" name="embed" value="1">
+        <input type="hidden" name="metadata__origem" value="site">
+        <button type="submit" class="botao" data-i18n="assinar_botao"></button>
+      </div>
+      <p class="mudo" data-i18n-html="assinar_nota"></p>
+    </form>
     <p data-i18n-html="rodape_fontes"></p>
     <p data-i18n="rodape_aviso"></p>
-    <p data-i18n-html="rodape_resumo"></p>
     <p id="gerado" class="mudo"></p>
   </div>
 </footer>
@@ -86,7 +97,7 @@
 
 <script src="data/empresas.js?v=e6014d9fce"></script>
 <script src="data/agenda.js?v=69379b7bf3"></script>
-<script src="i18n.js?v=a23db6dd03"></script>
+<script src="i18n.js?v=7b36e9f0c4"></script>
 <script src="app.js?v=cfd1aa074e"></script>
 <script src="inicio.js?v=39f1d6873a"></script>
 <script src="teia.js?v=6953f4e5ed"></script>
