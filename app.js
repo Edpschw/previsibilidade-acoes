@@ -1126,6 +1126,9 @@
       alvo === "qualidade" ? "qualidade" :
       alvo === "curso" ? "inicio" : "empresa";  // #/curso/7 abre a aula 7 do curso da página inicial
     $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
+    // no celular o menu rola de lado: mostra a aba aberta
+    var menu = $(".nav-principal"), ativa = $(".nav-principal [aria-current=page]");
+    if (menu && ativa && menu.scrollWidth > menu.clientWidth) menu.scrollLeft = Math.max(0, ativa.offsetLeft - menu.offsetLeft - 12);
     document.body.setAttribute("data-pagina", pagina);
     if (pagina === "inicio" && window.RealTermsInicio) window.RealTermsInicio.render($("#app"));
     else if (pagina === "inicio" || pagina === "acoes") telaRanking();

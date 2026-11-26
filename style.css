@@ -944,3 +944,10 @@ body[data-pagina="inicio"] #app { max-width: none; padding: 0; min-height: 0; }
 .q-tab th.num, .q-tab td.num { text-align: right; }
 .q-tab td.q-quebra { white-space: normal; min-width: 200px; }
 .q-tab .q-detalhe > td.q-quebra { min-width: 0; }
+
+/* menu principal no celular: com sete abas, rola de lado em vez de espremer os nomes */
+@media (max-width: 480px) {
+  .nav-principal { justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
+  .nav-principal::-webkit-scrollbar { display: none; }
+  .nav-principal a { flex: 0 0 auto; padding: 6px 10px; }
+}

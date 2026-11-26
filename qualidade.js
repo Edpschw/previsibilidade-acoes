@@ -490,4 +490,6 @@
   }
 
   window.RealTermsQualidade = { render: render };
+  // aberta direto pelo endereço: app.js roda a rota antes deste arquivo carregar
+  if (document.body.getAttribute("data-pagina") === "qualidade") render(document.getElementById("app"));
 })();
