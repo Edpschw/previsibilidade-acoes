@@ -1,0 +1,219 @@
+{
+ "data": "2026-11-25",
+ "numero": 3,
+ "tipo": "dia",
+ "titulo": "Wednesday, November 25, 2026",
+ "gerado_em": "2026-11-26 05:11",
+ "publicado_em": "2026-11-26T02:12-03:00",
+ "pregao": "2026-11-25",
+ "cambio": {
+  "de": 5.8573,
+  "para": 5.8825,
+  "data": "2026-11-25",
+  "real": -0.004284
+ },
+ "ptax_hoje": {
+  "data": "2026-11-25",
+  "valor": 5.8825
+ },
+ "universo": {
+  "n": 189,
+  "sobe": 147,
+  "desce": 35,
+  "mediana_brl": 0.019108,
+  "mediana_usd": 0.014743
+ },
+ "movimentos": {
+  "topo": [
+   {
+    "t": "RAIZ55",
+    "pagina": "RAIZ55",
+    "nome": "Raízen",
+    "preco": 0.1654,
+    "data": "2026-11-25",
+    "brl": 0.172218,
+    "usd": 0.167197
+   },
+   {
+    "t": "NATU3",
+    "pagina": "NATU3",
+    "nome": "Natura Cosméticos",
+    "preco": 4.71,
+    "data": "2026-11-25",
+    "brl": 0.105634,
+    "usd": 0.100897
+   },
+   {
+    "t": "PTBL3",
+    "pagina": "PTBL3",
+    "nome": "Pbg",
+    "preco": 1.4,
+    "data": "2026-11-25",
+    "brl": 0.09375,
+    "usd": 0.089064
+   },
+   {
+    "t": "HBOR3",
+    "pagina": "HBOR3",
+    "nome": "Helbor Empreendimentos",
+    "preco": 0.98,
+    "data": "2026-11-25",
+    "brl": 0.088889,
+    "usd": 0.084224
+   },
+   {
+    "t": "MOVI3",
+    "pagina": "MOVI3",
+    "nome": "Movida Participacoes",
+    "preco": 6.15,
+    "data": "2026-11-25",
+    "brl": 0.086572,
+    "usd": 0.081918
+   }
+  ],
+  "fim": [
+   {
+    "t": "EMBJ3",
+    "pagina": "EMBJ3",
+    "nome": "Embraer",
+    "preco": 103.2,
+    "data": "2026-11-25",
+    "brl": -0.04,
+    "usd": -0.044113
+   },
+   {
+    "t": "RCSL4",
+    "pagina": "RCSL4",
+    "nome": "Recrusul",
+    "preco": 0.56,
+    "data": "2026-11-25",
+    "brl": -0.050847,
+    "usd": -0.054914
+   },
+   {
+    "t": "SAUD3",
+    "pagina": "SAUD3",
+    "nome": "Bradsaúde",
+    "preco": 15.53,
+    "data": "2026-11-25",
+    "brl": -0.054778,
+    "usd": -0.058827
+   },
+   {
+    "t": "AZEV3",
+    "pagina": "AZEV3",
+    "nome": "Azevedo e Travassos",
+    "preco": 13.1,
+    "data": "2026-11-25",
+    "brl": -0.064954,
+    "usd": -0.068959
+   },
+   {
+    "t": "BRKM5",
+    "pagina": "BRKM5",
+    "nome": "Braskem",
+    "preco": 2.24,
+    "data": "2026-11-25",
+    "brl": -0.104,
+    "usd": -0.107838
+   }
+  ]
+ },
+ "proventos": {
+  "semana": [
+   "2026-11-26",
+   "2026-11-26"
+  ],
+  "direito": {
+   "itens": [],
+   "total": 0
+  },
+  "pagamentos": {
+   "itens": [
+    {
+     "t": "DEXP3",
+     "pagina": "DEXP3",
+     "nome": "Dexxos Participações",
+     "tipo": "dividendo",
+     "valor": 0.16707696,
+     "usd": 0.028402,
+     "yield": 0.024391,
+     "com": "2026-11-13",
+     "pag": "2026-11-26",
+     "outros": [
+      "DEXP4"
+     ]
+    },
+    {
+     "t": "BRBI11",
+     "pagina": "BRBI11",
+     "nome": "Brbi Br Partners",
+     "tipo": "dividendo",
+     "valor": 0.12,
+     "usd": 0.020399,
+     "yield": 0.011685,
+     "com": "2026-11-12",
+     "pag": "2026-11-26",
+     "outros": []
+    },
+    {
+     "t": "TAEE11",
+     "pagina": "TAEE11",
+     "nome": "Transmissora Aliança de Energia Elétrica",
+     "tipo": "jcp",
+     "valor": 0.35947458,
+     "usd": 0.061109,
+     "yield": 0.009041,
+     "com": "2026-08-14",
+     "pag": "2026-11-26",
+     "outros": [
+      "TAEE3",
+      "TAEE4"
+     ]
+    },
+    {
+     "t": "TAEE11",
+     "pagina": "TAEE11",
+     "nome": "Transmissora Aliança de Energia Elétrica",
+     "tipo": "dividendo",
+     "valor": 0.24076375,
+     "usd": 0.040929,
+     "yield": 0.006055,
+     "com": "2026-08-14",
+     "pag": "2026-11-26",
+     "outros": [
+      "TAEE3",
+      "TAEE4"
+     ]
+    }
+   ],
+   "total": 4
+  }
+ },
+ "mudancas": {
+  "desde": "2026-11-24",
+  "balancos": {
+   "topo": [],
+   "fim": [],
+   "total": 0
+  },
+  "indice": {
+   "topo": [],
+   "fim": [],
+   "total": 0
+  },
+  "entraram": [],
+  "sairam": [],
+  "anunciados": {
+   "itens": [],
+   "total": 0
+  }
+ },
+ "aula": {
+  "n": 3,
+  "total": 18,
+  "palavra": "EXCHANGE",
+  "pergunta": "Where are shares traded?"
+ },
+ "frase": "The real fell 0.4% against the dollar; 147 of 189 stocks gained in reais; 4 dividend payments are due in the next session."
+}
