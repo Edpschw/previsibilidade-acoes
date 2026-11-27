@@ -36,7 +36,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 SAIDA = RAIZ / "data" / "qualidade.js"
 HISTORICO = RAIZ / "data" / "qualidade_historico.json"
 AGENDA = RAIZ / "data" / "agenda.js"
-MAX_FALHAS = 150        # falhas guardadas por cruzamento (o total vai à parte)
+MAX_FALHAS = 3000       # falhas guardadas por cruzamento: todas, para o filtro de setor e o controle por empresa
 MAX_HISTORICO = 400     # pregões no gráfico da evolução
 # cruzamentos que as regras da auditoria não cobrem: entram na nota de cada empresa com este peso
 PESO_NOVOS = {"acoes_cvm_b3": "média", "cotacao_hist": "alta", "preco_ano_hist": "baixa", "agenda_hist": "média",
@@ -46,21 +46,30 @@ LIQUIDEZ_SAIDA = 500_000   # o mesmo de scripts/processar.py: abaixo disso a emp
 
 
 class Checagem:
-    """um cruzamento: casos testados, quantos passaram e as falhas com os dois valores comparados"""
+    """Um cruzamento: casos testados, quantos passaram e as falhas com os dois valores comparados, no total
+    e por empresa (ticker principal), para a aba filtrar por setor e montar o controle por empresa."""
 
     def __init__(self, id_, grupo):
-        self.id, self.grupo, self.testados, self.ok, self.falhas = id_, grupo, 0, 0, []
+        self.id, self.grupo, self.testados, self.ok, self.falhas, self.por_empresa = id_, grupo, 0, 0, [], {}
 
-    def caso(self, passou, **falha):
+    def caso(self, passou, emp=None, **falha):
         self.testados += 1
-        if passou:
-            self.ok += 1
-        else:
+        self.ok += 1 if passou else 0
+        if emp:
+            pe = self.por_empresa.setdefault(emp, [0, 0])
+            pe[0] += 1
+            pe[1] += 1 if passou else 0
+        if not passou:
+            if emp:
+                falha["e"] = emp
             self.falhas.append(falha)
 
     def saida(self):
-        return {"id": self.id, "grupo": self.grupo, "testados": self.testados, "ok": self.ok,
-                "n_falhas": len(self.falhas), "falhas": self.falhas[:MAX_FALHAS]}
+        out = {"id": self.id, "grupo": self.grupo, "testados": self.testados, "ok": self.ok,
+               "n_falhas": len(self.falhas), "falhas": self.falhas[:MAX_FALHAS]}
+        if self.por_empresa:  # só os cruzamentos gerais (PTAX) ficam sem empresa
+            out["por_empresa"] = self.por_empresa
+        return out
 
 
 def _r(v, casas=4):
@@ -80,22 +89,22 @@ def identidades(d):
             if None not in (fco, fci, fcf, vc):
                 soma = fco + fci + fcf + (s["fx_caixa"][k] or 0)
                 escala = max(abs(fco), abs(fci), abs(fcf), 1)
-                dfc.caso(abs(soma - vc) <= max(0.02 * escala, 1000), t=tk, ano=ano, a=soma, b=vc)
+                dfc.caso(abs(soma - vc) <= max(0.02 * escala, 1000), emp=tk, t=tk, ano=ano, a=soma, b=vc)
             at, pl = s["ativo_total"][k], s["pl"][k]
             if at is not None and pl is not None:
-                pla.caso(at > 0 and pl <= at * 1.01, t=tk, ano=ano, a=pl, b=at)
+                pla.caso(at > 0 and pl <= at * 1.01, emp=tk, t=tk, ano=ano, a=pl, b=at)
             if e["financeiro"]:
                 continue
             lb, rec = s["lucro_bruto"][k], s["receita"][k]
             if lb is not None and rec and rec > 0:
-                bruto.caso(lb <= rec * 1.01, t=tk, ano=ano, a=lb, b=rec)
+                bruto.caso(lb <= rec * 1.01, emp=tk, t=tk, ano=ano, a=lb, b=rec)
             eb, ebit = s["ebitda"][k], s["ebit"][k]
             if eb is not None and ebit is not None:
-                ebt.caso(eb >= ebit - max(abs(ebit) * 0.01, 1000), t=tk, ano=ano, a=eb, b=ebit)
+                ebt.caso(eb >= ebit - max(abs(ebit) * 0.01, 1000), emp=tk, t=tk, ano=ano, a=eb, b=ebit)
         t12 = e.get("ttm") or {}
         rec = s["receita"][-1]
         if t12.get("receita") and rec and rec > 0:
-            ttm.caso(0.5 <= t12["receita"] / rec <= 2, t=tk, ano=t12["ate"], a=t12["receita"], b=rec)
+            ttm.caso(0.5 <= t12["receita"] / rec <= 2, emp=tk, t=tk, ano=t12["ate"], a=t12["receita"], b=rec)
     return [dfc, bruto, pla, ebt, ttm]
 
 
@@ -103,7 +112,7 @@ def lpa(d):
     """LPA calculado (lucro da controladora ÷ ações) × LPA declarado na DRE, como em scripts/auditar.py"""
     c, pontos = Checagem("lpa", "cvm"), []
     for e in d["empresas"]:
-        s, anos = e["series"], e["anos"]
+        s, anos, tk = e["series"], e["anos"], e["ticker"]
         estimadas = s.get("acoes_estimadas") or [False] * len(anos)
         for i, ano in enumerate(anos):
             lpa_d, ac, luc = s["lpa_declarado"][i], s["acoes"][i], s["lucro_controladora"][i]
@@ -112,8 +121,8 @@ def lpa(d):
             lpa_c = luc * 1000 / ac
             media = (ac + s["acoes"][i - 1]) / 2 if i and s["acoes"][i - 1] else ac
             ok = 0.67 < lpa_c / lpa_d < 1.5 or 0.67 < luc * 1000 / media / lpa_d < 1.5
-            c.caso(ok, t=e["ticker"], ano=ano, a=_r(lpa_c), b=_r(lpa_d))
-            pontos.append([_r(lpa_c, 3), _r(lpa_d, 3), 1 if ok else 0])
+            c.caso(ok, emp=tk, t=tk, ano=ano, a=_r(lpa_c), b=_r(lpa_d))
+            pontos.append([_r(lpa_c, 3), _r(lpa_d, 3), 1 if ok else 0, tk])
     return c, pontos
 
 
@@ -124,20 +133,21 @@ def cvm_b3(d):
     tes = Checagem("tesouraria", "cvm")
     pontos = []
     for e in d["empresas"]:
-        tk, s = e["ticker"], e["series"]
+        tk = e["ticker"]
         cv, b3 = e.get("acoes_cvm"), e.get("acoes_b3")
         if cv:
-            tes.caso(0 <= cv.get("tesouraria_on", 0) <= cv["on"] and 0 <= cv.get("tesouraria_pn", 0) <= cv["pn"],
+            tes.caso(0 <= cv.get("tesouraria_on", 0) <= cv["on"] and 0 <= cv.get("tesouraria_pn", 0) <= cv["pn"], emp=tk,
                      t=tk, data=cv.get("data"), a=cv.get("tesouraria_on", 0) + cv.get("tesouraria_pn", 0), b=cv["on"] + cv["pn"])
         if cv and b3:
             a = cv["on"] + cv["pn"] - cv.get("tesouraria_on", 0) - cv.get("tesouraria_pn", 0)
             b = b3["on"] + b3["pn"] - b3.get("tesouraria", 0)
             if a > 0 and b > 0:
-                acoes.caso(abs(a / b - 1) <= 0.05, t=tk, data=cv.get("data"), a=a, b=b)
-                pontos.append([a, b, 1 if abs(a / b - 1) <= 0.05 else 0])
+                ok = abs(a / b - 1) <= 0.05
+                acoes.caso(ok, emp=tk, t=tk, data=cv.get("data"), a=a, b=b)
+                pontos.append([a, b, 1 if ok else 0, tk])
         v, vd = e.get("valor_mercado"), e.get("valor_mercado_dfp")
         if v and vd and vd > 0:
-            vm.caso(0.8 < v / vd < 1.25, t=tk, ano=e["anos"][-1], a=v, b=vd)
+            vm.caso(0.8 < v / vd < 1.25, emp=tk, t=tk, ano=e["anos"][-1], a=v, b=vd)
     return [tes, acoes, vm], pontos
 
 
@@ -147,8 +157,11 @@ def b3_b3(d, agenda, hist=R.ler_hist):
     cot, fim, ag, ev = (Checagem("cotacao_hist", "b3"), Checagem("preco_ano_hist", "b3"),
                         Checagem("agenda_hist", "b3"), Checagem("eventos_preco", "b3"))
     datas_ag, escopo = Checagem("agenda_datas", "b3"), Checagem("escopo_liquidez", "b3")
+    principal = {t: e["ticker"] for e in d["empresas"] for t in e["tickers"]}     # PETR3 → PETR4
+    por_cnpj = {e.get("cnpj"): e["ticker"] for e in d["empresas"]}
     for e in d["empresas"]:
-        escopo.caso((e.get("liquidez") or 0) >= LIQUIDEZ_SAIDA, t=e["ticker"], a=e.get("liquidez") or 0, b=LIQUIDEZ_SAIDA)
+        escopo.caso((e.get("liquidez") or 0) >= LIQUIDEZ_SAIDA, emp=e["ticker"], t=e["ticker"],
+                    a=e.get("liquidez") or 0, b=LIQUIDEZ_SAIDA)
     cache = {}
 
     def serie(t):
@@ -158,6 +171,7 @@ def b3_b3(d, agenda, hist=R.ler_hist):
         return cache[t]
 
     for e in d["empresas"]:
+        tk = e["ticker"]
         for t, c in e["cotacao"].items():
             sr = serie(t)
             if not sr:
@@ -165,7 +179,7 @@ def b3_b3(d, agenda, hist=R.ler_hist):
             alvo = date.fromisoformat(c["data"])
             r = R.no_dia(sr[1], sr[2], alvo)
             if r:
-                cot.caso(r[0] == alvo and abs(r[1] - c["preco"]) <= max(0.005, c["preco"] * 1e-4),
+                cot.caso(r[0] == alvo and abs(r[1] - c["preco"]) <= max(0.005, c["preco"] * 1e-4), emp=tk,
                          t=t, data=c["data"], a=c["preco"], b=_r(r[1]))
         for t, lst in e["precos_ano"].items():
             sr = serie(t)
@@ -177,17 +191,18 @@ def b3_b3(d, agenda, hist=R.ler_hist):
                     continue
                 r = R.no_dia(sr[1], sr[2], date(ano, 12, 31))
                 if r and r[0].year == ano:
-                    fim.caso(abs(r[1] - p) <= max(0.005, p * 1e-3), t=t, ano=ano, a=p, b=_r(r[1]))
-    for itens in agenda.values():
+                    fim.caso(abs(r[1] - p) <= max(0.005, p * 1e-3), emp=tk, t=t, ano=ano, a=p, b=_r(r[1]))
+    for cnpj, itens in agenda.items():
         for x in itens:
+            emp = por_cnpj.get(cnpj) or principal.get(x["t"])
             if x.get("pag"):
-                datas_ag.caso(x["pag"] >= x["com"], t=x["t"], data=x["com"], a=x["com"], b=x["pag"])
+                datas_ag.caso(x["pag"] >= x["com"], emp=emp, t=x["t"], data=x["com"], a=x["com"], b=x["pag"])
             sr = serie(x["t"])
             if not sr:
                 continue
             iguais = [p for p in sr[0].get("pv") or [] if p[0] == x["com"] and p[2] == x["tipo"]]
             ok = any(abs(p[1] - x["valor"]) <= max(1e-6, abs(x["valor"]) * 0.01) for p in iguais)
-            ag.caso(ok, t=x["t"], data=x["com"], a=x["valor"], b=_r(iguais[0][1], 6) if iguais else None)
+            ag.caso(ok, emp=emp, t=x["t"], data=x["com"], a=x["valor"], b=_r(iguais[0][1], 6) if iguais else None)
     for t, sr in list(cache.items()):
         if not sr:
             continue
@@ -198,7 +213,7 @@ def b3_b3(d, agenda, hist=R.ler_hist):
             if not i or not fator:
                 continue
             salto = ps[i - 1] / ps[i]
-            ev.caso(0.65 < salto / fator < 1.5, t=t, data=d_ex, a=_r(salto), b=_r(fator, 6))
+            ev.caso(0.65 < salto / fator < 1.5, emp=principal.get(t), t=t, data=d_ex, a=_r(salto), b=_r(fator, 6))
     return [cot, fim, ag, datas_ag, ev, escopo]
 
 

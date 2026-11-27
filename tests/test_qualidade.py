@@ -97,6 +97,29 @@ class Ptax(unittest.TestCase):
         self.assertEqual((fim.testados, fim.ok), (1, 1))
 
 
+class PorEmpresa(unittest.TestCase):
+    """cada caso conta para a empresa (ticker principal), para a aba filtrar por setor e montar a matriz"""
+
+    def test_casos_e_falhas_pela_empresa_principal(self):
+        e = empresa("PETR4", fco=[100_000, 100_000], fci=[-40_000, -40_000], fcf=[-50_000, -50_000], fx_caixa=[0, 0],
+                    var_caixa=[10_000, -10_000])
+        e["tickers"] = ["PETR3", "PETR4"]
+        dfc = Q.identidades({"empresas": [e]})[0].saida()
+        self.assertEqual(dfc["por_empresa"], {"PETR4": [2, 1]})
+        self.assertEqual(dfc["falhas"][0]["e"], "PETR4")
+        # classe que não é a principal (PETR3) conta para a empresa (PETR4)
+        h = hist([("2026-03-02", 30.0), ("2026-03-03", 15.2)], ev=[("2026-03-03", 2.0, "desdobramento", "b3")])
+        e["precos_ano"] = {}
+        e["cotacao"] = {"PETR3": {"preco": 15.2, "data": "2026-03-03"}}
+        cot = Q.b3_b3({"empresas": [e]}, {}, hist={"PETR3": h}.get)[0].saida()
+        self.assertEqual(cot["por_empresa"], {"PETR4": [1, 1]})
+
+    def test_ptax_fica_sem_empresa(self):
+        ind = {"ptax": {"d0": "2025-12-30", "dd": [], "v": [5.0]}}
+        media = Q.ptax({"ptax": {"2025": {"media": 5.0, "fim": 5.0}}}, hist={"_indices": ind}.get)[0].saida()
+        self.assertNotIn("por_empresa", media)
+
+
 class Notas(unittest.TestCase):
     def test_nota_desconta_ocorrencias_e_ordena_da_melhor_para_a_pior(self):
         d = {"empresas": [empresa("AAA3"), empresa("BBB3")]}
@@ -120,6 +143,14 @@ class DadosGerados(unittest.TestCase):
             self.assertIn(c["grupo"], ("cvm", "cvm_b3", "b3", "bcb"))
             self.assertLessEqual(c["ok"], c["testados"])
             self.assertEqual(c["testados"] - c["ok"], c["n_falhas"])
+
+    def test_por_empresa_soma_o_total_e_guarda_todas_as_falhas(self):
+        for c in self.q["checagens"]:
+            self.assertEqual(len(c["falhas"]), c["n_falhas"], c["id"])
+            if "por_empresa" in c:
+                self.assertEqual(sum(v[0] for v in c["por_empresa"].values()), c["testados"], c["id"])
+                self.assertEqual(sum(v[1] for v in c["por_empresa"].values()), c["ok"], c["id"])
+                self.assertTrue(all(f.get("e") for f in c["falhas"]), c["id"])
 
     def test_notas_da_melhor_para_a_pior(self):
         notas = [x["nota"] for x in self.q["empresas"]]

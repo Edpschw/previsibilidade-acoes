@@ -186,14 +186,41 @@
     var cor = v >= 0.99 ? "var(--pos)" : v >= 0.95 ? "var(--warn)" : "var(--neg)";
     return '<span class="q-barra"><i style="width:' + Math.max(1, v * 100).toFixed(1) + "%;background:" + cor + '"></i></span>';
   }
+  /** barra da nota de 0 a 100 (as faixas de cor são outras que as da taxa de casos que batem) */
+  function barraNota(n) {
+    var cor = n >= 90 ? "var(--pos)" : n >= 70 ? "var(--warn)" : "var(--neg)";
+    return '<span class="q-barra"><i style="width:' + Math.max(1, n) + "%;background:" + cor + '"></i></span>';
+  }
   function linkEmpresa(t) {
     var e = X.POR_TICKER[t];
     return '<a href="#/' + esc(e ? e.ticker : t) + '"><b>' + esc(t) + "</b></a>" + (e ? ' <span class="mudo">' + esc(X.nomeCurto(e.nome)) + "</span>" : "");
   }
-  function doFiltro(t) {
-    if (!filtro) return true;
-    var e = X.POR_TICKER[t];
-    return t === filtro || (e && e.ticker === filtro);
+  // ---------------------------------------------------------------- seleção: setor ou empresa
+
+  // empresas em análise ({ticker principal: true}); null = toda a base. A empresa do endereço
+  // (#/qualidade/PETR4) vence o filtro de setor da barra sob o cabeçalho.
+  var SEL = null;
+  function selecionar() {
+    SEL = null;
+    if (filtro) {
+      var e = X.POR_TICKER[filtro];
+      SEL = {};
+      if (e) SEL[e.ticker] = true;
+    } else if (X.setorAtivo()) {
+      SEL = {};
+      X.visiveis().forEach(function (e) { SEL[e.ticker] = true; });
+    }
+  }
+  function naSelecao(tk) { return !SEL || !!SEL[tk]; }
+  function doFiltro(t) { var e = X.POR_TICKER[t]; return naSelecao(e ? e.ticker : t); }
+  function nEmpresas() { return SEL ? Object.keys(SEL).length : X.EMPRESAS.length; }
+  /** números de um cruzamento só para as empresas em análise; os gerais (PTAX) valem para toda a base */
+  function agregar(c) {
+    if (!SEL || !c.por_empresa) return { c: c, testados: c.testados, ok: c.ok, falhas: c.falhas, n: c.n_falhas, geral: !c.por_empresa };
+    var t = 0, ok = 0;
+    Object.keys(c.por_empresa).forEach(function (k) { if (SEL[k]) { t += c.por_empresa[k][0]; ok += c.por_empresa[k][1]; } });
+    var falhas = c.falhas.filter(function (f) { return SEL[f.e]; });
+    return { c: c, testados: t, ok: ok, falhas: falhas, n: falhas.length, geral: false };
   }
 
   // ---------------------------------------------------------------- gráficos (SVG próprio)
@@ -272,48 +299,61 @@
   // ---------------------------------------------------------------- seções
 
   function resumo(q) {
-    var r = q.resumo, cov = q.cobertura;
+    var cov = q.cobertura, testes = 0, ok = 0, ativos = 0;
+    q.checagens.forEach(function (c) {
+      var x = agregar(c);
+      if (SEL && x.geral) return;
+      testes += x.testados; ok += x.ok;
+      if (x.testados) ativos++;
+    });
+    var graves = q.achados.filter(function (x) { return x.sev === "alta" && naSelecao(x.t); }).length;
+    var setor = !filtro && X.setorAtivo();
     var st = function (rot, v, extra) { return '<div class="stat"><span>' + rot + '</span><b class="num">' + v + "</b>" + (extra ? '<small class="mudo">' + extra + "</small>" : "") + "</div>"; };
     return '<section class="intro"><h1>' + L("Qualidade dos dados", "Data quality") + "</h1><p>" +
-      L("Cada número do site vem de uma fonte pública (CVM, B3 e Banco Central). Aqui ele é conferido contra outra fonte ou contra outra leitura da mesma fonte: o que tem de bater, bate? A conferência roda todo dia útil, junto com a atualização da base, e trava a publicação se a base piorar.",
-        "Every number on this site comes from a public source (CVM, B3 and the Central Bank). Here it is checked against another source or another reading of the same source: does what must match, match? The check runs every business day with the data update, and blocks publication if the data gets worse.") +
+      L("Cada número do site vem de uma fonte pública (CVM, B3 e Banco Central). Aqui ele é conferido contra outra fonte ou contra outra leitura da mesma fonte: o que tem de bater, bate? A conferência roda todo dia útil, junto com a atualização da base, e trava a publicação se a base piorar. O filtro de setor da barra acima vale aqui também.",
+        "Every number on this site comes from a public source (CVM, B3 and the Central Bank). Here it is checked against another source or another reading of the same source: does what must match, match? The check runs every business day with the data update, and blocks publication if the data gets worse. The sector filter above applies here too.") +
       "</p></section>" +
       '<section class="cartao"><div class="stats q-stats">' +
-      st(L("Casos que batem", "Cases that match"), pctTxt(r.ok / r.testes, 2), nf(0).format(r.ok) + " " + L("de", "of") + " " + nf(0).format(r.testes)) +
-      st(L("Cruzamentos", "Cross-checks"), q.checagens.length, L("entre CVM, B3 e Banco Central", "across CVM, B3 and the Central Bank")) +
-      st(L("Cobertura", "Coverage"), pctTxt(cov.cobertura, 0), nf(0).format(cov.na_base) + " " + L("de", "of") + " " + nf(0).format(cov.acima_corte) + " " + L("emissores líquidos", "liquid issuers")) +
-      st(L("Ocorrências graves", "Serious issues"), r.alta, L("regras de plausibilidade", "plausibility rules")) +
+      st(L("Casos que batem", "Cases that match"), pctTxt(testes ? ok / testes : null, 2), nf(0).format(ok) + " " + L("de", "of") + " " + nf(0).format(testes)) +
+      st(L("Empresas em análise", "Companies analyzed"), nf(0).format(nEmpresas()),
+        filtro ? esc(filtro) : setor ? esc(setor.nome) : L("toda a base", "the whole database")) +
+      st(L("Cruzamentos", "Cross-checks"), ativos, L("entre CVM, B3 e Banco Central", "across CVM, B3 and the Central Bank")) +
+      st(L("Ocorrências graves", "Serious issues"), graves, L("regras de plausibilidade", "plausibility rules")) +
+      st(L("Cobertura", "Coverage"), pctTxt(cov.cobertura, 0), nf(0).format(cov.na_base) + " " + L("de", "of") + " " + nf(0).format(cov.acima_corte) + " " +
+        L("emissores líquidos da B3", "liquid B3 issuers")) +
       st(L("Base de", "Data as of"), X.data(q.gerado_em.slice(0, 10)), L("cotações de ", "prices of ") + X.data(q.cotacoes_em)) +
       "</div></section>";
   }
 
   function cruzamentos(q) {
-    var lista = q.checagens.slice().sort(function (a, b) { return (taxa(b) || 0) - (taxa(a) || 0) || b.testados - a.testados; });
-    var linhas = lista.map(function (c) {
-      var d = C[c.id] || { n: [c.id, c.id], f: ["", ""], r: ["", ""], u: "", a: ["A", "A"], b: ["B", "B"] };
-      var falhas = c.falhas.filter(function (f) { return !f.t || doFiltro(f.t); });
-      var v = taxa(c);
-      var botao = c.n_falhas ? '<button type="button" class="q-ver" data-cruz="' + c.id + '" aria-expanded="' + (abertos[c.id] ? "true" : "false") + '">' +
-        nf(0).format(filtro ? falhas.length : c.n_falhas) + "</button>" : '<span class="pos">0</span>';
-      var linha = "<tr><td class=\"q-quebra\"><b>" + esc(T(d.n)) + '</b><br><span class="mudo q-fonte">' + esc(T(GRUPOS[c.grupo] || ["", ""])) + " · " + esc(T(d.f)) + "</span></td>" +
-        '<td class="num">' + nf(0).format(c.testados) + '</td><td class="num">' + (v == null ? "–" : barra(v) + " " + pctTxt(v, 1)) + '</td><td class="num">' + botao + "</td></tr>";
-      if (abertos[c.id]) {
-        var corpo = falhas.slice(0, 60).map(function (f) {
+    var lista = q.checagens.map(agregar).sort(function (a, b) {
+      return (b.testados ? 1 : 0) - (a.testados ? 1 : 0) || (taxa(b) || 0) - (taxa(a) || 0) || b.testados - a.testados;
+    });
+    var linhas = lista.map(function (x) {
+      var c = x.c, d = C[c.id] || { n: [c.id, c.id], f: ["", ""], r: ["", ""], u: "", a: ["A", "A"], b: ["B", "B"] };
+      var v = taxa(x);
+      var botao = x.n ? '<button type="button" class="q-ver" data-cruz="' + c.id + '" aria-expanded="' + (abertos[c.id] ? "true" : "false") + '">' +
+        nf(0).format(x.n) + "</button>" : x.testados ? '<span class="pos">0</span>' : '<span class="mudo">–</span>';
+      var geral = SEL && x.geral ? ' <span class="selo">' + L("toda a base", "whole database") + "</span>" : "";
+      var linha = "<tr><td class=\"q-quebra\"><b>" + esc(T(d.n)) + "</b>" + geral + '<br><span class="mudo q-fonte">' + esc(T(GRUPOS[c.grupo] || ["", ""])) + " · " + esc(T(d.f)) + "</span></td>" +
+        '<td class="num">' + (x.testados ? nf(0).format(x.testados) : "–") + '</td><td class="num">' +
+        (v == null ? '<span class="mudo">' + L("não se aplica", "not applicable") + "</span>" : barra(v) + " " + pctTxt(v, 1)) + '</td><td class="num">' + botao + "</td></tr>";
+      if (abertos[c.id] && x.n) {
+        var corpo = x.falhas.slice(0, 60).map(function (f) {
           return "<tr><td>" + (f.t ? linkEmpresa(f.t) : "–") + "</td><td>" + esc(f.ano != null ? String(f.ano) : X.data(f.data)) + '</td><td class="num">' +
             esc(valor(f.a, d.u)) + '</td><td class="num">' + esc(valor(f.b, d.u)) + '</td><td class="num">' + esc(diferenca(f, d)) + "</td></tr>";
         }).join("");
-        var resto = (filtro ? falhas.length : c.n_falhas) - Math.min(falhas.length, 60);
+        var resto = x.n - Math.min(x.falhas.length, 60);
         linha += '<tr class="q-detalhe"><td colspan="4" class="q-quebra"><p class="mudo">' + esc(T(d.r)) + "</p>" +
-          (corpo ? '<div class="tabela-wrap"><table class="q-tab"><thead><tr><th>' + L("Empresa", "Company") + "</th><th>" + L("Ano ou data", "Year or date") + '</th><th class="num">' +
-            esc(T(d.a)) + '</th><th class="num">' + esc(T(d.b)) + '</th><th class="num">' + L("Diferença", "Difference") + "</th></tr></thead><tbody>" + corpo + "</tbody></table></div>" :
-            '<p class="mudo">' + L("Nenhuma falha desta empresa.", "No failures for this company.") + "</p>") +
+          '<div class="tabela-wrap"><table class="q-tab"><thead><tr><th>' + L("Empresa", "Company") + "</th><th>" + L("Ano ou data", "Year or date") + '</th><th class="num">' +
+          esc(T(d.a)) + '</th><th class="num">' + esc(T(d.b)) + '</th><th class="num">' + L("Diferença", "Difference") + "</th></tr></thead><tbody>" + corpo + "</tbody></table></div>" +
           (resto > 0 ? '<p class="mudo">' + L("…e mais ", "…and ") + nf(0).format(resto) + L(" falhas.", " more failures.") + "</p>" : "") + "</td></tr>";
       }
       return linha;
     }).join("");
     return '<section class="cartao bloco"><h2>' + L("Cruzamentos entre fontes", "Cross-checks between sources") + "</h2><p class=\"mudo\">" +
-      L("Do que mais bate para o que menos bate. Clique no número de falhas para ver a regra e os dois valores de cada caso.",
-        "From the most to the least consistent. Click the number of failures to see the rule and both values of each case.") +
+      L("Do que mais bate para o que menos bate, nas empresas em análise. Clique no número de falhas para ver a regra e os dois valores de cada caso.",
+        "From the most to the least consistent, for the companies analyzed. Click the number of failures to see the rule and both values of each case.") +
       '</p><div class="tabela-wrap"><table class="q-tab q-cruz"><thead><tr><th>' + L("Cruzamento", "Cross-check") + '</th><th class="num">' + L("Casos", "Cases") +
       '</th><th class="num">' + L("Batem", "Match") + '</th><th class="num">' + L("Falhas", "Failures") + "</th></tr></thead><tbody>" + linhas + "</tbody></table></div></section>";
   }
@@ -321,22 +361,29 @@
   function graficos(q) {
     var grupos = {};
     q.checagens.forEach(function (c) {
+      var x = agregar(c);
+      if (SEL && x.geral) return;
       var g = grupos[c.grupo] || (grupos[c.grupo] = { t: 0, ok: 0 });
-      g.t += c.testados; g.ok += c.ok;
+      g.t += x.testados; g.ok += x.ok;
     });
-    var itens = Object.keys(grupos).map(function (k) { return { rot: T(GRUPOS[k] || [k, k]), v: grupos[k].ok / grupos[k].t }; })
+    var itens = Object.keys(grupos).filter(function (k) { return grupos[k].t; })
+      .map(function (k) { return { rot: T(GRUPOS[k] || [k, k]), v: grupos[k].ok / grupos[k].t }; })
       .sort(function (a, b) { return b.v - a.v; });
-    var lpa = (q.pontos && q.pontos.lpa) || [], acoes = (q.pontos && q.pontos.acoes) || [];
+    var sel = function (p) { return naSelecao(p[3]); };
+    var lpa = ((q.pontos && q.pontos.lpa) || []).filter(sel), acoes = ((q.pontos && q.pontos.acoes) || []).filter(sel);
+    var vazio = '<p class="mudo">' + L("Sem casos nas empresas em análise.", "No cases among the companies analyzed.") + "</p>";
     return '<section class="cartao bloco"><h2>' + L("Gráficos de conferência", "Check charts") + '</h2><div class="q-graficos">' +
-      '<figure><figcaption><b>' + L("Casos que batem, por grupo", "Cases that match, by group") + "</b></figcaption>" + barras(itens) + "</figure>" +
-      '<figure><figcaption><b>' + L("Evolução dos casos que batem", "Cases that match over time") + "</b></figcaption>" + evolucao(q.historico || []) + "</figure>" +
+      '<figure><figcaption><b>' + L("Casos que batem, por grupo", "Cases that match, by group") + "</b></figcaption>" + (itens.length ? barras(itens) : vazio) + "</figure>" +
+      '<figure><figcaption><b>' + L("Evolução dos casos que batem", "Cases that match over time") + "</b>" +
+      (SEL ? '<br><span class="mudo">' + L("Toda a base: o histórico diário não é guardado por setor.", "Whole database: the daily history is not stored by sector.") + "</span>" : "") +
+      "</figcaption>" + evolucao(q.historico || []) + "</figure>" +
       '<figure><figcaption><b>' + L("LPA calculado × LPA declarado", "Computed EPS × reported EPS") + '</b><br><span class="mudo">' +
       L("Cada ponto é uma empresa num ano. Na diagonal, os dois batem; as tracejadas marcam a folga (0,67× e 1,5×). Vermelho: fora da folga.",
         "Each dot is a company in a year. On the diagonal both match; dashed lines mark the tolerance (0.67× and 1.5×). Red: outside it.") +
-      "</span></figcaption>" + dispersao(lpa, [1 / 1.5, 1 / 0.67], L("LPA calculado (R$, valor absoluto)", "Computed EPS (R$, absolute)"), L("LPA declarado", "Reported EPS")) + "</figure>" +
+      "</span></figcaption>" + (lpa.length ? dispersao(lpa, [1 / 1.5, 1 / 0.67], L("LPA calculado (R$, valor absoluto)", "Computed EPS (R$, absolute)"), L("LPA declarado", "Reported EPS")) : vazio) + "</figure>" +
       '<figure><figcaption><b>' + L("Ações em circulação: CVM × B3", "Outstanding shares: CVM × B3") + '</b><br><span class="mudo">' +
       L("Uma empresa por ponto. As tracejadas marcam ±5%.", "One company per dot. Dashed lines mark ±5%.") + "</span></figcaption>" +
-      dispersao(acoes, [0.95, 1.05], L("CVM (último ITR ou DFP)", "CVM (latest filing)"), L("B3 (hoje)", "B3 (today)")) + "</figure>" +
+      (acoes.length ? dispersao(acoes, [0.95, 1.05], L("CVM (último ITR ou DFP)", "CVM (latest filing)"), L("B3 (hoje)", "B3 (today)")) : vazio) + "</figure>" +
       "</div></section>";
   }
 
@@ -377,22 +424,66 @@
       }).join("") + "</tbody></table></div>";
   }
 
-  function porEmpresa(q) {
-    var termo = busca.trim().toUpperCase();
-    var lista = q.empresas.filter(function (x) { return doFiltro(x.t) && (!termo || x.t.indexOf(termo) >= 0 || x.nome.toUpperCase().indexOf(termo) >= 0); });
+  // cruzamentos por empresa, na ordem das colunas da matriz (os gerais, de PTAX, não têm empresa)
+  var ORDEM = ["dfc", "pl_ativo", "bruto_receita", "ebitda_ebit", "ttm_anual", "lpa", "tesouraria", "acoes_cvm_b3", "vm_b3_dfp",
+    "cotacao_hist", "preco_ano_hist", "agenda_hist", "agenda_datas", "eventos_preco", "escopo_liquidez"];
+  var CURTO = {
+    dfc: ["Fluxo de caixa", "Cash flow"], pl_ativo: ["PL ≤ ativo", "Equity ≤ assets"], bruto_receita: ["Bruto ≤ receita", "Gross ≤ revenue"],
+    ebitda_ebit: ["EBITDA ≥ EBIT", "EBITDA ≥ EBIT"], ttm_anual: ["12 meses × ano", "TTM × year"], lpa: ["LPA", "EPS"],
+    tesouraria: ["Tesouraria", "Treasury"], acoes_cvm_b3: ["Ações CVM × B3", "Shares CVM × B3"], vm_b3_dfp: ["Valor de mercado", "Market cap"],
+    cotacao_hist: ["Cotação", "Price"], preco_ano_hist: ["Preço de fim de ano", "Year-end price"], agenda_hist: ["Proventos", "Dividends"],
+    agenda_datas: ["Pagamento", "Payment date"], eventos_preco: ["Desdobra&shy;mentos", "Splits"], escopo_liquidez: ["Liquidez", "Liquidity"]
+  };
+
+  function chipsOcorrencias(x) {
     var chip = function (n, cls, rot) { return n ? '<span class="q-sev ' + cls + '">' + n + " " + rot + "</span>" : ""; };
+    return chip(x.alta, "alta", L("alta", "high")) + chip(x.media, "media", L("média", "medium")) + chip(x.baixa, "baixa", L("baixa", "low")) +
+      chip(x.info, "info", "info") || '<span class="pos">' + L("nenhuma", "none") + "</span>";
+  }
+
+  /** matriz empresa × cruzamento: ✓ todos os casos batem, ✗ n falharam, – não se aplica */
+  function controle(q) {
+    var por = {};
+    q.checagens.forEach(function (c) { por[c.id] = c; });
+    var cols = ORDEM.filter(function (id) { return por[id] && por[id].por_empresa; });
+    var termo = busca.trim().toUpperCase();
+    var lista = q.empresas.filter(function (x) {
+      return naSelecao(x.t) && (!termo || x.t.indexOf(termo) >= 0 || x.nome.toUpperCase().indexOf(termo) >= 0);
+    });
+    // cabeçalho: grupos (CVM, CVM × B3, B3) sobre as colunas, e quanto bate em cada coluna para a lista
+    var faixas = [];
+    cols.forEach(function (id) {
+      var g = por[id].grupo, ult = faixas[faixas.length - 1];
+      if (ult && ult.g === g) ult.n++; else faixas.push({ g: g, n: 1 });
+    });
+    var total = cols.map(function (id) {
+      var t = 0, ok = 0;
+      lista.forEach(function (x) { var r = por[id].por_empresa[x.t]; if (r) { t += r[0]; ok += r[1]; } });
+      return t ? pctTxt(ok / t, 0) : "–";
+    });
+    var cab = '<tr><th rowspan="2" class="q-fixa">' + L("Empresa", "Company") + '</th><th rowspan="2" class="num">' + L("Nota", "Score") + "</th>" +
+      faixas.map(function (f) { return '<th colspan="' + f.n + '" class="q-grupo">' + esc(T(GRUPOS[f.g] || [f.g, f.g])) + "</th>"; }).join("") +
+      '<th rowspan="2">' + L("Ocorrências", "Issues") + "</th></tr><tr>" +
+      cols.map(function (id) { return '<th class="q-col" title="' + esc(T(C[id].n)) + '">' + T(CURTO[id] || [id, id]) + "</th>"; }).join("") + "</tr>";
+    var resumoLinha = '<tr class="q-total"><td class="q-fixa">' + L("Batem, nesta lista", "Match, in this list") + "</td><td></td>" +
+      total.map(function (v) { return '<td class="q-cel">' + v + "</td>"; }).join("") + "<td></td></tr>";
     var linhas = lista.map(function (x) {
-      return "<tr><td>" + linkEmpresa(x.t) + ' <a class="mudo q-filtrar" href="#/qualidade/' + esc(x.t) + '">' + L("ver ocorrências", "see issues") + "</a></td>" +
-        '<td class="num">' + barra(x.nota / 100) + " " + x.nota + "</td><td>" +
-        (chip(x.alta, "alta", L("alta", "high")) + chip(x.media, "media", L("média", "medium")) + chip(x.baixa, "baixa", L("baixa", "low")) + chip(x.info, "info", "info") ||
-          '<span class="pos">' + L("nenhuma", "none") + "</span>") + "</td></tr>";
+      var celulas = cols.map(function (id) {
+        var r = por[id].por_empresa[x.t];
+        if (!r) return '<td class="q-cel mudo" title="' + L("não se aplica", "not applicable") + '">–</td>';
+        if (r[1] === r[0]) return '<td class="q-cel pos" title="' + r[1] + " " + L("de", "of") + " " + r[0] + '">✓</td>';
+        return '<td class="q-cel neg" title="' + (r[0] - r[1]) + " " + L("falhas em", "failures in") + " " + r[0] + '"><a href="#/qualidade/' + esc(x.t) + '">✗ ' + (r[0] - r[1]) + "</a></td>";
+      }).join("");
+      return '<tr><td class="q-fixa">' + linkEmpresa(x.t) + ' <a class="mudo q-filtrar" href="#/qualidade/' + esc(x.t) + '">' + L("detalhes", "details") + "</a></td>" +
+        '<td class="num">' + barraNota(x.nota) + " " + x.nota + "</td>" + celulas + "<td>" + chipsOcorrencias(x) + "</td></tr>";
     }).join("");
-    return '<section class="cartao bloco"><h2>' + L("Confiabilidade por empresa", "Reliability by company") + '</h2><p class="mudo">' +
-      L("Nota de 0 a 100: começa em 100 e perde 25 por ocorrência alta, 10 por média e 3 por baixa (regras de plausibilidade e cruzamentos que só elas não cobrem). Da melhor para a pior.",
-        "Score from 0 to 100: it starts at 100 and loses 25 per high issue, 10 per medium and 3 per low (plausibility rules and the cross-checks they do not cover). From best to worst.") +
+    return '<section class="cartao bloco"><h2>' + L("Controle por empresa", "Control by company") + '</h2><p class="mudo">' +
+      L("Uma linha por empresa, da melhor para a pior nota. Em cada cruzamento: ✓ todos os casos da empresa batem; ✗ n, quantos falharam (o link mostra quais); – não se aplica, como lucro bruto em banco. A primeira linha mostra quanto bate em cada cruzamento nas empresas da lista. A nota começa em 100 e perde 25 por ocorrência alta, 10 por média e 3 por baixa.",
+        "One row per company, from the best to the worst score. In each cross-check: ✓ all of the company's cases match; ✗ n, how many failed (the link shows which); – not applicable, like gross profit for a bank. The first row shows how much matches in each cross-check for the companies listed. The score starts at 100 and loses 25 per high issue, 10 per medium and 3 per low.") +
       '</p><label class="q-busca"><input type="search" id="q-busca" placeholder="' + L("Filtrar por ticker ou nome", "Filter by ticker or name") + '" value="' + esc(busca) + '"></label>' +
-      '<div class="tabela-wrap q-rolagem"><table class="q-tab"><thead><tr><th>' + L("Empresa", "Company") + '</th><th class="num">' + L("Nota", "Score") + "</th><th>" +
-      L("Ocorrências", "Issues") + "</th></tr></thead><tbody>" + linhas + "</tbody></table></div></section>";
+      '<div class="tabela-wrap q-rolagem q-matriz"><table class="q-tab"><thead>' + cab + "</thead><tbody>" + resumoLinha +
+      (linhas || '<tr><td colspan="' + (cols.length + 3) + '" class="mudo">' + L("Nenhuma empresa com esse filtro.", "No company with this filter.") + "</td></tr>") +
+      "</tbody></table></div></section>";
   }
 
   function ocorrencias(q) {
@@ -433,8 +524,15 @@
   // ---------------------------------------------------------------- página
 
   function desenhar(app, q) {
-    var aviso = filtro ? '<p class="q-filtro">' + L("Mostrando só ", "Showing only ") + "<b>" + esc(filtro) + '</b>. <a href="#/qualidade">' + L("Ver todas as empresas", "See all companies") + "</a></p>" : "";
-    app.innerHTML = resumo(q) + aviso + cruzamentos(q) + graficos(q) + cobertura(q) + porEmpresa(q) + ocorrencias(q) + metodo();
+    selecionar();
+    var setor = !filtro && X.setorAtivo();
+    var aviso = filtro ? '<p class="q-filtro">' + L("Mostrando só ", "Showing only ") + "<b>" + esc(filtro) + '</b>. <a href="#/qualidade">' + L("Ver todas as empresas", "See all companies") + "</a></p>" :
+      setor ? '<p class="q-filtro">' + L("Setor ", "Sector ") + "<b>" + esc(setor.nome) + "</b>: " + setor.n + " " + L("empresas", "companies") + ". " +
+        L("Cobertura, data das fontes e evolução diária continuam sendo de toda a base. ", "Coverage, source dates and the daily trend still cover the whole database. ") +
+        '<button type="button" class="q-limpar" data-limpar-setor>' + L("Ver todas as empresas", "See all companies") + "</button></p>" : "";
+    app.innerHTML = resumo(q) + aviso + cruzamentos(q) + controle(q) + graficos(q) + ocorrencias(q) + cobertura(q) + metodo();
+    var limpar = app.querySelector("[data-limpar-setor]");
+    if (limpar) limpar.addEventListener("click", function () { X.definirSetor(""); });
     app.querySelectorAll("[data-cruz]").forEach(function (b) {
       b.addEventListener("click", function () {
         var id = b.getAttribute("data-cruz");
