@@ -1,0 +1,187 @@
+{
+ "data": "2026-11-26",
+ "numero": 4,
+ "tipo": "dia",
+ "titulo": "Thursday, November 26, 2026",
+ "gerado_em": "2026-11-27 05:08",
+ "publicado_em": "2026-11-27T02:11-03:00",
+ "pregao": "2026-11-26",
+ "cambio": {
+  "de": 5.8825,
+  "para": 5.7446,
+  "data": "2026-11-26",
+  "real": 0.024005
+ },
+ "ptax_hoje": {
+  "data": "2026-11-26",
+  "valor": 5.7446
+ },
+ "universo": {
+  "n": 189,
+  "sobe": 183,
+  "desce": 4,
+  "mediana_brl": 0.058282,
+  "mediana_usd": 0.083686
+ },
+ "movimentos": {
+  "topo": [
+   {
+    "t": "PMAM3",
+    "pagina": "PMAM3",
+    "nome": "Paranapanema",
+    "preco": 0.21,
+    "data": "2026-11-26",
+    "brl": 0.166667,
+    "usd": 0.194673
+   },
+   {
+    "t": "MRVE3",
+    "pagina": "MRVE3",
+    "nome": "Mrv Engenharia e Participacoes",
+    "preco": 5.33,
+    "data": "2026-11-26",
+    "brl": 0.15368,
+    "usd": 0.181374
+   },
+   {
+    "t": "RENT3",
+    "pagina": "RENT3",
+    "nome": "Localiza Rent A Car",
+    "preco": 33.77,
+    "data": "2026-11-26",
+    "brl": 0.151774,
+    "usd": 0.179422
+   },
+   {
+    "t": "SIMH3",
+    "pagina": "SIMH3",
+    "nome": "Simpar",
+    "preco": 6.85,
+    "data": "2026-11-26",
+    "brl": 0.147404,
+    "usd": 0.174947
+   },
+   {
+    "t": "AZEV3",
+    "pagina": "AZEV3",
+    "nome": "Azevedo e Travassos",
+    "preco": 15.0,
+    "data": "2026-11-26",
+    "brl": 0.145038,
+    "usd": 0.172525
+   }
+  ],
+  "fim": [
+   {
+    "t": "RCSL4",
+    "pagina": "RCSL4",
+    "nome": "Recrusul",
+    "preco": 0.56,
+    "data": "2026-11-26",
+    "brl": 0.0,
+    "usd": 0.024005
+   },
+   {
+    "t": "SUZB3",
+    "pagina": "SUZB3",
+    "nome": "Suzano",
+    "preco": 54.87,
+    "data": "2026-11-26",
+    "brl": -0.009567,
+    "usd": 0.014209
+   },
+   {
+    "t": "BRKM5",
+    "pagina": "BRKM5",
+    "nome": "Braskem",
+    "preco": 2.17,
+    "data": "2026-11-26",
+    "brl": -0.03125,
+    "usd": -0.007995
+   },
+   {
+    "t": "AZUL3",
+    "pagina": "AZUL3",
+    "nome": "Azul",
+    "preco": 11.08,
+    "data": "2026-11-26",
+    "brl": -0.032314,
+    "usd": -0.009085
+   },
+   {
+    "t": "LIGT3",
+    "pagina": "LIGT3",
+    "nome": "Light",
+    "preco": 2.78,
+    "data": "2026-11-26",
+    "brl": -0.13125,
+    "usd": -0.110396
+   }
+  ]
+ },
+ "proventos": {
+  "semana": [
+   "2026-11-27",
+   "2026-11-27"
+  ],
+  "direito": {
+   "itens": [],
+   "total": 0
+  },
+  "pagamentos": {
+   "itens": [
+    {
+     "t": "PSSA3",
+     "pagina": "PSSA3",
+     "nome": "Porto Seguro",
+     "tipo": "dividendo",
+     "valor": 0.88610136,
+     "usd": 0.154249,
+     "yield": 0.020578,
+     "com": "2026-03-31",
+     "pag": "2026-11-27",
+     "outros": []
+    },
+    {
+     "t": "MTRE3",
+     "pagina": "MTRE3",
+     "nome": "Mitre Realty Empreendimentos e Participações",
+     "tipo": "dividendo",
+     "valor": 0.03781618,
+     "usd": 0.006583,
+     "yield": 0.011459,
+     "com": "2026-11-13",
+     "pag": "2026-11-27",
+     "outros": []
+    }
+   ],
+   "total": 2
+  }
+ },
+ "mudancas": {
+  "desde": "2026-11-25",
+  "balancos": {
+   "topo": [],
+   "fim": [],
+   "total": 0
+  },
+  "indice": {
+   "topo": [],
+   "fim": [],
+   "total": 0
+  },
+  "entraram": [],
+  "sairam": [],
+  "anunciados": {
+   "itens": [],
+   "total": 0
+  }
+ },
+ "aula": {
+  "n": 4,
+  "total": 18,
+  "palavra": "PRICE",
+  "pergunta": "What moves a share price?"
+ },
+ "frase": "The real rose 2.4% against the dollar; 183 of 189 stocks gained in reais; 2 dividend payments are due in the next session."
+}

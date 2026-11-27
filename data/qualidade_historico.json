@@ -9,5 +9,16 @@
 "info": 144,
 "cobertura": 1.0,
 "empresas": 189
+},
+{
+"data": "2026-11-26",
+"testes": 15273,
+"ok": 15182,
+"alta": 4,
+"media": 31,
+"baixa": 92,
+"info": 144,
+"cobertura": 1.0,
+"empresas": 189
 }
 ]
