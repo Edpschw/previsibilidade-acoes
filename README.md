@@ -164,7 +164,7 @@ Problemas que a auditoria revelou e que o processamento já trata:
 | Problema | Exemplo | Tratamento |
 |---|---|---|
 | Empresa sem controladas só publica a demonstração individual | Sanepar, TIM (consolidado zerado) | consolidado quando existe e não está zerado; senão individual |
-| Código de negociação errado ou ausente no FCA | BTG ("000000"), CSN ("4030"), Marfrig ("ADR"), B3 (sem linha) | tickers pela lista de emissores da B3, casada por código CVM |
+| Código de negociação errado ou ausente no FCA | BTG ("000000"), CSN Mineração ("25585"), CSN ("4030"), Marfrig ("ADR"), B3 (sem linha) | tickers pela lista de emissores da B3, casada por código CVM; do FCA só entra código com raiz começando por letra e classe de ação (3 a 8 ou 11) |
 | B3 cadastra o CNPJ de uma filial | Tupy | casamento pelo código CVM |
 | Ações declaradas em escala errada | CSN Mineração 2025 (×10), Vivo 2020–21 (em milhares), IMC 2025 (×20) | continuidade do valor de mercado + LPA declarado + mediana da série |
 | Lucro da controladora preenchido com zero | CSN Mineração 2023–24 | usa o lucro consolidado |

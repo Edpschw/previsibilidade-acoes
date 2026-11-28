@@ -146,6 +146,15 @@ class Cadastro(unittest.TestCase):
         self.assertEqual(P.composicao_unit("1 ação ordinária e 4 ações preferenciais"), [1, 4])
         self.assertIsNone(P.composicao_unit(""))
 
+    def test_codigo_do_fca(self):
+        # números no lugar do código, achados no FCA de 2026: viravam ticker do BTG (BPAC11) e da CSN Mineração
+        for cod in ("000000", "25585", "023175", "022055", "713854"):
+            self.assertFalse(P.codigo_fca_valido(cod), cod)
+        for cod in ("PETR4", "B3SA3", "BPAC11", "KLBN11", "CMIN3", "ITSA4", "PNVL5", "ELET6"):
+            self.assertTrue(P.codigo_fca_valido(cod), cod)
+        self.assertFalse(P.codigo_fca_valido("PETR"))     # sem classe
+        self.assertFalse(P.codigo_fca_valido("PETR2"))    # direito de subscrição, não ação
+
 
 class UltimosDozeMeses(unittest.TestCase):
     def test_soma_exercicio_mais_acumulado_menos_acumulado_anterior(self):

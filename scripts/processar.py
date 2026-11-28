@@ -51,6 +51,9 @@ URL_DFP = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS/dfp_cia_abert
 URL_FCA = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/FCA/DADOS/fca_cia_aberta_{ano}.zip"
 CODBDI = (b"02", b"05", b"06", b"07", b"08")
 ESPECIE_ACAO = re.compile(r"^(ON|PN|PNA|PNB|PNC|PND|PNE|PNF|PNG|UNT)\b")
+# código de ação na B3: raiz de 4 caracteres que começa por letra (B3SA3 tem dígito no meio) e a classe
+# (3 ON, 4 PN, 5 a 8 PNA a PND, 11 unit)
+CODIGO_ACAO = re.compile(r"[A-Z][A-Z0-9]{3}(?:[3-8]|11)")
 URL_B3_EMPRESAS = "https://sistemaswebb3-listados.b3.com.br/listedCompaniesProxy/CompanyCall/GetInitialCompanies/"
 URL_B3_SUPLEMENTO = "https://sistemaswebb3-listados.b3.com.br/listedCompaniesProxy/CompanyCall/GetListedSupplementCompany/"
 URL_COTA = "https://bvmf.bmfbovespa.com.br/InstDados/SerHist/{nome}"
@@ -612,7 +615,7 @@ def carregar_cadastro(forcar: bool, negociados=frozenset(), b3=()):
             cod = (l["Codigo_Negociacao"] or "").strip().upper()
             if (l["Mercado"] == "Bolsa" and not l["Data_Fim_Negociacao"]
                     and l["Valor_Mobiliario"] in ("Ações Ordinárias", "Ações Preferenciais", "Units")
-                    and re.fullmatch(r"[A-Z0-9]{4}\d{1,2}", cod)
+                    and codigo_fca_valido(cod)
                     and dono_raiz.get(cod[:4], dig) == dig):
                 tickers.add(cod)
                 segmento = segmento or l["Segmento"]
@@ -654,6 +657,14 @@ def carregar_cadastro(forcar: bool, negociados=frozenset(), b3=()):
         }
     print(f"  {len(cad)} companhias ativas com ação na B3 (tickers: {dict(origem)})")
     return cad
+
+
+def codigo_fca_valido(cod):
+    """Código de negociação do FCA que pode ser de ação. O FCA às vezes traz um número no lugar do código
+    (BTG Pactual: 000000; CSN Mineração: 25585; também Iguá, Marisa e Cemepe), e o filtro antigo, que
+    aceitava dígito em qualquer posição da raiz, deixava esse número entrar como ticker. Código que a B3
+    negocia (AZUL97, RAIZ55) entra pelas cotações de qualquer jeito."""
+    return bool(CODIGO_ACAO.fullmatch(cod))
 
 
 def composicao_unit(texto):

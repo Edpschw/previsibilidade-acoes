@@ -57,6 +57,12 @@ class Base(unittest.TestCase):
                 self.assertNotIn(t, vistos, f"{t} em {vistos.get(t)} e {e['nome']}")
                 vistos[t] = e["nome"]
 
+    def test_ticker_no_formato_da_b3(self):
+        # raiz de 4 caracteres começando por letra e a classe; o FCA já pôs "000000" no BTG e "25585" na CSN Mineração
+        for e in self.d["empresas"]:
+            for t in e["tickers"]:
+                self.assertRegex(t, r"^[A-Z][A-Z0-9]{3}[1-9]\d?$", e["nome"])
+
     # ---- valores que já estiveram errados
     def test_b3_tem_valor_de_mercado(self):
         self.assertGreater(self.e("B3SA3")["valor_mercado"], 30_000_000)  # R$ mil
