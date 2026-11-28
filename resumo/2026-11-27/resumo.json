@@ -1,0 +1,271 @@
+{
+ "data": "2026-11-27",
+ "numero": 5,
+ "tipo": "dia",
+ "titulo": "Friday, November 27, 2026",
+ "gerado_em": "2026-11-28 04:47",
+ "publicado_em": "2026-11-28T01:49-03:00",
+ "pregao": "2026-11-27",
+ "cambio": {
+  "de": 5.7446,
+  "para": 5.543,
+  "data": "2026-11-27",
+  "real": 0.03637
+ },
+ "ptax_hoje": {
+  "data": "2026-11-27",
+  "valor": 5.543
+ },
+ "universo": {
+  "n": 189,
+  "sobe": 126,
+  "desce": 55,
+  "mediana_brl": 0.015217,
+  "mediana_usd": 0.052141
+ },
+ "movimentos": {
+  "topo": [
+   {
+    "t": "LJQQ3",
+    "pagina": "LJQQ3",
+    "nome": "Lojas Quero Quero",
+    "preco": 1.48,
+    "data": "2026-11-27",
+    "brl": 0.165354,
+    "usd": 0.207738
+   },
+   {
+    "t": "SIMH3",
+    "pagina": "SIMH3",
+    "nome": "Simpar",
+    "preco": 7.97,
+    "data": "2026-11-27",
+    "brl": 0.163504,
+    "usd": 0.205821
+   },
+   {
+    "t": "PTBL3",
+    "pagina": "PTBL3",
+    "nome": "Pbg",
+    "preco": 1.66,
+    "data": "2026-11-27",
+    "brl": 0.152778,
+    "usd": 0.194705
+   },
+   {
+    "t": "TEND3",
+    "pagina": "TEND3",
+    "nome": "Construtora Tenda",
+    "preco": 18.66,
+    "data": "2026-11-27",
+    "brl": 0.130224,
+    "usd": 0.171331
+   },
+   {
+    "t": "MOVI3",
+    "pagina": "MOVI3",
+    "nome": "Movida Participacoes",
+    "preco": 7.57,
+    "data": "2026-11-27",
+    "brl": 0.119822,
+    "usd": 0.160551
+   }
+  ],
+  "fim": [
+   {
+    "t": "SUZB3",
+    "pagina": "SUZB3",
+    "nome": "Suzano",
+    "preco": 51.98,
+    "data": "2026-11-27",
+    "brl": -0.05267,
+    "usd": -0.018215
+   },
+   {
+    "t": "HBOR3",
+    "pagina": "HBOR3",
+    "nome": "Helbor Empreendimentos",
+    "preco": 1.0,
+    "data": "2026-11-27",
+    "brl": -0.056604,
+    "usd": -0.022292
+   },
+   {
+    "t": "BRKM5",
+    "pagina": "BRKM5",
+    "nome": "Braskem",
+    "preco": 2.03,
+    "data": "2026-11-27",
+    "brl": -0.064516,
+    "usd": -0.030492
+   },
+   {
+    "t": "NATU3",
+    "pagina": "NATU3",
+    "nome": "Natura Cosméticos",
+    "preco": 4.86,
+    "data": "2026-11-27",
+    "brl": -0.065385,
+    "usd": -0.031392
+   },
+   {
+    "t": "PMAM3",
+    "pagina": "PMAM3",
+    "nome": "Paranapanema",
+    "preco": 0.19,
+    "data": "2026-11-27",
+    "brl": -0.095238,
+    "usd": -0.062332
+   }
+  ]
+ },
+ "proventos": {
+  "semana": [
+   "2026-11-28",
+   "2026-11-30"
+  ],
+  "direito": {
+   "itens": [],
+   "total": 0
+  },
+  "pagamentos": {
+   "itens": [
+    {
+     "t": "LOGG3",
+     "pagina": "LOGG3",
+     "nome": "Log Commercial Properties e Participações",
+     "tipo": "dividendo",
+     "valor": 0.99467134,
+     "usd": 0.179446,
+     "yield": 0.045253,
+     "com": "2026-11-13",
+     "pag": "2026-11-30",
+     "outros": []
+    },
+    {
+     "t": "VTRU3",
+     "pagina": "VTRU3",
+     "nome": "Vitru Educação",
+     "tipo": "dividendo",
+     "valor": 0.53320249,
+     "usd": 0.096194,
+     "yield": 0.035358,
+     "com": "2026-11-18",
+     "pag": "2026-11-30",
+     "outros": []
+    },
+    {
+     "t": "CURY3",
+     "pagina": "CURY3",
+     "nome": "Cury Construtora e Incorporadora",
+     "tipo": "dividendo",
+     "valor": 0.64925032,
+     "usd": 0.11713,
+     "yield": 0.021979,
+     "com": "2026-11-13",
+     "pag": "2026-11-30",
+     "outros": []
+    },
+    {
+     "t": "VLID3",
+     "pagina": "VLID3",
+     "nome": "Valid Soluções",
+     "tipo": "dividendo",
+     "valor": 0.17955669,
+     "usd": 0.032393,
+     "yield": 0.011153,
+     "com": "2026-11-16",
+     "pag": "2026-11-30",
+     "outros": []
+    },
+    {
+     "t": "BMOB3",
+     "pagina": "BMOB3",
+     "nome": "Bemobi Mobile Tech",
+     "tipo": "jcp",
+     "valor": 0.19178292,
+     "usd": 0.034599,
+     "yield": 0.006906,
+     "com": "2026-11-17",
+     "pag": "2026-11-30",
+     "outros": []
+    },
+    {
+     "t": "EZTC3",
+     "pagina": "EZTC3",
+     "nome": "Ez Tec Empreend. e Participacoes",
+     "tipo": "dividendo",
+     "valor": 0.07314516,
+     "usd": 0.013196,
+     "yield": 0.006578,
+     "com": "2026-11-12",
+     "pag": "2026-11-30",
+     "outros": []
+    },
+    {
+     "t": "RAIL3",
+     "pagina": "RAIL3",
+     "nome": "Rumo",
+     "tipo": "dividendo",
+     "valor": 0.10840223,
+     "usd": 0.019557,
+     "yield": 0.00609,
+     "com": "2026-04-28",
+     "pag": "2026-11-30",
+     "outros": []
+    },
+    {
+     "t": "SAUD3",
+     "pagina": "SAUD3",
+     "nome": "Bradsaúde",
+     "tipo": "jcp",
+     "valor": 0.0786737,
+     "usd": 0.014193,
+     "yield": 0.005053,
+     "com": "2026-06-30",
+     "pag": "2026-11-30",
+     "outros": []
+    },
+    {
+     "t": "MDIA3",
+     "pagina": "MDIA3",
+     "nome": "M.Dias Branco",
+     "tipo": "dividendo",
+     "valor": 0.03,
+     "usd": 0.005412,
+     "yield": 0.001862,
+     "com": "2026-11-19",
+     "pag": "2026-11-30",
+     "outros": []
+    }
+   ],
+   "total": 9
+  }
+ },
+ "mudancas": {
+  "desde": "2026-11-26",
+  "balancos": {
+   "topo": [],
+   "fim": [],
+   "total": 0
+  },
+  "indice": {
+   "topo": [],
+   "fim": [],
+   "total": 0
+  },
+  "entraram": [],
+  "sairam": [],
+  "anunciados": {
+   "itens": [],
+   "total": 0
+  }
+ },
+ "aula": {
+  "n": 5,
+  "total": 18,
+  "palavra": "DIVIDENDS",
+  "pergunta": "How do shareholders get paid?"
+ },
+ "frase": "The real rose 3.6% against the dollar; 126 of 189 stocks gained in reais; 9 dividend payments are due in the next session."
+}

@@ -20,5 +20,16 @@
 "info": 144,
 "cobertura": 1.0,
 "empresas": 189
+},
+{
+"data": "2026-11-27",
+"testes": 15268,
+"ok": 15177,
+"alta": 4,
+"media": 30,
+"baixa": 92,
+"info": 144,
+"cobertura": 1.0,
+"empresas": 189
 }
 ]

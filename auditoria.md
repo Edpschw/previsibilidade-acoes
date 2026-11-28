@@ -1,18 +1,18 @@
 # Auditoria da base
 
-Gerada em 27/11/2026 sobre `data/empresas.js` de 2026-11-27 05:08 (balanços até 2025, cotações até 2026-11-26). Refaça com `python3 scripts/auditar.py --externo`.
+Gerada em 28/11/2026 sobre `data/empresas.js` de 2026-11-28 04:47 (balanços até 2025, cotações até 2026-11-27). Refaça com `python3 scripts/auditar.py --externo`.
 
 ## 1. Cobertura
 
 | Etapa | Quantidade |
 |---|---|
-| Emissores com ação ON/PN/unit negociada na B3 nos últimos 21 pregões (raiz do ticker) | 302 |
-| Tickers de ação negociados nesse período | 389 |
+| Emissores com ação ON/PN/unit negociada na B3 nos últimos 21 pregões (raiz do ticker) | 303 |
+| Tickers de ação negociados nesse período | 388 |
 | Emissores de ações na lista oficial da B3 (tipo 1) | 566 |
 | Companhias ativas na CVM com ação na B3 (FCA + lista da B3) | 345 |
 | Empresas na base | 189 |
 | … das quais negociaram no período | 189 |
-| Emissores negociados na B3 que estão na base | 189 de 302 (63%) |
+| Emissores negociados na B3 que estão na base | 189 de 303 (62%) |
 
 Referências externas:
 
@@ -40,9 +40,9 @@ nenhuma
 | alta | LPA divergente | 4 |
 | média | ações B3 × DFP | 16 |
 | média | margem líquida extrema | 5 |
-| média | DY acima de 30% | 3 |
 | média | receita não positiva | 2 |
 | média | LPA com sinal trocado na DRE | 2 |
+| média | DY acima de 30% | 2 |
 | média | P/L extremo | 1 |
 | média | P/VP extremo | 1 |
 | média | buraco no histórico | 1 |
@@ -74,12 +74,11 @@ nenhuma
 | ENEV3 | ENEVA | alta | LPA divergente | 2025: calculado R$ 0.60 × declarado R$ 1.00 (razão 0.60) |
 | HBRE3 | HBR Realty Empreendimentos Imobiliários | alta | LPA divergente | 2025: calculado R$ 0.27 × declarado R$ 0.94 (razão 0.28) |
 | TFCO4 | TRACK & FIELD CO | alta | LPA divergente | 2025: calculado R$ 0.15 × declarado R$ 0.09 (razão 1.61) |
-| POMO4 | MARCOPOLO | média | DY acima de 30% | 32% (dividendo extraordinário ou valor de mercado subestimado) |
-| RIAA3 | GUARARAPES CONFECCOES | média | DY acima de 30% | 35% (dividendo extraordinário ou valor de mercado subestimado) |
-| SYNE3 | SYN PROP & TECH | média | DY acima de 30% | 30% (dividendo extraordinário ou valor de mercado subestimado) |
+| POMO4 | MARCOPOLO | média | DY acima de 30% | 31% (dividendo extraordinário ou valor de mercado subestimado) |
+| RIAA3 | GUARARAPES CONFECCOES | média | DY acima de 30% | 34% (dividendo extraordinário ou valor de mercado subestimado) |
 | HBSA3 | HIDROVIAS DO BRASIL | média | LPA com sinal trocado na DRE | 2025: lucro -140,918 mas LPA declarado +0.05 (erro de preenchimento da empresa) |
 | OBTC3 | ORANJEBTC | média | LPA com sinal trocado na DRE | 2025: lucro -469,986 mas LPA declarado +2.79 (erro de preenchimento da empresa) |
-| DXCO3 | DEXCO | média | P/L extremo | 4023.8x |
+| DXCO3 | DEXCO | média | P/L extremo | 4162.0x |
 | GFSA3 | GAFISA | média | P/VP extremo | 0.02x |
 | AUAU3 | União Pet Participações | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 2.11× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
 | AZEV3 | AZEVEDO E TRAVASSOS | média | ações B3 × DFP | valor de mercado com ações da B3 hoje é 0.19× o calculado com as da DFP de 2025 (emissão, recompra, grupamento depois do balanço, ou DFP errada); prevalece a B3 |
@@ -112,9 +111,9 @@ As de severidade baixa e informativas ficam em `auditoria.json`.
 
 | Ticker | Cotação base | Cotação brapi | Valor de mercado base | brapi | Diferença |
 |---|---|---|---|---|---|
-| PETR4 | 43.19 | 43.19 | 600.6 bi | 567.2 bi | +5.9% |
-| VALE3 | 58.73 | 58.73 | 244.8 bi | 226.8 bi | +8.0% |
-| ITUB4 | 42.56 | 42.56 | 489.7 bi | 461.2 bi | +6.2% |
-| MGLU3 | 9.65 | 9.65 | 7.5 bi | 7.2 bi | +3.7% |
+| PETR4 | 42.14 | 42.14 | 583.4 bi | 594.7 bi | -1.9% |
+| VALE3 | 57.19 | 57.19 | 238.4 bi | 234.1 bi | +1.9% |
+| ITUB4 | 42.73 | 42.73 | 492.6 bi | 488.7 bi | +0.8% |
+| MGLU3 | 10.59 | 10.59 | 8.2 bi | 7.5 bi | +9.6% |
 
 A base usa a quantidade de ações atual informada pela B3, menos as ações em tesouraria do último balanço (mesmo critério do LPA). Fontes de mercado variam: algumas usam o total emitido, outras uma contagem defasada. A cotação é o teste mais direto, e deve bater exatamente.
