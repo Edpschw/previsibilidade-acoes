@@ -904,28 +904,13 @@ body[data-pagina="inicio"] #app { max-width: none; padding: 0; min-height: 0; }
 }
 
 /* aba Qualidade (qualidade.js) ------------------------------------- */
-.q-stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 0; border-top: 0; }
+.q-stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 0; border-top: 0; gap: 16px 20px; }
 .q-stats .stat, .q-stats .stat + .stat { padding: 0; border-left: 0; }
-.q-stats { gap: 16px 20px; }
 .q-stats .stat small { font-size: 12px; margin-top: 2px; }
 .q-barra { display: inline-block; width: 72px; height: 6px; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--border); vertical-align: middle; overflow: hidden; }
 .q-barra i { display: block; height: 100%; }
-.q-cruz td { vertical-align: top; }
-.q-fonte { font-size: 12px; }
-.q-ver { font: inherit; font-weight: 700; color: var(--neg); background: none; border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
-.q-ver[aria-expanded="true"] { background: var(--surface-2); }
-.q-detalhe > td { background: var(--surface-2); }
-.q-detalhe .tabela-wrap { margin-top: 8px; }
-.q-graficos { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; margin-top: 12px; }
-.q-graficos figure { margin: 0; min-width: 0; }
-.q-graficos figcaption { font-size: 14px; margin-bottom: 10px; }
-.q-graficos figcaption .mudo { font-size: 12.5px; }
-.q-grafico { width: 100%; height: auto; display: block; }
-.q-eixo { font-size: 10px; fill: var(--muted); }
-.q-barras { display: grid; gap: 12px; }
-.q-barras-linha { display: grid; grid-template-columns: minmax(0, 1fr) minmax(80px, 140px) 64px; align-items: center; gap: 10px; font-size: 14px; }
-.q-barras-linha .q-barra, .q-funil-linha .q-barra { width: 100%; height: 10px; }
 .q-funil-linha { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 48px; align-items: center; gap: 4px 10px; margin: 10px 0; font-size: 14px; }
+.q-funil-linha .q-barra { width: 100%; height: 10px; }
 .q-funil-linha small { grid-column: 1 / -1; }
 .q-duas { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
 .cartao h3 { font-size: 15px; margin: 16px 0 8px; }
@@ -933,17 +918,88 @@ body[data-pagina="inicio"] #app { max-width: none; padding: 0; min-height: 0; }
 .q-sev.alta { color: var(--neg); border-color: color-mix(in srgb, var(--neg) 45%, transparent); }
 .q-sev.media { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
 .q-sev.baixa { color: var(--text); }
-.q-sev.info { color: var(--muted); }
-.q-busca { display: block; max-width: 320px; margin: 10px 0; }
-.q-busca input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text); font: inherit; }
-.q-rolagem { max-height: 520px; overflow-y: auto; }
-.q-pilulas { margin: 10px 0; }
+.q-sev.info, .q-sev.nenhuma { color: var(--muted); }
 .q-filtro { background: var(--accent-soft); color: var(--text); padding: 10px 14px; border-radius: 10px; margin: 0 0 12px; }
-.q-filtrar { font-size: 12px; margin-left: 6px; }
-.q-tab th, .q-tab td { text-align: left; }
-.q-tab th.num, .q-tab td.num { text-align: right; }
-.q-tab td.q-quebra { white-space: normal; min-width: 200px; }
-.q-tab .q-detalhe > td.q-quebra { min-width: 0; }
+.q-limpar { font: inherit; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+.q-quebra { white-space: normal; min-width: 180px; }
+
+/* controles da lista de empresas */
+.q-controles { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; margin: 14px 0 8px; }
+.q-busca { display: block; flex: 1 1 220px; max-width: 320px; }
+.q-busca input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text); font: inherit; }
+.q-abrir { display: inline-flex; gap: 6px; margin-left: auto; }
+.q-acao { border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 9px; cursor: pointer; }
+.q-acao:hover { background: var(--surface-2); }
+.q-legenda { font-size: 12.5px; color: var(--muted); margin: 0 0 12px; line-height: 1.8; }
+.q-leg { display: inline-flex; align-items: center; gap: 5px; margin-right: 14px; }
+.q-leg-sep { opacity: .6; margin: 0 3px; }
+.q-nada { padding: 16px 0; }
+
+/* uma linha por empresa; aberta, os cruzamentos com todos os casos */
+.q-lista { display: grid; gap: 8px; }
+.q-emp { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.q-emp.aberta { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.q-emp-cab { display: grid; grid-template-columns: minmax(150px, 1.2fr) 112px 132px minmax(240px, 2fr) minmax(120px, 1fr) 14px; gap: 6px 16px; align-items: center; width: 100%; padding: 10px 14px; border: 0; background: none; text-align: left; cursor: pointer; border-radius: 10px; }
+.q-emp-cab:hover { background: var(--surface-2); }
+.q-emp-cab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.q-emp-id { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; min-width: 0; }
+.q-emp-id b { font-family: var(--mono); font-size: 13.5px; }
+.q-emp-id small { flex-basis: 100%; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.q-emp-nota, .q-emp-casos { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; font-variant-numeric: tabular-nums; }
+.q-emp-nota small, .q-emp-casos small { flex-basis: 100%; font-size: 12px; }
+.q-emp-resumo { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.q-emp-falhas { font-size: 12.5px; color: var(--neg); }
+.q-emp-falhas.ok { color: var(--pos); }
+.q-emp-oc { display: flex; flex-wrap: wrap; gap: 2px; }
+.q-seta { grid-row: 1; grid-column: -2 / -1; }
+.q-seta::before { content: "▸"; color: var(--muted); display: inline-block; transition: transform .15s; }
+.q-emp.aberta .q-seta::before { transform: rotate(90deg); }
+.q-faixa { display: inline-flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+.q-pt { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--border); background: transparent; flex: 0 0 auto; }
+.q-pt.ok { background: var(--pos); border-color: transparent; }
+.q-pt.falha { background: var(--neg); border-color: transparent; }
+.q-pt.q-sep { margin-left: 7px; }
+.q-emp-corpo { padding: 2px 14px 16px; border-top: 1px solid var(--border); }
+.q-emp-links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; margin: 10px 0 0; }
+.q-grupo-tit { font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 18px 0 8px; }
+.q-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.q-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface); min-width: 0; }
+.q-card.falha { border-color: color-mix(in srgb, var(--neg) 45%, var(--border)); }
+.q-card h4 { font-size: 14px; margin: 0 0 4px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.q-card-n { font-size: 12.5px; font-weight: 650; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.q-regra { font-size: 12.5px; color: var(--muted); margin: 0 0 8px; }
+.q-tabela { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.q-tabela.q-alta { max-height: 360px; overflow-y: auto; }
+.q-casos { font-size: 12.5px; }
+.q-casos th, .q-casos td { padding: 5px 8px; text-align: left; }
+.q-casos th.num, .q-casos td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.q-casos thead th { font-size: 11px; white-space: normal; vertical-align: bottom; line-height: 1.3; }
+.q-casos tbody tr { cursor: default; }
+.q-casos tr.q-falha td { background: color-mix(in srgb, var(--neg) 10%, transparent); }
+.q-casos .q-st { text-align: center; width: 1%; font-weight: 700; }
+.q-oc td { vertical-align: top; }
+@media (max-width: 860px) {
+  .q-emp-cab { grid-template-columns: minmax(0, 1fr) auto auto 14px; }
+  .q-emp-resumo, .q-emp-oc { grid-column: 1 / -2; }
+  .q-abrir { margin-left: 0; }
+}
+@media (max-width: 520px) {
+  .q-emp-cab { grid-template-columns: minmax(0, 1fr) auto 14px; padding: 10px 12px; }
+  .q-emp-id { grid-column: 1; grid-row: 1; }
+  .q-emp-nota { grid-column: 2; grid-row: 1; }
+  .q-emp-casos, .q-emp-resumo, .q-emp-oc { grid-column: 1 / -1; }
+  .q-emp-casos small { flex-basis: auto; }
+  .q-empresas { padding: 16px 10px; }
+  .q-emp-corpo { padding: 2px 8px 12px; }
+  .q-cards { grid-template-columns: minmax(0, 1fr); }
+  .q-card { padding: 10px 8px; }
+  .q-casos { font-size: 11.5px; }
+  .q-casos th, .q-casos td { padding: 4px 5px; }
+  /* no celular a coluna ✓/✗ sai: a linha que falha fica tingida e ganha o ✗ ao lado da comparação */
+  .q-casos .q-st { display: none; }
+  .q-casos tr.q-falha .q-cmp::after { content: " ✗"; color: var(--neg); font-weight: 700; }
+  .q-quebra { min-width: 96px; }
+}
 
 /* menu principal no celular: com sete abas, rola de lado em vez de espremer os nomes */
 @media (max-width: 480px) {
@@ -952,14 +1008,28 @@ body[data-pagina="inicio"] #app { max-width: none; padding: 0; min-height: 0; }
   .nav-principal a { flex: 0 0 auto; padding: 6px 10px; }
 }
 
-/* aba Qualidade: matriz do controle por empresa */
-.q-matriz th.q-col { white-space: normal; min-width: 62px; max-width: 86px; font-size: 11.5px; line-height: 1.25; text-align: center; vertical-align: bottom; }
-.q-matriz th.q-grupo { text-align: center; font-size: 11.5px; padding: 6px 8px; }
-.q-matriz td.q-cel { text-align: center; font-weight: 650; padding: 8px 6px; }
-.q-matriz td.q-cel a { color: inherit; text-decoration: none; }
-.q-matriz .q-fixa { position: sticky; left: 0; z-index: 1; background: var(--surface); }
-.q-matriz .q-total td { background: var(--surface-2); font-size: 12.5px; }
-.q-limpar { font: inherit; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+/* aba Gráficos (graficos.js) ---------------------------------------- */
+.g-escolha .teia-controles { margin-bottom: 0; }
+.g-periodo { margin-left: auto; }
+.g-escolha .aviso-setor { margin: 12px 0 0; }
+.g-inds { display: grid; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.g-grupo { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 6px 12px; align-items: start; }
+.g-grupo-rot { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; padding-top: 6px; }
+.g-lista { display: flex; flex-wrap: wrap; gap: 6px; }
+.g-ind { border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600; padding: 5px 11px; border-radius: 999px; cursor: pointer; }
+.g-ind:hover { background: var(--surface-2); }
+.g-ind[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.g-graficos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap: 16px; margin-top: 16px; }
+.g-graficos .cartao + .cartao { margin-top: 0; }
+.g-cartao { min-width: 0; }
+.g-cab { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.g-cab h2 { margin: 0; margin-right: auto; }
+.g-sub { font-size: 13px; margin: 0 0 10px; }
+.g-fechar { border: 0; background: transparent; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; }
+.g-fechar:hover { background: var(--surface-2); color: var(--text); }
+.g-cartao .aviso[hidden] { display: none; }
 @media (max-width: 640px) {
-  .q-matriz .q-fixa .mudo { display: none; }  /* no celular, só o ticker na coluna fixa */
+  .g-grupo { grid-template-columns: minmax(0, 1fr); }
+  .g-grupo-rot { padding-top: 0; }
+  .g-periodo { margin-left: 0; }
 }

@@ -98,21 +98,40 @@ class Ptax(unittest.TestCase):
 
 
 class PorEmpresa(unittest.TestCase):
-    """cada caso conta para a empresa (ticker principal), para a aba filtrar por setor e montar a matriz"""
+    """cada caso conta para a empresa (ticker principal) e fica guardado com os dois valores, os que batem e os
+    que falham: a aba mostra os dados de cada empresa"""
 
     def test_casos_e_falhas_pela_empresa_principal(self):
         e = empresa("PETR4", fco=[100_000, 100_000], fci=[-40_000, -40_000], fcf=[-50_000, -50_000], fx_caixa=[0, 0],
                     var_caixa=[10_000, -10_000])
         e["tickers"] = ["PETR3", "PETR4"]
-        dfc = Q.identidades({"empresas": [e]})[0].saida()
+        c_dfc = Q.identidades({"empresas": [e]})[0]
+        dfc = c_dfc.saida()
         self.assertEqual(dfc["por_empresa"], {"PETR4": [2, 1]})
         self.assertEqual(dfc["falhas"][0]["e"], "PETR4")
-        # classe que não é a principal (PETR3) conta para a empresa (PETR4)
+        # todos os casos, com o ano e os dois valores (soma dos fluxos × variação declarada)
+        self.assertEqual(c_dfc.casos["PETR4"], [[1, 2024, 10_000, 10_000], [0, 2025, 10_000, -10_000]])
+        # classe que não é a principal (PETR3) conta para a empresa (PETR4) e leva o ticker no fim do caso
         h = hist([("2026-03-02", 30.0), ("2026-03-03", 15.2)], ev=[("2026-03-03", 2.0, "desdobramento", "b3")])
         e["precos_ano"] = {}
         e["cotacao"] = {"PETR3": {"preco": 15.2, "data": "2026-03-03"}}
-        cot = Q.b3_b3({"empresas": [e]}, {}, hist={"PETR3": h}.get)[0].saida()
-        self.assertEqual(cot["por_empresa"], {"PETR4": [1, 1]})
+        c_cot = Q.b3_b3({"empresas": [e]}, {}, hist={"PETR3": h}.get)[0]
+        self.assertEqual(c_cot.saida()["por_empresa"], {"PETR4": [1, 1]})
+        self.assertEqual(c_cot.casos["PETR4"], [[1, "2026-03-03", 15.2, 15.2, "PETR3"]])
+
+    def test_casos_por_empresa_do_mais_antigo_ao_mais_recente_e_ptax_a_parte(self):
+        c = Q.Checagem("x", "cvm")
+        c.caso(True, emp="AAA3", t="AAA3", ano=2025, a=1.0, b=1.0)
+        c.caso(False, emp="AAA3", t="AAA4", ano=2023, a=2.5, b=1.0)
+        g = Q.Checagem("ptax_fim", "bcb")
+        g.caso(True, ano=2025, a=5.0, b=5.0)
+        casos, gerais = Q.casos_por_empresa([c, g])
+        self.assertEqual(casos, {"AAA3": {"x": [[0, 2023, 2.5, 1, "AAA4"], [1, 2025, 1, 1]]}})
+        self.assertEqual(gerais, {"ptax_fim": [[1, 2025, 5, 5]]})
+
+    def test_valores_sem_casas_sobrando(self):
+        self.assertEqual([Q._v(x) for x in (None, "2026-01-02", 12_345.678, 1.23456789, 3.0, True)],
+                         [None, "2026-01-02", 12_346, 1.234568, 3, 1])
 
     def test_ptax_fica_sem_empresa(self):
         ind = {"ptax": {"d0": "2025-12-30", "dd": [], "v": [5.0]}}
@@ -144,22 +163,34 @@ class DadosGerados(unittest.TestCase):
             self.assertLessEqual(c["ok"], c["testados"])
             self.assertEqual(c["testados"] - c["ok"], c["n_falhas"])
 
-    def test_por_empresa_soma_o_total_e_guarda_todas_as_falhas(self):
+    def test_casos_de_cada_empresa_somam_o_total(self):
+        """todos os casos vão para a aba, empresa por empresa (PTAX à parte), com os dois valores"""
         for c in self.q["checagens"]:
-            self.assertEqual(len(c["falhas"]), c["n_falhas"], c["id"])
-            if "por_empresa" in c:
-                self.assertEqual(sum(v[0] for v in c["por_empresa"].values()), c["testados"], c["id"])
-                self.assertEqual(sum(v[1] for v in c["por_empresa"].values()), c["ok"], c["id"])
-                self.assertTrue(all(f.get("e") for f in c["falhas"]), c["id"])
+            casos = [x for emp in self.q["casos"].values() for x in emp.get(c["id"], [])] + self.q["gerais"].get(c["id"], [])
+            self.assertEqual(len(casos), c["testados"], c["id"])
+            self.assertEqual(sum(x[0] for x in casos), c["ok"], c["id"])
+            self.assertTrue(all(len(x) in (4, 5) and x[0] in (0, 1) for x in casos), c["id"])
+
+    def test_cada_empresa_da_base_tem_casos_e_nota(self):
+        tickers = {x["t"] for x in self.q["empresas"]}
+        self.assertEqual(set(self.q["casos"]), tickers)
+
+    def test_cruzamento_por_empresa_tem_quadradinho_na_aba(self):
+        ordem = re.search(r"var ORDEM = \[([^\]]+)\]", self.js).group(1)
+        for c in self.q["checagens"]:
+            if c["grupo"] != "bcb":
+                self.assertIn('"' + c["id"] + '"', ordem, c["id"])
+                self.assertRegex(self.js, r"\b" + re.escape(c["id"]) + r": \[", c["id"])  # nome curto
 
     def test_notas_da_melhor_para_a_pior(self):
         notas = [x["nota"] for x in self.q["empresas"]]
         self.assertEqual(notas, sorted(notas, reverse=True))
 
     def test_historico_um_ponto_por_pregao(self):
-        datas = [h["data"] for h in self.q["historico"]]
+        historico = json.loads((RAIZ / "data" / "qualidade_historico.json").read_text(encoding="utf-8"))
+        datas = [h["data"] for h in historico]
         self.assertEqual(datas, sorted(set(datas)))
-        self.assertEqual(self.q["historico"][-1]["data"], self.q["cotacoes_em"])
+        self.assertEqual(historico[-1]["data"], self.q["cotacoes_em"])
 
 
 if __name__ == "__main__":

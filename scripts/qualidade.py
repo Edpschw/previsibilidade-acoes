@@ -16,8 +16,10 @@ bater. Cada cruzamento diz quantos casos testou, quantos passaram e quais falhar
     Atualização  data de cada fonte contra a data da base
 
 Escreve:
-    data/qualidade.js               window.QUALIDADE; a aba carrega só quando abre
-    data/qualidade_historico.json   um resumo por pregão, para o gráfico da evolução
+    data/qualidade.js               window.QUALIDADE; a aba carrega só quando abre. A aba mostra empresa
+                                    por empresa: vão todos os casos de cada uma (os que batem e os que
+                                    falham, com os dois valores), a nota e as ocorrências da auditoria
+    data/qualidade_historico.json   um resumo por pregão (casos, ocorrências, cobertura), como registro
 
 Os nomes e as explicações de cada cruzamento ficam em qualidade.js (raiz), em português e inglês.
 """
@@ -36,8 +38,8 @@ RAIZ = Path(__file__).resolve().parent.parent
 SAIDA = RAIZ / "data" / "qualidade.js"
 HISTORICO = RAIZ / "data" / "qualidade_historico.json"
 AGENDA = RAIZ / "data" / "agenda.js"
-MAX_FALHAS = 3000       # falhas guardadas por cruzamento: todas, para o filtro de setor e o controle por empresa
-MAX_HISTORICO = 400     # pregões no gráfico da evolução
+MAX_FALHAS = 3000       # falhas guardadas por cruzamento (para as notas; a aba usa os casos por empresa)
+MAX_HISTORICO = 400     # pregões guardados no registro diário
 # cruzamentos que as regras da auditoria não cobrem: entram na nota de cada empresa com este peso
 PESO_NOVOS = {"acoes_cvm_b3": "média", "cotacao_hist": "alta", "preco_ano_hist": "baixa", "agenda_hist": "média",
               "eventos_preco": "baixa", "ebitda_ebit": "baixa", "ttm_anual": "baixa"}
@@ -47,22 +49,31 @@ LIQUIDEZ_SAIDA = 500_000   # o mesmo de scripts/processar.py: abaixo disso a emp
 
 class Checagem:
     """Um cruzamento: casos testados, quantos passaram e as falhas com os dois valores comparados, no total
-    e por empresa (ticker principal), para a aba filtrar por setor e montar o controle por empresa."""
+    e por empresa (ticker principal). Guarda também todos os casos, os que batem e os que falham, para a
+    aba mostrar os dados de cada empresa: [1 ou 0, ano ou data, valor A, valor B] e, quando o caso é de
+    outra classe da empresa (PETR3 em PETR4), o ticker no fim."""
 
     def __init__(self, id_, grupo):
         self.id, self.grupo, self.testados, self.ok, self.falhas, self.por_empresa = id_, grupo, 0, 0, [], {}
+        self.casos, self.gerais = defaultdict(list), []
 
-    def caso(self, passou, emp=None, **falha):
+    def caso(self, passou, emp=None, **x):
         self.testados += 1
         self.ok += 1 if passou else 0
+        linha = [1 if passou else 0, x.get("ano", x.get("data")), _v(x.get("a")), _v(x.get("b"))]
         if emp:
             pe = self.por_empresa.setdefault(emp, [0, 0])
             pe[0] += 1
             pe[1] += 1 if passou else 0
+            if x.get("t") and x["t"] != emp:
+                linha.append(x["t"])
+            self.casos[emp].append(linha)
+        else:
+            self.gerais.append(linha)
         if not passou:
             if emp:
-                falha["e"] = emp
-            self.falhas.append(falha)
+                x["e"] = emp
+            self.falhas.append(x)
 
     def saida(self):
         out = {"id": self.id, "grupo": self.grupo, "testados": self.testados, "ok": self.ok,
@@ -74,6 +85,22 @@ class Checagem:
 
 def _r(v, casas=4):
     return None if v is None else round(v, casas)
+
+
+def _v(v):
+    """valor de um caso no arquivo da aba: datas e textos como estão; números sem casas sobrando"""
+    if v is None or isinstance(v, str):
+        return v
+    if isinstance(v, bool):
+        return int(v)
+    v = round(v) if abs(v) >= 1000 else round(v, 6)
+    return int(v) if float(v).is_integer() else v
+
+
+def ordem_caso(linha):
+    """ano (int) ou data (AAAA-MM-DD) do caso, para listar do mais antigo ao mais recente"""
+    q = linha[1]
+    return (0, "") if q is None else (1, f"{q:04d}") if isinstance(q, int) else (1, str(q))
 
 
 # ---------------------------------------------------------------- CVM
@@ -288,12 +315,25 @@ def notas(d, achados, checagens):
     return out
 
 
+def casos_por_empresa(objs):
+    """{empresa: {cruzamento: [casos do mais antigo ao mais recente]}} e os cruzamentos gerais (PTAX)"""
+    casos, gerais = defaultdict(dict), {}
+    for c in objs:
+        for emp, lst in c.casos.items():
+            casos[emp][c.id] = sorted(lst, key=ordem_caso)
+        if c.gerais:
+            gerais[c.id] = sorted(c.gerais, key=ordem_caso)
+    return dict(sorted(casos.items())), gerais
+
+
 def gerar(d, achados, cobertura, externo):
     """roda os cruzamentos e escreve data/qualidade.js e o histórico; devolve o resumo do dia"""
     agenda = R.ler_js(AGENDA) if AGENDA.exists() else {"empresas": {}, "gerado_em": None}
-    c_lpa, pontos_lpa = lpa(d)
-    c_cvm_b3, pontos_acoes = cvm_b3(d)
-    checagens = [c.saida() for c in identidades(d) + [c_lpa] + c_cvm_b3 + b3_b3(d, agenda["empresas"]) + ptax(d)]
+    c_lpa, _ = lpa(d)
+    c_cvm_b3, _ = cvm_b3(d)
+    objs = identidades(d) + [c_lpa] + c_cvm_b3 + b3_b3(d, agenda["empresas"]) + ptax(d)
+    checagens = [c.saida() for c in objs]
+    casos, gerais = casos_por_empresa(objs)
     testados = sum(c["testados"] for c in checagens)
     ok = sum(c["ok"] for c in checagens)
     sev = Counter(a["sev"] for a in achados)
@@ -303,14 +343,15 @@ def gerar(d, achados, cobertura, externo):
     historico = [h for h in historico if h["data"] != dia["data"]] + [dia]
     historico = sorted(historico, key=lambda h: h["data"])[-MAX_HISTORICO:]
     HISTORICO.write_text(json.dumps(historico, ensure_ascii=False, indent=0) + "\n", encoding="utf-8")
+    # a aba mostra empresa por empresa: cada cruzamento vai só com os totais, e os casos (todos, os que
+    # batem e os que falham, com os dois valores) vão por empresa; as falhas soltas ficam para as notas
     dados = {
         "gerado_em": d["gerado_em"], "cotacoes_em": d["cotacoes_em"], "ano_final": d["ano_final"],
         "resumo": dia, "cobertura": cobertura, "atualizacao": atualizacao(d, agenda.get("gerado_em")),
-        "checagens": checagens, "externo": externo,
+        "checagens": [{k: c[k] for k in ("id", "grupo", "testados", "ok", "n_falhas")} for c in checagens],
+        "casos": casos, "gerais": gerais, "externo": externo,
         "achados": [{"t": a["ticker"], "sev": a["sev"], "regra": a["regra"], "msg": a["msg"]} for a in achados],
         "empresas": notas(d, achados, checagens),
-        "pontos": {"lpa": pontos_lpa, "acoes": pontos_acoes},
-        "historico": historico,
     }
     js = json.dumps(dados, ensure_ascii=False, separators=(",", ":"))
     SAIDA.write_text("// Gerado por scripts/qualidade.py (chamado por scripts/auditar.py) — não edite à mão.\n"

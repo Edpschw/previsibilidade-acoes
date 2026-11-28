@@ -983,9 +983,10 @@
     return { w: w, h: h, x: x, y: y, bw: bw, svg: svg, ih: ih };
   }
 
+  /** s.rotulo, quando há, vale só para a legenda (a dica usa s.nome) */
   function legenda(series, linha) {
     return '<div class="legenda">' + series.map(function (s) {
-      return '<span><i class="' + (linha ? "linha" : "") + '" style="--c:' + s.cor + '"></i>' + esc(s.nome) + "</span>";
+      return '<span><i class="' + (linha ? "linha" : "") + '" style="--c:' + s.cor + '"></i>' + esc(s.rotulo || s.nome) + "</span>";
     }).join("") + "</div>";
   }
 
@@ -1114,7 +1115,7 @@
 
   // ---------------------------------------------------------------- roteamento e controles
 
-  /** "#/" início · "#/acoes" lista de ações · "#/ranking/PETR4" ranking por fundamentos · "#/comparar/PETR4,VALE3" comparar (#/teia e #/mapa antigos caem nela) · "#/simular/PETR4,VALE3/2020-01-02/10000" simulador · "#/PETR4" empresa */
+  /** "#/" início · "#/acoes" lista de ações · "#/ranking/PETR4" ranking por fundamentos · "#/comparar/PETR4,VALE3" comparar (#/teia e #/mapa antigos caem nela) · "#/graficos/PETR4,VALE3/cotacao,pl" gráficos · "#/simular/PETR4,VALE3/2020-01-02/10000" simulador · "#/qualidade/PETR4" qualidade · "#/PETR4" empresa */
   function rota() {
     var m = location.hash.match(/^#\/([A-Za-z0-9]+)/);
     var alvo = m ? m[1] : "";
@@ -1123,7 +1124,7 @@
     if (window.RealTermsTeia) window.RealTermsTeia.parar();
     var pagina = alvo === "" ? "inicio" : alvo === "acoes" ? "acoes" : alvo === "comparar" || alvo === "teia" || alvo === "mapa" ? "teia" :
       alvo === "agenda" ? "agenda" : alvo === "ranking" ? "ranking" : alvo === "simular" ? "simular" :
-      alvo === "qualidade" ? "qualidade" :
+      alvo === "qualidade" ? "qualidade" : alvo === "graficos" ? "graficos" :
       alvo === "curso" ? "inicio" : "empresa";  // #/curso/7 abre a aula 7 do curso da página inicial
     $$("[data-nav]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-nav") === pagina ? "page" : "false"); });
     // no celular o menu rola de lado: mostra a aba aberta
@@ -1137,6 +1138,7 @@
     else if (pagina === "ranking") { if (window.RealTermsRanking) window.RealTermsRanking.render($("#app")); }
     else if (pagina === "simular") { if (window.RealTermsSimular) window.RealTermsSimular.render($("#app")); }
     else if (pagina === "qualidade") { if (window.RealTermsQualidade) window.RealTermsQualidade.render($("#app")); }
+    else if (pagina === "graficos") { if (window.RealTermsGraficos) window.RealTermsGraficos.render($("#app")); }
     else telaEmpresa(alvo.toUpperCase());
   }
 
